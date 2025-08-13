@@ -6,16 +6,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.sejonglifebe.place.PlaceCategory;
 
 @Entity
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Category {
 
@@ -28,5 +28,9 @@ public class Category {
     private String name;
 
     @OneToMany(mappedBy = "category")
-    private List<PlaceCategory> placeCategories;
+    private List<PlaceCategory> placeCategories = new ArrayList<>();
+
+    public Category(String name) {
+        this.name = name;
+    }
 }

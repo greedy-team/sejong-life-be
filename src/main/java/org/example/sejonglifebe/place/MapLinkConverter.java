@@ -27,5 +27,4 @@ public class MapLinkConverter implements AttributeConverter<MapLinks, String> {
             throw new RuntimeException(e);
         }
     }
-
 }

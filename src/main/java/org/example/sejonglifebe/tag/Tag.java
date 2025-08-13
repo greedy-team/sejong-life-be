@@ -8,18 +8,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
+
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.example.sejonglifebe.place.PlaceTag;
 
-@Setter
 @Getter
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Tag {
 
     @Id
@@ -31,5 +28,9 @@ public class Tag {
     private String name;
 
     @OneToMany(mappedBy ="tag")
-    List<PlaceTag> placeTags = new ArrayList<>();
+    private List<PlaceTag> placeTags = new ArrayList<>();
+
+    public Tag(String name) {
+        this.name = name;
+    }
 }

@@ -1,14 +1,14 @@
 package org.example.sejonglifebe.theme;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.sejonglifebe.tag.Tag;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -22,4 +22,11 @@ public class Theme {
 
     @Column(unique = true, nullable = false)
     private String name;
+
+    @OneToMany(mappedBy = "theme", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ThemeTag> themeTags = new ArrayList<>();
+
+    public void addTag(Tag tag) {
+        ThemeTag.createThemeTag(this, tag);
+    }
 }

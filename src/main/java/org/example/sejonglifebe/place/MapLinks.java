@@ -1,10 +1,13 @@
 package org.example.sejonglifebe.place;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Getter
-@Setter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MapLinks {
     private String naverMap;
     private String kakaoMap;

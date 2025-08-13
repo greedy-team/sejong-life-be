@@ -8,17 +8,20 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
+
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.tag.Tag;
 
 @Getter
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Place {
 
     @Id
@@ -33,31 +36,31 @@ public class Place {
     private String address;
 
     @Convert(converter = MapLinkConverter.class)
-    @Column(columnDefinition = "json")
-    private MapLinks map_links;
+    @Column(columnDefinition = "text")
+    private MapLinks mapLinks;
 
-    @Column(unique = true, nullable = true)
-    private String main_image_url;
+    @Column(unique = true)
+    private String mainImageUrl;
 
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceTag> placeTags = new ArrayList<>();
 
-    @OneToMany(mappedBy = "place")
-    private List<PlaceCategory> placeCategories;
+    @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PlaceCategory> placeCategories = new ArrayList<>();
 
-    public Place(String name, String address) {
+    @Builder
+    public Place(String name, String address, MapLinks mapLinks, String mainImageUrl) {
         this.name = name;
         this.address = address;
+        this.mapLinks = mapLinks;
+        this.mainImageUrl = mainImageUrl;
     }
 
-    public void addTags(Tag...tags){
-        for (Tag tag : tags) {
-            PlaceTag placeTag = new PlaceTag();
-            placeTag.setTag(tag);
-            tag.getPlaceTags().add(placeTag);
-            placeTag.setPlace(this);
-            placeTags.add(placeTag);
-        }
+    public void addTag(Tag tag) {
+        PlaceTag.createPlaceTag(this, tag);
     }
 
+    public void addCategory(Category category) {
+        PlaceCategory.createPlaceCategory(this, category);
+    }
 }

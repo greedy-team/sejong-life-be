@@ -30,5 +30,4 @@ public class PlaceImage {
 
     @Column(name = "image_url", unique = true ,nullable = false)
     private String url;
-
 }
