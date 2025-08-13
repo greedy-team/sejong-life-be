@@ -10,4 +10,6 @@ public class SejongLifeBeApplication {
         SpringApplication.run(SejongLifeBeApplication.class, args);
     }
 
+
+
 }
