@@ -12,7 +12,7 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.example.sejonglifebe.place.PlaceCategory;
+import org.example.sejonglifebe.place.entity.PlaceCategory;
 
 @Entity
 @Getter

@@ -1,4 +1,4 @@
-package org.example.sejonglifebe.place;
+package org.example.sejonglifebe.place.entity;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,6 +17,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.sejonglifebe.category.Category;
+import org.example.sejonglifebe.place.util.MapLinkConverter;
 import org.example.sejonglifebe.tag.Tag;
 
 @Getter
@@ -63,4 +64,17 @@ public class Place {
     public void addCategory(Category category) {
         PlaceCategory.createPlaceCategory(this, category);
     }
+
+    public List<Category> getCategories() {
+        return placeCategories
+                .stream().map(PlaceCategory::getCategory)
+                .toList();
+    }
+
+    public List<Tag> getTags() {
+        return placeTags
+                .stream()
+                .map(PlaceTag::getTag).toList();
+    }
+
 }
