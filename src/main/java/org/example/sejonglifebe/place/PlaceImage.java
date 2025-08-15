@@ -12,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Entity
@@ -33,4 +34,10 @@ public class PlaceImage {
 
     @Column(name = "is_thumbnail")
     private Boolean isThumbnail;
+
+    public PlaceImage(Place place, String imageUrl, Boolean isThumbnail) {
+        this.place = place;
+        this.url = imageUrl;
+        this.isThumbnail = isThumbnail;
+    }
 }

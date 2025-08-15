@@ -55,6 +55,11 @@ public class Place {
         this.mapLinks = mapLinks;
     }
 
+    public void addImage(String imageUrl, Boolean isThumbnail) {
+        PlaceImage placeImage = new PlaceImage(this, imageUrl, isThumbnail);
+        this.placeImages.add(placeImage);
+    }
+
     public void addTag(Tag tag) {
         PlaceTag.createPlaceTag(this, tag);
     }
