@@ -73,9 +73,7 @@ public class PlaceControllerTest {
     @Test
     @DisplayName("존재하지 않는 장소 ID 조회 실패 테스트")
     void getPlaceDetail_fail() throws Exception {
-        Long nonExistentId = NON_EXISTENT_ID;
-
-        mockMvc.perform(get("/api/places/" + nonExistentId)
+        mockMvc.perform(get("/api/places/" + NON_EXISTENT_ID)
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isNotFound()) // 1. HTTP 상태 코드가 404 Not Found 인지 확인
