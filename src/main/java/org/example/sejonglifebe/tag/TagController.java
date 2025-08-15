@@ -21,7 +21,7 @@ public class TagController {
      * 태그 전체 조회
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TagResponse>>> getAllTags() {
+    public ResponseEntity<ApiResponse<List<TagResponse>>> getTags() {
         List<TagResponse> data = tagService.getAllTags();
         return ApiResponse.of(HttpStatus.OK, "전체 태그 목록 조회 성공", data);
     }
