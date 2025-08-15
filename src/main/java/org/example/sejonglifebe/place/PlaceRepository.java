@@ -10,11 +10,11 @@ import org.springframework.data.repository.query.Param;
 public interface PlaceRepository extends JpaRepository<Place, Long> {
 
     @Query("SELECT p FROM Place p " +
-           "JOIN p.placeTags pt " +
-           "JOIN p.placeCategories pc " +
-           "WHERE pt.tag IN :tags AND pc.category = :category " +
-           "GROUP BY p.id " +
-           "HAVING COUNT(DISTINCT pt.tag) = :tagCount ")
+            "JOIN p.placeTags pt " +
+            "JOIN p.placeCategories pc " +
+            "WHERE pt.tag IN :tags AND pc.category = :category " +
+            "GROUP BY p.id " +
+            "ORDER BY COUNT(DISTINCT pt.tag) DESC")
     List<Place> findPlacesByTagsAndCategory(
             @Param("tags") List<Tag> tags,
             @Param("category") Category category,
@@ -22,10 +22,10 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     );
 
     @Query("SELECT p FROM Place p " +
-           "JOIN p.placeTags pt " +
-           "WHERE pt.tag IN :tags " +
-           "GROUP BY p.id " +
-           "HAVING COUNT(DISTINCT pt.tag) = :tagCount")
+            "JOIN p.placeTags pt " +
+            "WHERE pt.tag IN :tags " +
+            "GROUP BY p.id " +
+            "ORDER BY COUNT(DISTINCT pt.tag) DESC")
     List<Place> findByTags(
             @Param("tags") List<Tag> tags,
             @Param("tagCount") Long tagCount
