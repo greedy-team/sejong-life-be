@@ -11,7 +11,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PlaceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handlePlaceNotFoundException(PlaceNotFoundException ex) {
-        ErrorResponse response = ErrorResponse.of("존재하지 않는 장소 조회", ex.getMessage());
+        ErrorResponse response = ErrorResponse.of("NOT_FOUND_PLACE", ex.getMessage());
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
