@@ -39,8 +39,8 @@ public class Place {
     @Column(columnDefinition = "text")
     private MapLinks mapLinks;
 
-    @Column(unique = true)
-    private String mainImageUrl;
+    @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
+    private List<PlaceImage> placeImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceTag> placeTags = new ArrayList<>();
@@ -49,11 +49,18 @@ public class Place {
     private List<PlaceCategory> placeCategories = new ArrayList<>();
 
     @Builder
-    public Place(String name, String address, MapLinks mapLinks, String mainImageUrl) {
+    public Place(String name, String address, MapLinks mapLinks) {
         this.name = name;
         this.address = address;
         this.mapLinks = mapLinks;
-        this.mainImageUrl = mainImageUrl;
+    }
+
+    public void addImage(String imageUrl, Boolean isThumbnail) {
+        if (isThumbnail) {
+            this.placeImages.removeIf(PlaceImage::getIsThumbnail);
+        }
+        PlaceImage placeImage = new PlaceImage(this, imageUrl, isThumbnail);
+        this.placeImages.add(placeImage);
     }
 
     public void addTag(Tag tag) {
@@ -62,5 +69,17 @@ public class Place {
 
     public void addCategory(Category category) {
         PlaceCategory.createPlaceCategory(this, category);
+    }
+
+    public String getThumbnailImageUrl() {
+        if (placeImages == null || placeImages.isEmpty()) {
+            return null; // 이미지가 아예 없는 경우
+        }
+
+        return placeImages.stream()
+                .filter(image -> image.getIsThumbnail() != null && image.getIsThumbnail())
+                .findFirst() // isThumbnail이 true인 첫 번째 이미지를 찾고
+                .map(PlaceImage::getUrl) // 그 이미지의 URL을 반환
+                .orElse(placeImages.get(0).getUrl()); // 만약 대표 이미지가 없다면, 그냥 첫 번째 이미지 반환
     }
 }
