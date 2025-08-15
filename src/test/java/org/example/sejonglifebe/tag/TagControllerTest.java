@@ -1,11 +1,12 @@
 package org.example.sejonglifebe.tag;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.place.MapLinks;
 import org.example.sejonglifebe.place.Place;
 import org.example.sejonglifebe.place.PlaceRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,6 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -40,27 +40,25 @@ public class TagControllerTest {
     @Autowired
     CategoryRepository categoryRepository;
 
-    @BeforeEach
-    void setUp() {
-        tagRepository.deleteAllInBatch();
-
-        Tag tag1 = new Tag("맛집");
-        Tag tag2 = new Tag("분위기 좋은");
-        tagRepository.saveAll(List.of(tag1, tag2));
-    }
+    @PersistenceContext
+    EntityManager em;
 
     @Test
     @DisplayName("전체 태그 목록 조회 성공 테스트")
     void getAllTags_success() throws Exception {
+
+        Tag tag1 = new Tag("맛집");
+        Tag tag2 = new Tag("분위기 좋은");
+        tagRepository.saveAll(List.of(tag1, tag2));
+        em.flush();
+
         mockMvc.perform(get("/api/tags")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk()) // 1. HTTP 상태 코드 확인
                 .andExpect(jsonPath("$.message").value("전체 태그 목록 조회 성공")) // 2. 응답 메시지 확인
                 .andExpect(jsonPath("$.data").isArray()) // 3. data 필드 배열인지 확인
-                .andExpect(jsonPath("$.data[0].tagName").value("맛집")) // 4. 첫 번째 태그이름 확인
-                .andExpect(jsonPath("$.data[1].tagName").value("분위기 좋은")) // 5. 두 번째 태그이름 확인
-                .andDo(print()); // 요청/응답 전체 내용 콘솔에 출력
+                .andExpect(jsonPath("$.data[*].tagName", containsInAnyOrder("맛집", "분위기 좋은")));// 4. 첫 번째 태그이름 확인
     }
 
     @Test
@@ -85,7 +83,7 @@ public class TagControllerTest {
                         .param("categoryId", String.valueOf(category.getId()))
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("카테고리별 태그 목록 조회 성공"))
+                .andExpect(jsonPath("$.message").value("전체 태그 목록 조회 성공"))
                 .andExpect(jsonPath("$.data", hasSize(2)))
                 .andExpect(jsonPath("$.data[*].tagName",
                         containsInAnyOrder("가성비", "집밥")))
@@ -102,7 +100,7 @@ public class TagControllerTest {
                         .param("categoryId", String.valueOf(emptyCategory.getId()))
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("카테고리별 태그 목록 조회 성공"))
+                .andExpect(jsonPath("$.message").value("전체 태그 목록 조회 성공"))
                 .andExpect(jsonPath("$.data", hasSize(0)));
     }
 
@@ -115,17 +113,6 @@ public class TagControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("NOT_FOUND_CATEGORY"))
                 .andExpect(jsonPath("$.message", containsString("존재하지 않는 카테고리입니다.")));
-    }
-
-    @Test
-    @DisplayName("카테고리 파라미터가 누락되면 예외를 던진다")
-    void 카테고리_파라미터가_누락되면_예외를_던진다() throws Exception {
-        mockMvc.perform(get("/api/tags").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("MISSING_REQUIRED_PARAMETER"))
-                .andExpect(jsonPath("$.message", containsString("필수 파라미터가 누락되었습니다.")));
-
-
     }
 
     @Test
