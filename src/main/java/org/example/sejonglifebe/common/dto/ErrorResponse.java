@@ -1,11 +1,14 @@
 package org.example.sejonglifebe.common.dto;
 
-public record ErrorResponse(
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+public record ErrorResponse<T>(
         String errorCode,
         String message,
-        Object data
+        T data
 ) {
-    public static ErrorResponse of(String errorCode, String message) {
-        return new ErrorResponse(errorCode, message, null);
+    public static <T> ResponseEntity<ErrorResponse<T>> of(HttpStatus httpStatus, String errorCode, String message) {
+        return ResponseEntity.status(httpStatus).body(new ErrorResponse<>(errorCode, message, null));
     }
 }

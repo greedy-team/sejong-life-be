@@ -10,9 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(PlaceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handlePlaceNotFoundException(PlaceNotFoundException ex) {
-        ErrorResponse response = ErrorResponse.of("NOT_FOUND_PLACE", ex.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    public ResponseEntity<ErrorResponse<Object>> handlePlaceNotFoundException(PlaceNotFoundException ex) {
+        return ErrorResponse.of(HttpStatus.NOT_FOUND, "NOT_FOUND_PLACE", ex.getMessage());
     }
 }
