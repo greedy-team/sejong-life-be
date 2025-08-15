@@ -56,6 +56,9 @@ public class Place {
     }
 
     public void addImage(String imageUrl, Boolean isThumbnail) {
+        if (isThumbnail) {
+            this.placeImages.removeIf(PlaceImage::getIsThumbnail);
+        }
         PlaceImage placeImage = new PlaceImage(this, imageUrl, isThumbnail);
         this.placeImages.add(placeImage);
     }
