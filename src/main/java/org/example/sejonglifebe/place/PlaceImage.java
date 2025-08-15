@@ -30,4 +30,7 @@ public class PlaceImage {
 
     @Column(name = "image_url", unique = true ,nullable = false)
     private String url;
+
+    @Column(name = "is_thumbnail")
+    private Boolean isThumbnail;
 }
