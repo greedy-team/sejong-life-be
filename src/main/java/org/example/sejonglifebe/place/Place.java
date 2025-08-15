@@ -39,7 +39,7 @@ public class Place {
     @Column(columnDefinition = "text")
     private MapLinks mapLinks;
 
-    @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
