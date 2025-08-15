@@ -1,4 +1,6 @@
-package org.example.sejonglifebe.tag;
+package org.example.sejonglifebe.tag.dto;
+
+import org.example.sejonglifebe.tag.Tag;
 
 public record TagResponse(
         Long tagId,
