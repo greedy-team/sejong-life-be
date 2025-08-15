@@ -27,5 +27,5 @@ public class TagController {
     public ResponseEntity<ApiResponse<List<TagResponse>>> getTagsByCategoryId(@RequestParam("categoryId") Long categoryId) {
         List<TagResponse> tagResponses = tagService.getTagsByCategoryId(categoryId);
         return ApiResponse.of(HttpStatus.OK, "카테고리별 태그 목록 조회 성공", tagResponses);
-        }
+    }
 }
