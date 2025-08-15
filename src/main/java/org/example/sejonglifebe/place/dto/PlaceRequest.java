@@ -4,4 +4,4 @@ import java.util.List;
 
 public record PlaceRequest(
         List<String> tags,
-        List<String> categories) {}
+        String category) {}

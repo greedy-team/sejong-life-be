@@ -24,14 +24,13 @@ public class PlaceService {
 
     public PlaceResponse searchPlacesByFilter(PlaceRequest placeRequest) {
         List<String> tagNames = placeRequest.tags();
-        List<String> categoryNames = placeRequest.categories();
+        String categoryName = placeRequest.category();
 
         List<Tag> tags = tagRepository.findByNameIn(tagNames);
-        List<Category> categories = categoryRepository.findByNameIn(categoryNames);
+        Category category = categoryRepository.findByName(categoryName);
         Long tagCount = (long) tags.size();
-        Long categoryCount = (long) categories.size();
-        List<Place> places = placeRepository
-                .findPlacesByAllTagsAndCategories(tags, categories, tagCount, categoryCount);
+
+        List<Place> places = findPlacesByCategoryAndTags(category, tags, tagCount);
 
         List<PlaceInfo> placeInfos = places.stream()
                 .map(place -> new PlaceInfo(
@@ -43,6 +42,13 @@ public class PlaceService {
                 .toList();
 
         return new PlaceResponse("장소 목록 조회 성공",placeInfos);
+    }
+
+    private List<Place> findPlacesByCategoryAndTags(Category category, List<Tag> tags, Long tagCount) {
+        if (category.getName().equals("전체")) {
+            return placeRepository.findByTags(tags, tagCount);
+        }
+        return placeRepository.findPlacesByTagsAndCategory(tags, category, tagCount);
     }
 
     private List<CategoryInfo> toCategoryInfos(List<Category> categories) {
