@@ -1,0 +1,4 @@
+GET http://localhost:8080/api/places/1
+Accept: application/json
+
+###
