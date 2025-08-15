@@ -20,6 +20,6 @@ public class TagService {
     public List<TagResponse> getAllTags() {
         return tagRepository.findAll().stream()
                 .map(TagResponse::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
