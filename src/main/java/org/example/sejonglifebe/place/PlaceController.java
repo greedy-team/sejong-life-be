@@ -18,10 +18,8 @@ public class PlaceController {
         this.placeService = placeService;
     }
 
-    //장소 목록 필터링 및 조회 기능
-
     @GetMapping("/{placeId}")
-    public  ResponseEntity<ApiResponse<PlaceDetailResponse>> getPlaceDetail(@PathVariable Long placeId) {
+    public  ResponseEntity<ApiResponse<PlaceDetailResponse>> getPlaceDetail(@PathVariable("placeId") Long placeId) {
         PlaceDetailResponse response = placeService.getPlaceDetail(placeId);
         return ApiResponse.of(HttpStatus.OK, "장소 상세 정보 조회 성공", response);
     }
