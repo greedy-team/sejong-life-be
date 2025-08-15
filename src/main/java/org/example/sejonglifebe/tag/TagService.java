@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,13 +18,16 @@ public class TagService {
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
 
-    public List<org.example.sejonglifebe.tag.TagResponse> getAllTags() {
+    public List<TagResponse> getTags() {
         return tagRepository.findAll().stream()
-                .map(org.example.sejonglifebe.tag.TagResponse::from)
+                .map(TagResponse::from)
                 .toList();
     }
 
     public List<TagResponse> getTagsByCategoryId(Long categoryId) {
+        if (categoryId == null) {
+            return getTags();
+        }
         if (!categoryRepository.existsById(categoryId)) {
             throw new SejongLifeException(ErrorCode.NOT_FOUND_CATEGORY);
         }
