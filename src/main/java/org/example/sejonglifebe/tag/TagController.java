@@ -17,12 +17,15 @@ public class TagController {
 
     private final TagService tagService;
 
-    /**
-     * 태그 전체 조회
-     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<TagResponse>>> getTags() {
         List<TagResponse> data = tagService.getAllTags();
         return ApiResponse.of(HttpStatus.OK, "전체 태그 목록 조회 성공", data);
     }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<TagResponse>>> getTagsByCategoryId(@RequestParam("categoryId") Long categoryId) {
+        List<TagResponse> tagResponses = tagService.getTagsByCategoryId(categoryId);
+        return ApiResponse.of(HttpStatus.OK, "카테고리별 태그 목록 조회 성공", tagResponses);
+        }
 }
