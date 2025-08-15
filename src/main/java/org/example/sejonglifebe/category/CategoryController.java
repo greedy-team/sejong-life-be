@@ -20,7 +20,7 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> getCategories() {
-        List<CategoryResponse> categoryResponses = categoryService.findAll();
+        List<CategoryResponse> categoryResponses = categoryService.getCategories();
         return ApiResponse.of(HttpStatus.OK, "전체 카테고리 목록 조회 성공", categoryResponses);
     }
 }
