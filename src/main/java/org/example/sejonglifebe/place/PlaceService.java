@@ -28,9 +28,8 @@ public class PlaceService {
 
         List<Tag> tags = tagRepository.findByNameIn(tagNames);
         Category category = categoryRepository.findByName(categoryName);
-        Long tagCount = (long) tags.size();
 
-        List<Place> places = findPlacesByCategoryAndTags(category, tags, tagCount);
+        List<Place> places = findPlacesByCategoryAndTags(category, tags);
 
         List<PlaceInfo> placeInfos = places.stream()
                 .map(place -> new PlaceInfo(
@@ -44,11 +43,11 @@ public class PlaceService {
         return new PlaceResponse("장소 목록 조회 성공",placeInfos);
     }
 
-    private List<Place> findPlacesByCategoryAndTags(Category category, List<Tag> tags, Long tagCount) {
+    private List<Place> findPlacesByCategoryAndTags(Category category, List<Tag> tags) {
         if (category.getName().equals("전체")) {
-            return placeRepository.findByTags(tags, tagCount);
+            return placeRepository.findByTags(tags);
         }
-        return placeRepository.findPlacesByTagsAndCategory(tags, category, tagCount);
+        return placeRepository.findPlacesByTagsAndCategory(category, tags);
     }
 
     private List<CategoryInfo> toCategoryInfos(List<Category> categories) {
