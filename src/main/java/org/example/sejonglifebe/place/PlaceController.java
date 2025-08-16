@@ -16,8 +16,9 @@ public class PlaceController {
     private final PlaceService placeService;
 
     @GetMapping("/api/places")
-    public ResponseEntity<PlaceResponse> searchPlaces(@RequestParam("tags") List<String> tags,
-            @RequestParam("categories") String category
+    public ResponseEntity<PlaceResponse> searchPlaces(
+            @RequestParam(value = "tags", required = false) List<String> tags,
+            @RequestParam(value = "category", required = false) String category
     ) {
         PlaceRequest placeRequest = new PlaceRequest(tags, category);
         return ResponseEntity.ok(placeService.searchPlacesByFilter(placeRequest));

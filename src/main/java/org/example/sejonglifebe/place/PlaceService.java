@@ -44,10 +44,17 @@ public class PlaceService {
     }
 
     private List<Place> findPlacesByCategoryAndTags(Category category, List<Tag> tags) {
-        if (category.getName().equals("전체")) {
+        boolean isCategoryAll = (category == null || category.getName().equals("전체"));
+        if (!isCategoryAll && !tags.isEmpty()) {
+            return placeRepository.findPlacesByTagsAndCategory(category, tags);
+        }
+        if (!isCategoryAll) {
+            return placeRepository.findByCategory(category);
+        }
+        if (!tags.isEmpty()) {
             return placeRepository.findByTags(tags);
         }
-        return placeRepository.findPlacesByTagsAndCategory(category, tags);
+        return placeRepository.findAll();
     }
 
     private List<CategoryInfo> toCategoryInfos(List<Category> categories) {

@@ -12,9 +12,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 
     @Query("SELECT p FROM Place p " +
             "JOIN p.placeCategories pc " +
-            "LEFT JOIN p.placeTags pt " +
-            "WHERE pc.category = :category " +
-            "AND (:tags IS EMPTY OR pt.tag IN :tags) " +
+            "JOIN p.placeTags pt " +
+            "WHERE pc.category = :category AND pt.tag IN :tags " +
             "GROUP BY p.id " +
             "ORDER BY COUNT(DISTINCT pt.tag) DESC")
     List<Place> findPlacesByTagsAndCategory(
@@ -24,12 +23,15 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     );
 
     @Query("SELECT p FROM Place p " +
-            "LEFT JOIN p.placeTags pt " +
-            "WHERE (:tags IS EMPTY OR pt.tag IN :tags) " +
+            "JOIN p.placeTags pt " +
+            "WHERE pt.tag IN :tags " +
             "GROUP BY p.id " +
             "ORDER BY COUNT(DISTINCT pt.tag) DESC")
     List<Place> findByTags(
             @Param("tags") List<Tag> tags
     );
+
+    @Query("SELECT p FROM Place p JOIN p.placeCategories pc WHERE pc.category = :category")
+    List<Place> findByCategory(@Param("category") Category category);
 
 }
