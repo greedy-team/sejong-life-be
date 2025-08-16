@@ -12,7 +12,7 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.example.sejonglifebe.place.PlaceTag;
+import org.example.sejonglifebe.place.entity.PlaceTag;
 
 @Getter
 @Entity

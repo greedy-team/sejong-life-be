@@ -1,9 +1,10 @@
-package org.example.sejonglifebe.place;
+package org.example.sejonglifebe.place.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import org.example.sejonglifebe.place.entity.MapLinks;
 
 @Converter
 public class MapLinkConverter implements AttributeConverter<MapLinks, String> {

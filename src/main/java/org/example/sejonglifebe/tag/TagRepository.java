@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.tag;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,7 +10,6 @@ import java.util.List;
 
 @Repository
 public interface TagRepository extends JpaRepository<Tag, Long> {
-
     @Query("""
                  SELECT DISTINCT t
                  FROM Tag t
@@ -19,4 +19,7 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
                  WHERE pc.category.id = :categoryId
             """)
     List<Tag> findAllByCategoryId(@Param("categoryId")Long categoryId);
+
+    List<Tag> findByNameIn(List<String> names);
+
 }
