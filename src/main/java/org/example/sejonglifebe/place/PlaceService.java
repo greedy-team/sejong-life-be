@@ -12,6 +12,7 @@ import org.example.sejonglifebe.place.dto.PlaceResponse.TagInfo;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.example.sejonglifebe.exception.PlaceNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -39,7 +40,6 @@ public class PlaceService {
                         toCategoryInfos(place.getCategories()),
                         toTagInfos(place.getTags())))
                 .toList();
-
         return new PlaceResponse("장소 목록 조회 성공",placeInfos);
     }
 
@@ -69,4 +69,9 @@ public class PlaceService {
                 .toList();
     }
 
+    public PlaceDetailResponse getPlaceDetail(Long placeId) {
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new PlaceNotFoundException("해당하는 장소 ID를 찾을 수 없습니다. id=" + placeId));
+        return PlaceDetailResponse.from(place);
+    }
 }

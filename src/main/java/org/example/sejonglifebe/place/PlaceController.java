@@ -1,21 +1,26 @@
 package org.example.sejonglifebe.place;
 
+import lombok.RequiredArgsConstructor;
+import org.example.sejonglifebe.common.dto.ApiResponse;
+import org.springframework.http.HttpStatus;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Controller
-@AllArgsConstructor
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/places")
 public class PlaceController {
 
     private final PlaceService placeService;
 
-    @GetMapping("/api/places")
+    @GetMapping
     public ResponseEntity<PlaceResponse> searchPlaces(
             @RequestParam(value = "tags", required = false) List<String> tags,
             @RequestParam(value = "category", required = false) String category
@@ -23,4 +28,11 @@ public class PlaceController {
         PlaceRequest placeRequest = new PlaceRequest(tags, category);
         return ResponseEntity.ok(placeService.searchPlacesByFilter(placeRequest));
     }
+
+    @GetMapping("/{placeId}")
+    public  ResponseEntity<ApiResponse<PlaceDetailResponse>> getPlaceDetail(@PathVariable("placeId") Long placeId) {
+        PlaceDetailResponse response = placeService.getPlaceDetail(placeId);
+        return ApiResponse.of(HttpStatus.OK, "장소 상세 정보 조회 성공", response);
+    }
+
 }
