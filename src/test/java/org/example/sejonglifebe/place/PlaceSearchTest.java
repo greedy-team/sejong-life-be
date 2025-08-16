@@ -1,4 +1,4 @@
-package org.example.sejonglifebe;
+package org.example.sejonglifebe.place;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
-import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
@@ -25,7 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @Transactional
 @SpringBootTest
 @AutoConfigureMockMvc
-public class PlaceControllerTest
+public class PlaceSearchTest
 {
     @Autowired
     private MockMvc mockMvc;

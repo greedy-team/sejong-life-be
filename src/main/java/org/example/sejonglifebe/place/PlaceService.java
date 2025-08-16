@@ -10,6 +10,8 @@ import org.example.sejonglifebe.place.dto.PlaceResponse.CategoryInfo;
 import org.example.sejonglifebe.place.dto.PlaceResponse.PlaceInfo;
 import org.example.sejonglifebe.place.dto.PlaceResponse.TagInfo;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.place.entity.PlaceCategory;
+import org.example.sejonglifebe.place.entity.PlaceTag;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.exception.PlaceNotFoundException;
@@ -37,10 +39,10 @@ public class PlaceService {
                         place.getId(),
                         place.getName(),
                         place.getMainImageUrl(),
-                        toCategoryInfos(place.getCategories()),
-                        toTagInfos(place.getTags())))
+                        toCategoryInfos(place.getPlaceCategories()),
+                        toTagInfos(place.getPlaceTags())))
                 .toList();
-        return new PlaceResponse("장소 목록 조회 성공",placeInfos);
+        return new PlaceResponse("장소 목록 조회 성공", placeInfos);
     }
 
     private List<Place> findPlacesByCategoryAndTags(Category category, List<Tag> tags) {
@@ -57,15 +59,17 @@ public class PlaceService {
         return placeRepository.findAll();
     }
 
-    private List<CategoryInfo> toCategoryInfos(List<Category> categories) {
-        return categories.stream()
-                .map(category -> new CategoryInfo(category.getId(), category.getName()))
+    private List<CategoryInfo> toCategoryInfos(List<PlaceCategory> placeCategories) {
+
+
+        return placeCategories.stream()
+                .map(category -> new CategoryInfo(category.getId(), category.getCategory().getName()))
                 .toList();
     }
 
-    private List<TagInfo> toTagInfos(List<Tag> tags) {
-        return tags.stream()
-                .map(tag -> new TagInfo(tag.getId(), tag.getName()))
+    private List<TagInfo> toTagInfos(List<PlaceTag> placeTags) {
+        return placeTags.stream()
+                .map(tag -> new TagInfo(tag.getId(), tag.getTag().getName()))
                 .toList();
     }
 

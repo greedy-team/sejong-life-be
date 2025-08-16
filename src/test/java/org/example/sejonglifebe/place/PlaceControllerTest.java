@@ -1,5 +1,7 @@
 package org.example.sejonglifebe.place;
 
+import org.example.sejonglifebe.place.entity.MapLinks;
+import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.junit.jupiter.api.BeforeEach;
