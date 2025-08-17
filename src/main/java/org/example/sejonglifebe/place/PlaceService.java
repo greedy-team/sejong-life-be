@@ -4,6 +4,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.entity.Place;
@@ -24,10 +26,18 @@ public class PlaceService {
         List<String> tagNames = placeRequest.tags();
         String categoryName = placeRequest.category();
         List<Tag> tags = tagRepository.findByNameIn(tagNames);
+        if (tags.size() != tagNames.size()) {
+            throw new SejongLifeException(ErrorCode.NOT_FOUND_TAG);
+        }
 
         Category category = new Category("전체");
-        if(!categoryName.equals("전체"))
+        if(!categoryName.equals("전체")) {
             category = categoryRepository.findByName(categoryName);
+        }
+
+        if(category == null) {
+            throw new SejongLifeException(ErrorCode.NOT_FOUND_CATEGORY);
+        }
 
         List<Place> places = findPlacesByCategoryAndTags(category, tags);
 
