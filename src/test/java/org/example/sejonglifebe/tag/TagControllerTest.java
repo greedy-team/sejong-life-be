@@ -110,8 +110,8 @@ public class TagControllerTest {
         mockMvc.perform(get("/api/tags")
                         .param("categoryId", "999999")
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("NOT_FOUND_CATEGORY"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_CATEGORY"))
                 .andExpect(jsonPath("$.message", containsString("존재하지 않는 카테고리입니다.")));
     }
 

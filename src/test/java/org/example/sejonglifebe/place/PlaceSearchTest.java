@@ -147,8 +147,8 @@ public class PlaceSearchTest
         mockMvc.perform(get("/api/places")
                         .param("category", "병원")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("NOT_FOUND_CATEGORY"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_CATEGORY"))
                 .andExpect(jsonPath("$.message", containsString("존재하지 않는 카테고리입니다.")));
     }
 
@@ -160,8 +160,8 @@ public class PlaceSearchTest
                         .param("tags", "맛집")
                         .param("tags", "진상부리기 좋은")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("NOT_FOUND_TAG"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_TAG"))
                 .andExpect(jsonPath("$.message", containsString("존재하지 않는 태그입니다.")));
     }
 }

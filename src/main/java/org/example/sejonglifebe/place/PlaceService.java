@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.place;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,36 +31,36 @@ public class PlaceService {
         if (tagNames == null) { tagNames = Collections.emptyList();}
         List<Tag> tags = tagRepository.findByNameIn(tagNames);
         if (tags.size() != tagNames.size()) {
-            throw new SejongLifeException(ErrorCode.NOT_FOUND_TAG);
+            throw new SejongLifeException(ErrorCode.INVALID_TAG);
         }
 
-        Category category = new Category("전체");
+        List<Place> places = new ArrayList<>();
+        if(categoryName.equals("전체"))
+            places = getPlacesByAllCategory(tags);
+
+        Category category;
         if(!categoryName.equals("전체")) {
-            category = categoryRepository.findByName(categoryName);
+            category = categoryRepository
+                    .findByName(categoryName)
+                    .orElseThrow(() ->new SejongLifeException(ErrorCode.INVALID_CATEGORY));
+
+            places = getPlacesBySelectedCategory(category, tags);
         }
-
-        if(category == null) {
-            throw new SejongLifeException(ErrorCode.NOT_FOUND_CATEGORY);
-        }
-
-        List<Place> places = findPlacesByCategoryAndTags(category, tags);
-
         return places.stream().map(PlaceResponse::from).toList();
     }
 
-    private List<Place> findPlacesByCategoryAndTags(Category category, List<Tag> tags) {
-
-        boolean isCategoryAll = category.getName().equals("전체");
-        if (!isCategoryAll && !tags.isEmpty()) {
-            return placeRepository.findPlacesByTagsAndCategory(category, tags);
+    private List<Place> getPlacesByAllCategory(List<Tag> tags) {
+        if (tags.isEmpty()) {
+            return placeRepository.findAll();
         }
-        if (!isCategoryAll) {
+        return placeRepository.findByTags(tags);
+    }
+
+    private List<Place> getPlacesBySelectedCategory(Category category, List<Tag> tags) {
+        if (tags.isEmpty()) {
             return placeRepository.findByCategory(category);
         }
-        if (!tags.isEmpty()) {
-            return placeRepository.findByTags(tags);
-        }
-        return placeRepository.findAll();
+        return placeRepository.findPlacesByTagsAndCategory(category, tags);
     }
 
     public PlaceDetailResponse getPlaceDetail(Long placeId) {
