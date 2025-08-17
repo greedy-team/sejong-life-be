@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 public class PlaceSearchTest
 {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -60,7 +61,9 @@ public class PlaceSearchTest
         Place place4 = createPlace("카페1", "주소4", "url4", category2, List.of(tag3));
         Place place5 = createPlace("카페2", "주소5", "url5", category2, List.of(tag4));
         Place place6 = createPlace("카페3", "주소6", "url6", category2, List.of(tag3, tag4));
+
         placeRepository.saveAll(List.of(place1, place2, place3, place4, place5, place6));
+
     }
 
     private Place createPlace(String name, String address, String url, Category category, List<Tag> tags) {
@@ -80,6 +83,7 @@ public class PlaceSearchTest
     @DisplayName("카테고리가 전체이고 선택된 태그가 없으면 모든 장소가 조회된다.")
     public void search_noCategory_noTags() throws Exception {
         mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(6)) // 응답 데이터의 개수가 6개인지 확인
@@ -109,7 +113,7 @@ public class PlaceSearchTest
     @Test
     @DisplayName("카테고리 식당이고 선택된 태그가 없으면 식당 3개가 조회된다.")
     public void search_categoryRestaurant_noTags() throws Exception {
-        // when: /api/places?categoryId=1 과 같이 요청
+        // when
         mockMvc.perform(get("/api/places")
                         .param("category", "식당")
                         .contentType(MediaType.APPLICATION_JSON))

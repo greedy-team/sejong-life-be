@@ -21,12 +21,13 @@ public class PlaceController {
     private final PlaceService placeService;
 
     @GetMapping
-    public ResponseEntity<PlaceResponse> searchPlaces(
+    public ResponseEntity<ApiResponse<List<PlaceResponse>>> getPlaces(
             @RequestParam(value = "tags", required = false) List<String> tags,
-            @RequestParam(value = "category", required = false) String category
+            @RequestParam(value = "category") String category
     ) {
-        PlaceRequest placeRequest = new PlaceRequest(tags, category);
-        return ResponseEntity.ok(placeService.searchPlacesByFilter(placeRequest));
+        PlaceRequest request = new PlaceRequest(tags, category);
+        List<PlaceResponse> response = placeService.getPlacesFilteredByCategoryAndTags(request);
+        return ApiResponse.of(HttpStatus.OK, "장소 목록 조회 성공", response);
     }
 
     @GetMapping("/{placeId}")

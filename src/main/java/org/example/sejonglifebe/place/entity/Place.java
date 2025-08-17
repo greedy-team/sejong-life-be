@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.util.MapLinkConverter;
 import org.example.sejonglifebe.tag.Tag;
+import org.hibernate.annotations.BatchSize;
 
 @Getter
 @Entity
@@ -46,9 +47,11 @@ public class Place {
     @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceTag> placeTags = new ArrayList<>();
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceCategory> placeCategories = new ArrayList<>();
 
