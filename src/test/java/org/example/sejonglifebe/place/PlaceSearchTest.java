@@ -96,7 +96,7 @@ public class PlaceSearchTest
     public void search_noCategory_withTags() throws Exception {
         // when
         mockMvc.perform(get("/api/places")
-                        .param("category", "식당")   // @RequestParam("categories") String category
+                        .param("category", "전체")   // @RequestParam("categories") String category
                         .param("tags", "맛집")       // @RequestParam("tags") List<String> tags 의 첫 번째 요소
                         .param("tags", "가성비")      // @RequestParam("tags") List<String> tags 의 두 번째 요소
                         .contentType(MediaType.APPLICATION_JSON))
