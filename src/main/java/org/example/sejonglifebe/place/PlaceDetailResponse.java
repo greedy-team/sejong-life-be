@@ -2,6 +2,9 @@ package org.example.sejonglifebe.place;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import org.example.sejonglifebe.place.entity.MapLinks;
+import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.place.entity.PlaceImage;
 
 public record PlaceDetailResponse (
         Long id,

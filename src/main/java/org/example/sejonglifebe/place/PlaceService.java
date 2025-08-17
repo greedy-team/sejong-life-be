@@ -1,6 +1,18 @@
 package org.example.sejonglifebe.place;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.example.sejonglifebe.category.Category;
+import org.example.sejonglifebe.category.CategoryRepository;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.place.dto.PlaceRequest;
+import org.example.sejonglifebe.place.dto.PlaceResponse;
+import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.tag.Tag;
+import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.exception.PlaceNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -9,14 +21,51 @@ import org.springframework.stereotype.Service;
 public class PlaceService {
 
     private final PlaceRepository placeRepository;
+    private final TagRepository tagRepository;
+    private final CategoryRepository categoryRepository;
 
-    /**
-     * 장소 상세 조회
-     */
+    public List<PlaceResponse> getPlacesFilteredByCategoryAndTags(PlaceRequest placeRequest) {
+        List<String> tagNames = placeRequest.tags();
+        String categoryName = placeRequest.category();
+
+        if (tagNames == null) { tagNames = Collections.emptyList();}
+        List<Tag> tags = tagRepository.findByNameIn(tagNames);
+        if (tags.size() != tagNames.size()) {
+            throw new SejongLifeException(ErrorCode.INVALID_TAG);
+        }
+
+        List<Place> places = new ArrayList<>();
+        if(categoryName.equals("전체"))
+            places = getPlacesByAllCategory(tags);
+
+        Category category;
+        if(!categoryName.equals("전체")) {
+            category = categoryRepository
+                    .findByName(categoryName)
+                    .orElseThrow(() ->new SejongLifeException(ErrorCode.INVALID_CATEGORY));
+
+            places = getPlacesBySelectedCategory(category, tags);
+        }
+        return places.stream().map(PlaceResponse::from).toList();
+    }
+
+    private List<Place> getPlacesByAllCategory(List<Tag> tags) {
+        if (tags.isEmpty()) {
+            return placeRepository.findAll();
+        }
+        return placeRepository.findByTags(tags);
+    }
+
+    private List<Place> getPlacesBySelectedCategory(Category category, List<Tag> tags) {
+        if (tags.isEmpty()) {
+            return placeRepository.findByCategory(category);
+        }
+        return placeRepository.findPlacesByTagsAndCategory(category, tags);
+    }
+
     public PlaceDetailResponse getPlaceDetail(Long placeId) {
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new PlaceNotFoundException("해당하는 장소 ID를 찾을 수 없습니다. id=" + placeId));
-
         return PlaceDetailResponse.from(place);
     }
 }

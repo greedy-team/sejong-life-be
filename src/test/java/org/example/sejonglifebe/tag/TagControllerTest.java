@@ -4,9 +4,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
-import org.example.sejonglifebe.place.MapLinks;
-import org.example.sejonglifebe.place.Place;
 import org.example.sejonglifebe.place.PlaceRepository;
+import org.example.sejonglifebe.place.entity.MapLinks;
+import org.example.sejonglifebe.place.entity.Place;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,8 +110,8 @@ public class TagControllerTest {
         mockMvc.perform(get("/api/tags")
                         .param("categoryId", "999999")
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("NOT_FOUND_CATEGORY"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_CATEGORY"))
                 .andExpect(jsonPath("$.message", containsString("존재하지 않는 카테고리입니다.")));
     }
 

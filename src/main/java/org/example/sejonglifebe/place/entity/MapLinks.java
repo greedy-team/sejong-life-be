@@ -1,4 +1,4 @@
-package org.example.sejonglifebe.place;
+package org.example.sejonglifebe.place.entity;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
