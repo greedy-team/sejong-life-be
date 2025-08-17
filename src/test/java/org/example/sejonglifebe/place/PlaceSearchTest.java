@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.place;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -138,5 +139,29 @@ public class PlaceSearchTest
                 .andExpect(jsonPath("$.data.length()").value(2))
                 .andExpect(jsonPath("$.data[0].placeName").value("카페1"))
                 .andExpect(jsonPath("$.data[1].placeName").value("카페3"));
+    }
+
+    @Test
+    @DisplayName("잘못된 카테고리로 검색하면 예외를 반환한다")
+    void search_wrongCategory_fail() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "병원")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("NOT_FOUND_CATEGORY"))
+                .andExpect(jsonPath("$.message", containsString("존재하지 않는 카테고리입니다.")));
+    }
+
+    @Test
+    @DisplayName("잘못된 태그로 검색하면 예외를 반환한다")
+    void search_wrongTags_fail() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("tags", "맛집")
+                        .param("tags", "진상부리기 좋은")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("NOT_FOUND_TAG"))
+                .andExpect(jsonPath("$.message", containsString("존재하지 않는 태그입니다.")));
     }
 }

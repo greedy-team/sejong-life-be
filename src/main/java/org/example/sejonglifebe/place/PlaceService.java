@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.place;
 
+import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.category.Category;
@@ -25,6 +26,8 @@ public class PlaceService {
     public List<PlaceResponse> getPlacesFilteredByCategoryAndTags(PlaceRequest placeRequest) {
         List<String> tagNames = placeRequest.tags();
         String categoryName = placeRequest.category();
+
+        if (tagNames == null) { tagNames = Collections.emptyList();}
         List<Tag> tags = tagRepository.findByNameIn(tagNames);
         if (tags.size() != tagNames.size()) {
             throw new SejongLifeException(ErrorCode.NOT_FOUND_TAG);
