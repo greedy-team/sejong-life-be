@@ -1,7 +1,6 @@
 package org.example.sejonglifebe.place;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.entity.PlaceImage;
@@ -9,6 +8,7 @@ import org.example.sejonglifebe.place.entity.PlaceImage;
 public record PlaceDetailResponse (
         Long id,
         String name,
+        List<String> category,
         List<String> imageUrls,
         List<String> tags,
         MapLinks mapLinks
@@ -17,12 +17,15 @@ public record PlaceDetailResponse (
         return new PlaceDetailResponse(
                 place.getId(),
                 place.getName(),
+                place.getPlaceCategories().stream()
+                        .map(placeCategory -> placeCategory.getCategory().getName())
+                        .toList(),
                 place.getPlaceImages().stream()
                         .map(PlaceImage::getUrl)
-                        .collect(Collectors.toList()),
+                        .toList(),
                 place.getPlaceTags().stream()
                         .map(placeTag -> placeTag.getTag().getName())
-                        .collect(Collectors.toList()),
+                        .toList(),
                 place.getMapLinks()
         );
     }
