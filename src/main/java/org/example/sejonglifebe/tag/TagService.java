@@ -29,7 +29,7 @@ public class TagService {
             return getTags();
         }
         if (!categoryRepository.existsById(categoryId)) {
-            throw new SejongLifeException(ErrorCode.INVALID_CATEGORY);
+            throw new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND);
         }
 
         return tagRepository.findAllByCategoryId(categoryId).stream()

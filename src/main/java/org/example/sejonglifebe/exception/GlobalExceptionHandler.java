@@ -17,11 +17,6 @@ import static org.example.sejonglifebe.exception.ErrorCode.*;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(PlaceNotFoundException.class)
-    public ResponseEntity<ErrorResponse<Object>> handlePlaceNotFoundException(PlaceNotFoundException ex) {
-        return ErrorResponse.of(HttpStatus.NOT_FOUND, "NOT_FOUND_PLACE", ex.getMessage());
-    }
-
     @ExceptionHandler(SejongLifeException.class)
     public ResponseEntity<ErrorResponse<Void>> handleSejongLifeException(SejongLifeException exception, HttpServletRequest request) {
 

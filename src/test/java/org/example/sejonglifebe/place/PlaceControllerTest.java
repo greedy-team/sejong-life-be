@@ -167,8 +167,8 @@ public class PlaceControllerTest
         mockMvc.perform(get("/api/places")
                         .param("category", "병원")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("INVALID_CATEGORY"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("CATEGORY_NOT_FOUND"))
                 .andExpect(jsonPath("$.message", containsString("존재하지 않는 카테고리입니다.")));
     }
 
@@ -180,8 +180,8 @@ public class PlaceControllerTest
                         .param("tags", "맛집")
                         .param("tags", "진상부리기 좋은")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value("INVALID_TAG"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("TAG_NOT_FOUND"))
                 .andExpect(jsonPath("$.message", containsString("존재하지 않는 태그입니다.")));
     }
 
@@ -207,7 +207,7 @@ public class PlaceControllerTest
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isNotFound()) // 1. HTTP 상태 코드가 404 Not Found 인지 확인
-                .andExpect(jsonPath("$.errorCode").value("NOT_FOUND_PLACE")) // 2. 커스텀 에러 코드 확인
+                .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND")) // 2. 커스텀 에러 코드 확인
                 .andExpect(jsonPath("$.message").exists()) // 3. 에러 메시지가 존재하는지 확인
                 .andDo(print());
     }

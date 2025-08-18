@@ -13,7 +13,6 @@ import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
-import org.example.sejonglifebe.exception.PlaceNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,7 +30,7 @@ public class PlaceService {
         if (tagNames == null) { tagNames = Collections.emptyList();}
         List<Tag> tags = tagRepository.findByNameIn(tagNames);
         if (tags.size() != tagNames.size()) {
-            throw new SejongLifeException(ErrorCode.INVALID_TAG);
+            throw new SejongLifeException(ErrorCode.TAG_NOT_FOUND);
         }
 
         List<Place> places = new ArrayList<>();
@@ -42,7 +41,7 @@ public class PlaceService {
         if(!categoryName.equals("전체")) {
             category = categoryRepository
                     .findByName(categoryName)
-                    .orElseThrow(() ->new SejongLifeException(ErrorCode.INVALID_CATEGORY));
+                    .orElseThrow(() ->new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND));
 
             places = getPlacesBySelectedCategory(category, tags);
         }
@@ -65,7 +64,7 @@ public class PlaceService {
 
     public PlaceDetailResponse getPlaceDetail(Long placeId) {
         Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new PlaceNotFoundException("해당하는 장소 ID를 찾을 수 없습니다. id=" + placeId));
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
         return PlaceDetailResponse.from(place);
     }
 }
