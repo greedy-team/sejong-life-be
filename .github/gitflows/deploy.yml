@@ -1,0 +1,65 @@
+name: Deploy to EC2
+
+on:
+  push:
+    #types: [ closed ]
+    branches:
+      - chore/github-action
+
+jobs:
+  Deploy:
+    #if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH(원격 접속)로 EC2에 접속하기
+        # 라이브러리로 ec2 접속
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          APPLICATION_PROPERTIES: ${{ secrets.APPLICATION_PROPERTIES }} #application 추가 rm, envs로 선언, echo
+        with:
+          host: ${{ secrets.EC2_HOST }} #어떤 컴퓨터로 접속할지(ip주소)
+          username: ${{ secrets.EC2_USERNAME }} #접속할 떄 사용자이름
+          key: ${{ secrets.EC2_PRIVATE_KEY }} #키페어 cat으로 파일 읽은 후 복사
+          envs: APPLICATION_PROPERTIES
+          script_stop: true
+          # 파일 접근, pull 후 빌드 -> 원래 파일 있으면 삭제 -> snapshot 실행 -> 실행 로그 output.log에 저장(라이브러리 이슈로 키워드: 표준출력)
+          script: |
+            # 1. 에러 발생 시 즉시 스크립트 중단
+            #set -e
+
+            # 2. 프로젝트 디렉토리로 이동
+            cd /home/ubuntu/instagram-server
+
+            # 3. 최신 코드를 pull 받음
+            echo ">>>>> git pull"
+            git pull origin main
+
+            # 4. 기존 설정 파일이 있다면 삭제
+            echo ">>>>> 기존 application.yml 삭제"
+            rm -rf src/main/resources/application.yml
+
+            # 5. 새로운 설정 파일 생성
+            echo ">>>>> 새로운 application.yml 생성"
+            echo "$APPLICATION_PROPERTIES" > src/main/resources/application.yml
+
+            # 4. 프로젝트 빌드
+            echo ">>>>> 프로젝트 빌드 시작"
+            ./gradlew clean build
+
+            # 5. 기존 애플리케이션 안전하게 종료
+            echo ">>>>> 기존 애플리케이션 종료"
+
+#            CURRENT_PID=$(lsof -t -i:8080 || echo "")
+#            if [ -z "$CURRENT_PID" ]; then
+#              echo "      -> 현재 실행 중인 애플리케이션이 없습니다."
+#            else
+#              echo "      -> 실행 중인 애플리케이션 종료 (PID: $CURRENT_PID)"
+#              kill -15 $CURRENT_PID
+#              sleep 5 # 정상 종료를 위해 5초 대기
+#            fi
+
+            sudo fuser -k -n tcp 8080 || true
+
+            # 6. 새 애플리케이션 배포 및 로그 분리
+            echo ">>>>> 새 애플리케이션 배포"
+            nohup java -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &
