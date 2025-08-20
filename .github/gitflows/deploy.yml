@@ -2,13 +2,11 @@ name: Deploy to EC2
 
 on:
   push:
-    #types: [ closed ]
     branches:
       - chore/git-action
 
 jobs:
   Deploy:
-    #if: ${{ github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
     steps:
       - name: SSH(원격 접속)로 EC2에 접속하기
