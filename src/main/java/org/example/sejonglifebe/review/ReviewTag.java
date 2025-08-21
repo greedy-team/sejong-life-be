@@ -1,0 +1,36 @@
+package org.example.sejonglifebe.review;
+
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.example.sejonglifebe.tag.Tag;
+
+@Getter
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"review_id", "tag_id"}))
+public class ReviewTag {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "review_tag_id")
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "review_id")
+    Review review;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tag_id")
+    Tag tag;
+
+    private ReviewTag(Review review, Tag tag) {
+        this.review = review;
+        this.tag = tag;
+    }
+
+    public static ReviewTag createReviewTag(Review review, Tag tag) {
+        return new ReviewTag(review, tag);
+    }
+}

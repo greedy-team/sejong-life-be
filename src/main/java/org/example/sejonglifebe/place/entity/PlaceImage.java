@@ -12,7 +12,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.example.sejonglifebe.review.Review;
 
 @Getter
 @Entity
@@ -29,7 +29,11 @@ public class PlaceImage {
     @JoinColumn(name = "place_id")
     private Place place;
 
-    @Column(name = "image_url", unique = true ,nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "review_id")
+    private Review review;
+
+    @Column(name = "image_url", unique = true, nullable = false)
     private String url;
 
     @Column(name = "is_thumbnail")
@@ -37,6 +41,13 @@ public class PlaceImage {
 
     public PlaceImage(Place place, String imageUrl, Boolean isThumbnail) {
         this.place = place;
+        this.url = imageUrl;
+        this.isThumbnail = isThumbnail;
+    }
+
+    public PlaceImage(Place place, Review review, String imageUrl, Boolean isThumbnail) {
+        this.place = place;
+        this.review = review;
         this.url = imageUrl;
         this.isThumbnail = isThumbnail;
     }
