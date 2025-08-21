@@ -16,9 +16,6 @@ cd $PROJECT_DIR
 echo "Start deployment for $PROFILE"
 echo "Pull repository"
 
-git reset --hard HEAD
-git clean -f -d
-
 if [ "$PROFILE" == "dev" ]; then
     git pull origin chore/github-action
 elif [ "$PROFILE" == "prod" ]; then
