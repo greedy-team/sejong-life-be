@@ -19,4 +19,5 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            sh deploy.sh dev
+            cd /home/ubuntu/sejong-life-dev
+            sh ./deploy.sh dev
