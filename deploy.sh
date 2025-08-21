@@ -17,7 +17,7 @@ echo "Start deployment for $PROFILE"
 echo "Pull repository"
 
 if [ "$PROFILE" == "dev" ]; then
-    git pull origin chore/github-action
+    git pull origin develop
 elif [ "$PROFILE" == "prod" ]; then
     git pull origin main
 fi
