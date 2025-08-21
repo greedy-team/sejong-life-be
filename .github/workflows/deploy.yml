@@ -20,4 +20,4 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/sejong-life-dev
-            sh ./deploy.sh dev
+            bash ./deploy.sh dev
