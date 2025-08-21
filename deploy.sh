@@ -26,7 +26,7 @@ echo "Gradle Build"
 chmod +x ./gradlew
 ./gradlew build
 
-CURRENT_PID=$(pgrep -f "${JAR_NAME}.*\.jar.*spring\.profiles\.active=$PROFILE")
+CURRENT_PID=$(pgrep -f "${JAR_NAME}.*\.jar.*spring\.profiles\.active=$PROFILE" || true)
 
 if [ -z "$CURRENT_PID" ]; then
     echo "No running application for $PROFILE"
