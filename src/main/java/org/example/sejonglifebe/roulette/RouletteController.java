@@ -16,5 +16,4 @@ public class RouletteController {
     public ResponseEntity<RouletteResponse> getRoulettePlaces(@PathVariable String categoryName) {
         return ResponseEntity.ok(rouletteService.getRoulettePlaces(categoryName));
     }
-
 }

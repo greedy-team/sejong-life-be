@@ -29,7 +29,7 @@ public class PlaceImage {
     @JoinColumn(name = "place_id")
     private Place place;
 
-    @Column(name = "image_url", unique = true ,nullable = false)
+    @Column(name = "image_url", unique = true, nullable = false)
     private String url;
 
     @Column(name = "is_thumbnail")
