@@ -8,6 +8,7 @@ import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.entity.Place;
