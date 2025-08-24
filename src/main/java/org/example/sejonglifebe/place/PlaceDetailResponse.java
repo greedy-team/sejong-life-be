@@ -1,18 +1,19 @@
 package org.example.sejonglifebe.place;
 
 import java.util.List;
+
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.entity.PlaceImage;
 
-public record PlaceDetailResponse (
+public record PlaceDetailResponse(
         Long id,
         String name,
         List<String> category,
         List<String> imageUrls,
         List<String> tags,
         MapLinks mapLinks
-){
+) {
     public static PlaceDetailResponse from(Place place) {
         return new PlaceDetailResponse(
                 place.getId(),
