@@ -1,7 +1,6 @@
 package org.example.sejonglifebe.place;
 
 import java.util.List;
-
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;

@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
         return ErrorResponse.of(
                 TYPE_MISMATCH.getHttpStatus(),
                 TYPE_MISMATCH.name(),
-                exception.getName() + " : " + TYPE_MISMATCH.getErrorMessage());
+                exception.getName() + " : "+ TYPE_MISMATCH.getErrorMessage());
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

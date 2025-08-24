@@ -9,7 +9,7 @@ import org.example.sejonglifebe.tag.Tag;
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"tag_id", "theme_id"}))
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"tag_id","theme_id"}))
 public class ThemeTag {
 
     @Id

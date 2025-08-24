@@ -1,7 +1,6 @@
 package org.example.sejonglifebe.tag;
 
 import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +18,7 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
                  JOIN p.placeCategories pc
                  WHERE pc.category.id = :categoryId
             """)
-    List<Tag> findAllByCategoryId(@Param("categoryId") Long categoryId);
+    List<Tag> findAllByCategoryId(@Param("categoryId")Long categoryId);
 
     List<Tag> findByNameIn(List<String> names);
 

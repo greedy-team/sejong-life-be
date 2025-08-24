@@ -3,7 +3,6 @@ package org.example.sejonglifebe.place;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
@@ -28,23 +27,21 @@ public class PlaceService {
         List<String> tagNames = placeRequest.tags();
         String categoryName = placeRequest.category();
 
-        if (tagNames == null) {
-            tagNames = Collections.emptyList();
-        }
+        if (tagNames == null) { tagNames = Collections.emptyList();}
         List<Tag> tags = tagRepository.findByNameIn(tagNames);
         if (tags.size() != tagNames.size()) {
             throw new SejongLifeException(ErrorCode.TAG_NOT_FOUND);
         }
 
         List<Place> places = new ArrayList<>();
-        if (categoryName.equals("전체"))
+        if(categoryName.equals("전체"))
             places = getPlacesByAllCategory(tags);
 
         Category category;
-        if (!categoryName.equals("전체")) {
+        if(!categoryName.equals("전체")) {
             category = categoryRepository
                     .findByName(categoryName)
-                    .orElseThrow(() -> new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND));
+                    .orElseThrow(() ->new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND));
 
             places = getPlacesBySelectedCategory(category, tags);
         }
