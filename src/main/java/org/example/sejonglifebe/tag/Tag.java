@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class Tag {
     @Column(name = "tag_name", unique = true, nullable = false)
     private String name;
 
-    @OneToMany(mappedBy ="tag")
+    @OneToMany(mappedBy = "tag")
     private List<PlaceTag> placeTags = new ArrayList<>();
 
     public Tag(String name) {
