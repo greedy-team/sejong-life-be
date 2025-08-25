@@ -7,6 +7,9 @@ import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.review.Review;
+import org.example.sejonglifebe.user.User;
+import org.example.sejonglifebe.user.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +43,9 @@ public class TagControllerTest {
     @Autowired
     CategoryRepository categoryRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
     @PersistenceContext
     EntityManager em;
 
@@ -63,7 +69,7 @@ public class TagControllerTest {
 
     @Test
     @DisplayName("카테고리별 태그를 조회 후 반환한다")
-    void 카테고리별_태그를_조회_후_반환한다() throws Exception {
+    void getTagsByCategory_success() throws Exception {
         Category category = categoryRepository.save(new Category("식당"));
         Tag tag1 = tagRepository.save(new Tag("가성비"));
         Tag tag2 = tagRepository.save(new Tag("집밥"));
@@ -93,7 +99,7 @@ public class TagControllerTest {
 
     @Test
     @DisplayName("카테고리에 해당하는 태그가 없으면 빈 배열을 반환한다")
-    void 카테고리에_해당하는_태그가_없으면_빈_배열을_반환한다() throws Exception {
+    void getTagsByCategory_emptyResult() throws Exception {
         Category emptyCategory = categoryRepository.save(new Category("편의점"));
 
         mockMvc.perform(get("/api/tags")
@@ -106,7 +112,7 @@ public class TagControllerTest {
 
     @Test
     @DisplayName("존재하지 않는 카테고리이면 예외를 던진다")
-    void 존재하지_않는_카테고리이면_예외를_던진다() throws Exception {
+    void getTagsByCategory_notFoundCategory_throwsException() throws Exception {
         mockMvc.perform(get("/api/tags")
                         .param("categoryId", "999999")
                         .accept(MediaType.APPLICATION_JSON))
@@ -117,12 +123,64 @@ public class TagControllerTest {
 
     @Test
     @DisplayName("카테고리 파라미터 타입이 맞지 않으면 예외를 던진다")
-    void 카테고리ID_타입이_맞지_않으면_예외를_던진다() throws Exception {
+    void getTagsByCategory_invalidCategoryIdType_throwsException() throws Exception {
         mockMvc.perform(get("/api/tags")
                         .param("categoryId", "abc")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("TYPE_MISMATCH"))
                 .andExpect(jsonPath("$.message", containsString("파라미터 형식이 올바르지 않습니다.")));
+    }
+
+    @Test
+    @DisplayName("카테고리에서 자주 쓰인 태그를 우선적으로 반환한다")
+    void getFrequentlyUsedTagsByCategory_prioritized() throws Exception {
+        // given
+        User user = User.builder()
+                .studentId("21011111")
+                .name("이름")
+                .nickname("닉네임")
+                .build();
+        userRepository.save(user);
+
+        Category category = categoryRepository.save(new Category("식당"));
+        Tag tag1 = tagRepository.save(new Tag("가성비"));
+        Tag tag2 = tagRepository.save(new Tag("집밥"));
+
+        Place place = Place.builder()
+                .name("또래끼리")
+                .address("세종대 후문")
+                .mapLinks(new MapLinks("네이버", "카카오", "구글"))
+                .build();
+        place.addCategory(category);
+        place.addTag(tag1);
+        place.addTag(tag2);
+        placeRepository.save(place);
+
+        Review review1 = Review.createReview(place, user,5, "좋아요");
+        Review review2 = Review.createReview(place, user,4, "괜찮음");
+        Review review3 = Review.createReview(place, user,3, "보통");
+        review1.addTag(tag1);
+        review2.addTag(tag1);
+        review3.addTag(tag2);
+
+        em.persist(review1);
+        em.persist(review2);
+        em.persist(review3);
+        em.flush();
+        em.clear();
+
+        // when & then
+        mockMvc.perform(get("/api/tags/popular")
+                        .param("categoryId", String.valueOf(category.getId()))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("추천 태그 목록 조회 성공"))
+                // 태그 개수는 2개
+                .andExpect(jsonPath("$.data", hasSize(2)))
+                // 첫 번째 태그가 tag1("가성비")인지 확인 (더 많이 쓰임)
+                .andExpect(jsonPath("$.data[0].tagName").value("가성비"))
+                // 두 번째 태그가 tag2("집밥")인지 확인
+                .andExpect(jsonPath("$.data[1].tagName").value("집밥"));
     }
 }
