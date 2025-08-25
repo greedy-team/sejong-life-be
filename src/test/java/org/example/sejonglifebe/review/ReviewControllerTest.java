@@ -70,7 +70,6 @@ class ReviewControllerTest {
         // given
         User user = User.builder()
                 .studentId("21011111")
-                .name("이름")
                 .nickname("닉네임")
                 .build();
         userRepository.save(user);
@@ -123,7 +122,6 @@ class ReviewControllerTest {
         // given
         User user = User.builder()
                 .studentId("21011111")
-                .name("이름")
                 .nickname("닉네임")
                 .build();
         userRepository.save(user);

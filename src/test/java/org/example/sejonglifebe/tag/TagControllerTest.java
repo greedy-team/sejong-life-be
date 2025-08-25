@@ -138,7 +138,6 @@ public class TagControllerTest {
         // given
         User user = User.builder()
                 .studentId("21011111")
-                .name("이름")
                 .nickname("닉네임")
                 .build();
         userRepository.save(user);
@@ -171,7 +170,7 @@ public class TagControllerTest {
         em.clear();
 
         // when & then
-        mockMvc.perform(get("/api/tags/popular")
+        mockMvc.perform(get("/api/tags/recommended")
                         .param("categoryId", String.valueOf(category.getId()))
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

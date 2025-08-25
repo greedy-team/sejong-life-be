@@ -25,7 +25,7 @@ public class TagController {
         return ApiResponse.of(HttpStatus.OK, "전체 태그 목록 조회 성공", tagResponses);
     }
 
-    @GetMapping("/popular")
+    @GetMapping("/recommended")
     public ResponseEntity<ApiResponse<List<TagResponse>>> getFrequentlyUsedTagsByCategoryId(@RequestParam(value = "categoryId") Long categoryId) {
         List<TagResponse> tagResponses = tagService.getFrequentlyUsedTagsByCategoryId(categoryId);
         return ApiResponse.of(HttpStatus.OK, "추천 태그 목록 조회 성공", tagResponses);
