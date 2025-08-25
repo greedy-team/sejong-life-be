@@ -1,8 +1,10 @@
 package org.example.sejonglifebe.review;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.common.dto.ApiResponse;
-import org.example.sejonglifebe.review.dto.ReviewDataResponse;
+import org.example.sejonglifebe.review.dto.ReviewResponse;
+import org.example.sejonglifebe.review.dto.ReviewSummaryResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +20,15 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<ReviewDataResponse>> getReviews(
+    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviews(
             @PathVariable("placeId") String placeId) {
-        return ApiResponse.of(HttpStatus.OK,"리뷰 목록 조회 성공", reviewService.getReviewDataByPlaceId(placeId));
+        return ApiResponse.of(HttpStatus.OK,"리뷰 목록 조회 성공", reviewService.getReviewsByPlaceId(placeId));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<ReviewSummaryResponse>> getReviewSummary(
+            @PathVariable("placeId") String placeId) {
+        return ApiResponse.of(HttpStatus.OK,"리뷰 요약 정보 조회 성공", reviewService.getReviewSummaryByPlaceId(placeId));
     }
 
 }
