@@ -26,7 +26,7 @@ public class Review {
     @Column(name = "review_id")
     private Long id;
 
-    private Double rating;
+    private int rating;
 
     @Column(nullable = false)
     private String content;
@@ -56,32 +56,22 @@ public class Review {
     private User user;
 
     @Builder
-    private Review(Place place, Double rating, String content) {
+    private Review(Place place, User user, int rating, String content) {
         this.place = place;
+        this.user = user;
         this.rating = rating;
         this.content = content;
     }
 
-    public static Review createReview(Place place, Double rating, String content, List<Tag> tags, List<String> imageUrls) {
-
+    public static Review createReview(Place place,User user, int rating, String content) {
         Review review = Review.builder()
                 .place(place)
+                .user(user)
                 .rating(rating)
                 .content(content)
                 .build();
 
-        if (tags != null && !tags.isEmpty()) {
-            for (Tag tag : tags) {
-                review.addTag(tag);
-            }
-        }
-
-        if (imageUrls != null && !imageUrls.isEmpty()) {
-            for (String imageUrl : imageUrls) {
-                review.addImage(place, imageUrl);
-            }
-        }
-
+        user.addReview(review);
         return review;
     }
 
