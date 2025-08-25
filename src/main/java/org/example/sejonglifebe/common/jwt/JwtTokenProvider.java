@@ -3,6 +3,7 @@ package org.example.sejonglifebe.common.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.example.sejonglifebe.auth.AuthUser;
 import jakarta.annotation.PostConstruct;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
 import org.example.sejonglifebe.user.User;
@@ -71,5 +72,16 @@ public class JwtTokenProvider {
                 .studentId(claims.getSubject())
                 .name(claims.get("name", String.class))
                 .build();
+    }
+
+    public AuthUser validateAndGetAuthUser(String token) {
+
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return new AuthUser(claims.getSubject());
     }
 }

@@ -4,8 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.example.sejonglifebe.common.dto.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -84,5 +84,20 @@ public class GlobalExceptionHandler {
                 INTERNAL_SERVER_ERROR.getHttpStatus(),
                 INTERNAL_SERVER_ERROR.name(),
                 INTERNAL_SERVER_ERROR.getErrorMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleValidation(MethodArgumentNotValidException exception, HttpServletRequest request) {
+        String errorMessage = exception.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        log.warn("예외 발생: {},method: {}, url: {}",
+                errorMessage,
+                request.getMethod(),
+                request.getRequestURL(),
+                exception);
+
+        return ErrorResponse.of(
+                ErrorCode.INVALID_INPUT_VALUE.getHttpStatus(),
+                ErrorCode.INVALID_INPUT_VALUE.name(),
+                errorMessage);
     }
 }
