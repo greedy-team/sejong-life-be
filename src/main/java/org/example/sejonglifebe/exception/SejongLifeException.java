@@ -11,4 +11,9 @@ public class SejongLifeException extends RuntimeException {
         super(errorCode.getErrorMessage());
         this.errorCode = errorCode;
     }
+
+    public SejongLifeException(ErrorCode errorCode, Throwable cause) {
+        super(errorCode.getErrorMessage(), cause);
+        this.errorCode = errorCode;
+    }
 }
