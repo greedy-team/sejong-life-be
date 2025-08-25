@@ -41,7 +41,7 @@ public class Review {
     @Column(name = "review_id")
     private Long id;
 
-    private Double rating;
+    private Long rating;
 
     @Column(nullable = false)
     private String content;
@@ -71,13 +71,13 @@ public class Review {
     private User user;
 
     @Builder
-    private Review(Place place, Double rating, String content) {
+    private Review(Place place, Long rating, String content) {
         this.place = place;
         this.rating = rating;
         this.content = content;
     }
 
-    public static Review createReview(Place place, Double rating, String content, List<Tag> tags, List<String> imageUrls) {
+    public static Review createReview(Place place, Long rating, String content, List<Tag> tags, List<String> imageUrls) {
 
         Review review = Review.builder()
                 .place(place)
