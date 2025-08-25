@@ -3,6 +3,7 @@ package org.example.sejonglifebe.common.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
 import org.example.sejonglifebe.user.User;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,11 +25,16 @@ public class JwtTokenProvider {
     @Value("${jwt.signup-expiration}")
     private long signUpTokenExpirationTime;
 
+    private SecretKey key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
+
     public String createToken(User user) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationTime);
-
-        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
 
         return Jwts.builder()
                 .subject(user.getStudentId())
@@ -44,8 +50,6 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + signUpTokenExpirationTime);
 
-        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-
         return Jwts.builder()
                 .subject(portalInfo.getStudentId())
                 .claim("name", portalInfo.getName())
@@ -56,7 +60,6 @@ public class JwtTokenProvider {
     }
 
     public PortalStudentInfo validateAndGetPortalInfo(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
 
         Claims claims = Jwts.parser()
                 .verifyWith(key)
