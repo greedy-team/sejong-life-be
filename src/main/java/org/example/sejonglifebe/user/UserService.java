@@ -30,7 +30,6 @@ public class UserService {
 
         User newUser = User.builder()
                 .studentId(requestDto.getStudentId())
-                .name(requestDto.getName())
                 .nickname(requestDto.getNickname())
                 .build();
 

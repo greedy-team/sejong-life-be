@@ -36,9 +36,6 @@ public class User {
     @Column(name = "student_id", unique = true, nullable = false)
     private String studentId;
 
-    @Column(nullable = false, length = 5)
-    private String name;
-
     @Column(unique = true, nullable = false, length = 15)
     private String nickname;
 

@@ -8,7 +8,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
+
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.place.entity.Place;
@@ -26,8 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @Transactional
 @SpringBootTest
 @AutoConfigureMockMvc
-public class PlaceControllerTest
-{
+public class PlaceControllerTest {
     private static final Long NON_EXISTENT_ID = 999L;
 
     @Autowired

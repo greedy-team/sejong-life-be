@@ -18,14 +18,24 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class PortalClient {
 
+    private static final String LOGIN_URL = "https://portal.sejong.ac.kr/jsp/login/login_action.jsp";
+    private static final String RETURN_URL = "http://classic.sejong.ac.kr/_custom/sejong/sso/sso-return.jsp?returnUrl=https%3A%2F%2Fclassic.sejong.ac.kr%2Fclassic%2Findex.do";
+    private static final String HOST = "portal.sejong.ac.kr";
+    private static final String REFERER = "https://portal.sejong.ac.kr";
+    private static final String COOKIE = "chknos=false";
+    private static final String SSO_URL = "http://classic.sejong.ac.kr/_custom/sejong/sso/sso-return.jsp?returnUrl=https://classic.sejong.ac.kr/classic/index.do";
+    private static final String HTML_URL = "https://classic.sejong.ac.kr/classic/reading/status.do";
+
+    private static final int RETRY_COUNT = 3;
+
     private final OkHttpClient client;
 
     public void login(String portalId, String portalPassword) {
-        String loginUrl = "https://portal.sejong.ac.kr/jsp/login/login_action.jsp";
+        String loginUrl = LOGIN_URL;
 
         RequestBody formBody = new FormBody.Builder()
                 .add("mainLogin", "Y")
-                .add("rtUrl", "http://classic.sejong.ac.kr/_custom/sejong/sso/sso-return.jsp?returnUrl=https%3A%2F%2Fclassic.sejong.ac.kr%2Fclassic%2Findex.do")
+                .add("rtUrl", RETURN_URL)
                 .add("id", portalId)
                 .add("password", portalPassword)
                 .build();
@@ -33,9 +43,9 @@ public class PortalClient {
         Request request = new Request.Builder()
                 .url(loginUrl)
                 .post(formBody)
-                .header("Host", "portal.sejong.ac.kr")
-                .header("Referer", "https://portal.sejong.ac.kr")
-                .header("Cookie", "chknos=false")
+                .header("Host", HOST)
+                .header("Referer", REFERER)
+                .header("Cookie", COOKIE)
                 .build();
 
         try (Response response = executeWithRetry(request)) {
@@ -45,7 +55,7 @@ public class PortalClient {
         }
 
         // 로그인 이후 SSO 요청 (세션 연결 유지 목적)
-        String ssoUrl = "http://classic.sejong.ac.kr/_custom/sejong/sso/sso-return.jsp?returnUrl=https://classic.sejong.ac.kr/classic/index.do";
+        String ssoUrl = SSO_URL;
         Request ssoRequest = new Request.Builder().url(ssoUrl).get().build();
 
         try (Response ssoResponse = client.newCall(ssoRequest).execute()) {
@@ -58,7 +68,7 @@ public class PortalClient {
     }
 
     public String fetchHtml() {
-        String url = "https://classic.sejong.ac.kr/classic/reading/status.do";
+        String url = HTML_URL;
         Request request = new Request.Builder().url(url).get().build();
 
         try (Response response = client.newCall(request).execute()) {
@@ -73,7 +83,7 @@ public class PortalClient {
 
     private Response executeWithRetry(Request request) {
         int tryCount = 0;
-        while (tryCount < 3) {
+        while (tryCount < RETRY_COUNT) {
             try {
                 Response response = client.newCall(request).execute();
                 if (response.isSuccessful()) {

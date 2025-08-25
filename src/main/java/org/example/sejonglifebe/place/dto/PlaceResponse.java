@@ -1,11 +1,12 @@
 package org.example.sejonglifebe.place.dto;
 
 import java.util.List;
+
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.entity.PlaceCategory;
 import org.example.sejonglifebe.place.entity.PlaceTag;
 
-public record PlaceResponse (
+public record PlaceResponse(
         Long placeId,
         String placeName,
         String mainImageUrl,
