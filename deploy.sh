@@ -17,9 +17,11 @@ echo "Start deployment for $PROFILE"
 echo "Pull repository"
 
 if [ "$PROFILE" == "dev" ]; then
-    git pull origin develop
+    git fetch origin develop
+    git reset --hard origin/develop
 elif [ "$PROFILE" == "prod" ]; then
-    git pull origin main
+    git fetch origin main
+    git reset --hard origin/main
 fi
 
 echo "Gradle Build"
