@@ -35,7 +35,7 @@ public class ReviewController {
     @GetMapping("/summary")
     public ResponseEntity<ApiResponse<ReviewSummaryResponse>> getReviewSummary(
             @PathVariable("placeId") Long placeId) {
-        return ApiResponse.of(HttpStatus.OK,"리뷰 요약 정보 조회 성공", reviewService.getReviewSummaryByPlaceId(placeId));
+        return ApiResponse.of(HttpStatus.OK, "리뷰 요약 정보 조회 성공", reviewService.getReviewSummaryByPlaceId(placeId));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

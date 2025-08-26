@@ -66,8 +66,10 @@ public class ReviewService {
     @Transactional
     public void createReview(Long placeId, ReviewRequest reviewRequest, AuthUser authUser) {
 
-        User user = userRepository.findByStudentId(authUser.studentId()).orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
-        Place place = placeRepository.findById(placeId).orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
+        User user = userRepository.findByStudentId(authUser.studentId())
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
         List<Tag> tags = tagRepository.findByIdIn(reviewRequest.tagIds());
         if (tags.size() != reviewRequest.tagIds().size()) {
             throw new SejongLifeException(ErrorCode.TAG_NOT_FOUND);

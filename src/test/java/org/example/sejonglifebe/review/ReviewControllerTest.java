@@ -89,7 +89,8 @@ class ReviewControllerTest {
         placeRepository.save(place);
 
         ReviewRequest request = new ReviewRequest(3, "맛있음", List.of(tag1.getId(), tag2.getId()));
-        MockMultipartFile reviewPart = new MockMultipartFile("review", "", "application/json", objectMapper.writeValueAsBytes(request));
+        MockMultipartFile reviewPart = new MockMultipartFile("review", "", "application/json",
+                objectMapper.writeValueAsBytes(request));
         MockMultipartFile imagePart = new MockMultipartFile("images", "file1.jpg", "image/jpeg", "test".getBytes());
 
         // when & then
@@ -115,7 +116,8 @@ class ReviewControllerTest {
         placeRepository.save(place);
 
         ReviewRequest request = new ReviewRequest(5, "맛있음", List.of(tag.getId()));
-        MockMultipartFile reviewPart = new MockMultipartFile("review", "", "application/json", objectMapper.writeValueAsBytes(request));
+        MockMultipartFile reviewPart = new MockMultipartFile("review", "", "application/json",
+                objectMapper.writeValueAsBytes(request));
 
         // when: 동일한 태그가 포함된 리뷰 5개 작성
         for (int i = 0; i < 5; i++) {
@@ -200,20 +202,22 @@ class ReviewControllerTest {
         placeRepository.save(place);
 
         Review review1 = createReview(place, user1, "맛있어요", 5, List.of("url1", "url2"), List.of(tag1, tag2));
-        Review review2 = createReview(place, user2,"별로에요", 2, List.of("url3"), List.of(tag2));
+        Review review2 = createReview(place, user2, "별로에요", 2, List.of("url3"), List.of(tag2));
         reviewRepository.saveAll(List.of(review1, review2));
 
         return place;
     }
 
     private Place createPlaceFixture(String name, String address, String url, Category category, List<Tag> tags) {
-        Place place = Place.builder().name(name).address(address).mainImageUrl(url).mapLinks(new MapLinks("a", "b", "c")).build();
+        Place place = Place.builder().name(name).address(address).mainImageUrl(url)
+                .mapLinks(new MapLinks("a", "b", "c")).build();
         place.addCategory(category);
         tags.forEach(place::addTag);
         return place;
     }
 
-    private Review createReview(Place place, User user, String content, int rating, List<String> images, List<Tag> tags) {
+    private Review createReview(Place place, User user, String content, int rating, List<String> images,
+                                List<Tag> tags) {
         Review review = Review.builder().place(place).user(user).content(content).rating(rating).build();
         images.forEach(image -> review.addImage(place, image));
         tags.forEach(review::addTag);
