@@ -30,6 +30,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReviewService {
 
+    private static final int RATING_MAX = 5;
+    private static final int RATING_MIN = 1;
     private static final int TAG_THRESHOLD = 5;
 
     private final PlaceRepository placeRepository;
@@ -58,7 +60,7 @@ public class ReviewService {
         List<RatingCount> ratingCounts = reviewRepository.findRatingCountsByPlace(place);
 
         Map<String, Long> ratingDistribution = new HashMap<>();
-        for (int rating = 1; rating <= 5; rating++) {
+        for (int rating = RATING_MIN; rating <= RATING_MAX; rating++) {
             ratingDistribution.put(String.valueOf(rating), 0L);
         }
 

@@ -6,4 +6,5 @@ public record ReviewSummaryResponse(
         Long reviewCount,
         Double averageRate,
         Map<String, Long> ratingDistribution
-) {}
+) {
+}
