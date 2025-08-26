@@ -1,5 +1,7 @@
 package org.example.sejonglifebe.review;
 
+import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.tag.Tag;
 import java.util.List;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.dto.RatingCount;
@@ -10,6 +12,15 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+
+    @Query("""
+                SELECT COUNT(r)
+                FROM Review r
+                JOIN r.reviewTags rt
+                JOIN rt.tag t
+                WHERE r.place = :place AND t = :tag
+            """)
+    long countByPlaceAndTag(@Param("place") Place place, @Param("tag") Tag tag);
 
     List<Review> findByPlace(Place place);
 

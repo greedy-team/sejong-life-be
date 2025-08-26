@@ -71,11 +71,19 @@ public class Place {
     }
 
     public void addTag(Tag tag) {
-        PlaceTag.createPlaceTag(this, tag);
+        boolean exists = placeTags.stream()
+                .anyMatch(placeTag -> placeTag.getTag().equals(tag));
+        if (!exists) {
+            PlaceTag.createPlaceTag(this, tag);
+        }
     }
 
     public void addCategory(Category category) {
-        PlaceCategory.createPlaceCategory(this, category);
+        boolean exists = placeCategories.stream()
+                .anyMatch(placeCategory -> placeCategory.getCategory().equals(category));
+        if (!exists) {
+            PlaceCategory.createPlaceCategory(this, category);
+        }
     }
 
     public String getThumbnailImageUrl() {

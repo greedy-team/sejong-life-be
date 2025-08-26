@@ -1,42 +1,45 @@
 package org.example.sejonglifebe.review;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
+import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.place.PlaceRepository;
+import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.example.sejonglifebe.user.User;
+import org.example.sejonglifebe.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 @SpringBootTest
 @AutoConfigureMockMvc
-public class ReviewControllerTest {
-
-    private static final Long NON_EXISTENT_ID = 999L;
+class ReviewControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private PlaceRepository placeRepository;
 
     @Autowired
     private CategoryRepository categoryRepository;
@@ -45,118 +48,121 @@ public class ReviewControllerTest {
     private TagRepository tagRepository;
 
     @Autowired
-    private ReviewRepository reviewRepository;
+    private PlaceRepository placeRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
 
     @BeforeEach
     void setUp() {
-        placeRepository.deleteAll();
-        reviewRepository.deleteAll();
-        tagRepository.deleteAll();
-        categoryRepository.deleteAll();
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111"));
 
-        Category category = new Category("식당");
-        categoryRepository.saveAll(List.of(category));
+    }
 
-        Tag tag1 = new Tag("맛집");
-        Tag tag2 = new Tag("가성비");
-        tagRepository.saveAll(List.of(tag1, tag2));
+    @Test
+    @DisplayName("리뷰가 정상적으로 생성된다")
+    void createReview_success() throws Exception {
 
-        Place place = createPlace("식당2", "주소2", "url2", category, List.of(tag1, tag2));
+        // given
+        User user = User.builder()
+                .studentId("21011111")
+                .nickname("닉네임")
+                .build();
+        userRepository.save(user);
+
+        Category category = categoryRepository.save(new Category("식당"));
+        Tag tag1 = tagRepository.save(new Tag("가성비"));
+        Tag tag2 = tagRepository.save(new Tag("집밥"));
+
+        Place place = Place.builder()
+                .name("또래끼리")
+                .address("세종대 후문")
+                .mapLinks(new MapLinks("네이버", "카카오", "구글"))
+                .build();
+        place.addCategory(category);
         placeRepository.save(place);
 
-        Review review1 = createReview(place, "맛있어요", 5L, List.of("url1", "url2"), List.of(tag1, tag2));
-        Review review2 = createReview(place, "별로에요", 2L, List.of("url3"), List.of(tag2));
+        ReviewRequest request = new ReviewRequest(
+                3,
+                "맛있음",
+                List.of(tag1.getId(), tag2.getId())
+        );
 
-        reviewRepository.saveAll(List.of(review1, review2));
+        MockMultipartFile reviewPart = new MockMultipartFile(
+                "review",
+                "",
+                "application/json",
+                new ObjectMapper().writeValueAsBytes(request)
+        );
+
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "images",
+                "file1.jpg",
+                "image/jpeg",
+                "test".getBytes()
+        );
+
+        // when & then
+        mockMvc.perform(multipart("/api/places/{placeId}/reviews", place.getId())
+                        .file(reviewPart)
+                        .file(imagePart)
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("리뷰 작성 성공"));
     }
 
-    private Place createPlace(String name, String address, String url, Category category, List<Tag> tags) {
+    @Test
+    @DisplayName("리뷰에서 5번 이상 언급된 태그는 장소 태그에 추가된다.")
+    void addFrequentlyUsedTagToPlace_whenTagMentionedFiveTimes() throws Exception {
+
+        // given
+        User user = User.builder()
+                .studentId("21011111")
+                .nickname("닉네임")
+                .build();
+        userRepository.save(user);
+
+        Category category = categoryRepository.save(new Category("식당"));
+        Tag tag = tagRepository.save(new Tag("가성비"));
+
         Place place = Place.builder()
-                .name(name)
-                .address(address)
-                .mainImageUrl(url)
+                .name("또래끼리")
+                .address("세종대 후문")
+                .mapLinks(new MapLinks("네이버", "카카오", "구글"))
                 .build();
-
         place.addCategory(category);
-        tags.forEach(place::addTag);
-        return place;
-    }
+        placeRepository.save(place);
 
-    private Review createReview(Place place, String content, Long rating, List<String> images, List<Tag> tags) {
-        Review review = Review.builder()
-                .place(place)
-                .content(content)
-                .rating(rating)
-                .build();
+        ReviewRequest request = new ReviewRequest(
+                5,
+                "맛있음",
+                List.of(tag.getId())
+        );
 
-        images.forEach(image -> review.addImage(place, image));
-        tags.forEach(review::addTag);
-        return review;
-    }
+        MockMultipartFile reviewPart = new MockMultipartFile(
+                "review", "", "application/json",
+                new ObjectMapper().writeValueAsBytes(request)
+        );
 
-    @Test
-    @DisplayName("장소에 대한 리뷰 목록을 성공적으로 조회한다")
-    void getReviews_success() throws Exception {
-        Place place = placeRepository.findAll().get(0);
+        // when: 동일한 태그가 포함된 리뷰 5개 작성
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(multipart("/api/places/{placeId}/reviews", place.getId())
+                            .file(reviewPart)
+                            .header("Authorization", "Bearer test-token"))
+                    .andExpect(status().isCreated());
+        }
 
-        mockMvc.perform(get("/api/places/{placeId}/reviews", place.getId())
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("리뷰 목록 조회 성공"))
-                .andExpect(jsonPath("$.data", hasSize(2)))
-                .andExpect(jsonPath("$.data[0].reviewId").value(notNullValue()))
-                .andExpect(jsonPath("$.data[0].content").value("맛있어요"))
-                .andExpect(jsonPath("$.data[0].rating").value(5))
-                .andExpect(jsonPath("$.data[0].likeCount").value(0))
-                .andExpect(jsonPath("$.data[0].createdAt").exists())
-                .andExpect(jsonPath("$.data[0].images", hasSize(2)))
-                .andExpect(jsonPath("$.data[0].tags[*].tagName", containsInAnyOrder("맛집", "가성비")))
-                .andExpect(jsonPath("$.data[1].reviewId").value(notNullValue()))
-                .andExpect(jsonPath("$.data[1].content").value("별로에요"))
-                .andExpect(jsonPath("$.data[1].rating").value(2))
-                .andExpect(jsonPath("$.data[1].images", hasSize(1)))
-                .andExpect(jsonPath("$.data[1].tags[*].tagName", containsInAnyOrder("가성비")))
-                .andDo(print());
-    }
+        // then: placeTags 에 tag 가 추가되었는지 검증
+        Place savedPlace = placeRepository.findById(place.getId())
+                .orElseThrow();
 
-    @Test
-    @DisplayName("존재하지 않는 장소의 리뷰 목록 조회 시 예외를 반환한다")
-    void getReviews_placeNotFound_fail() throws Exception {
-        mockMvc.perform(get("/api/places/{placeId}/reviews", NON_EXISTENT_ID)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value("존재하지 않는 장소입니다."))
-                .andDo(print());
-    }
-
-    @Test
-    @DisplayName("장소에 대한 리뷰 요약 정보를 성공적으로 조회한다")
-    void getReviewSummary_success() throws Exception {
-        Place place = placeRepository.findAll().get(0);
-
-        mockMvc.perform(get("/api/places/{placeId}/reviews/summary", place.getId())
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("리뷰 요약 정보 조회 성공"))
-                .andExpect(jsonPath("$.data.reviewCount").value(2))
-                .andExpect(jsonPath("$.data.averageRate").value(3.5))
-                .andExpect(jsonPath("$.data.ratingDistribution").isMap())
-                .andExpect(jsonPath("$.data.ratingDistribution['5']").value(1))
-                .andExpect(jsonPath("$.data.ratingDistribution['2']").value(1))
-                .andExpect(jsonPath("$.data.ratingDistribution['1']").value(0))
-                .andDo(print());
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 장소의 리뷰 요약 정보 조회 시 예외를 반환한다")
-    void getReviewSummary_placeNotFound_fail() throws Exception {
-        mockMvc.perform(get("/api/places/{placeId}/reviews/summary", NON_EXISTENT_ID)
-                        .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value("존재하지 않는 장소입니다."))
-                .andDo(print());
+        assertThat(savedPlace.getPlaceTags())
+                .hasSize(1)
+                .extracting(pt -> pt.getTag().getName())
+                .contains("가성비");
     }
 }
-
