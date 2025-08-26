@@ -39,8 +39,8 @@ public class ReviewService {
     private final TagRepository tagRepository;
     private final ReviewRepository reviewRepository;
 
-    public List<ReviewResponse> getReviewsByPlaceId(String placeId) {
-        Place place = placeRepository.findById(Long.parseLong(placeId))
+    public List<ReviewResponse> getReviewsByPlaceId(Long placeId) {
+        Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
         List<Review> reviews = reviewRepository.findByPlace(place);
@@ -50,8 +50,8 @@ public class ReviewService {
                 .toList();
     }
 
-    public ReviewSummaryResponse getReviewSummaryByPlaceId(String placeId) {
-        Place place = placeRepository.findById(Long.parseLong(placeId))
+    public ReviewSummaryResponse getReviewSummaryByPlaceId(Long placeId) {
+        Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
         Long reviewCount = reviewRepository.countByPlace(place);

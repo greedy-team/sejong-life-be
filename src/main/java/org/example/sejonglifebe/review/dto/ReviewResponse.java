@@ -8,6 +8,9 @@ import org.example.sejonglifebe.review.ReviewTag;
 public record ReviewResponse(
         Long reviewId,
         int rating,
+        Long userId,
+        String userName,
+        String studentId,
         String content,
         Long likeCount,
         String createdAt,
@@ -20,6 +23,9 @@ public record ReviewResponse(
         return new ReviewResponse(
                 review.getId(),
                 review.getRating(),
+                review.getUser().getId(),
+                review.getUser().getNickname(),
+                review.getUser().getStudentId(),
                 review.getContent(),
                 review.getLikeCount(),
                 review.getCreatedAt().toString(),

@@ -28,8 +28,14 @@ public class ReviewController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviews(
-            @PathVariable("placeId") String placeId) {
+            @PathVariable("placeId") Long placeId) {
         return ApiResponse.of(HttpStatus.OK, "리뷰 목록 조회 성공", reviewService.getReviewsByPlaceId(placeId));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<ReviewSummaryResponse>> getReviewSummary(
+            @PathVariable("placeId") Long placeId) {
+        return ApiResponse.of(HttpStatus.OK,"리뷰 요약 정보 조회 성공", reviewService.getReviewSummaryByPlaceId(placeId));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -40,11 +46,5 @@ public class ReviewController {
 
         reviewService.createReview(placeId, reviewRequest, authUser);
         return ApiResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
-    }
-
-    @GetMapping("/summary")
-    public ResponseEntity<ApiResponse<ReviewSummaryResponse>> getReviewSummary(
-            @PathVariable("placeId") String placeId) {
-        return ApiResponse.of(HttpStatus.OK,"리뷰 요약 정보 조회 성공", reviewService.getReviewSummaryByPlaceId(placeId));
     }
 }
