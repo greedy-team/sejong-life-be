@@ -14,17 +14,11 @@ import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.User;
 import org.example.sejonglifebe.user.UserRepository;
-import org.example.sejonglifebe.exception.ErrorCode;
-import org.example.sejonglifebe.exception.SejongLifeException;
-import org.example.sejonglifebe.place.PlaceRepository;
-import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.dto.RatingCount;
 import org.example.sejonglifebe.review.dto.ReviewResponse;
 import org.example.sejonglifebe.review.dto.ReviewSummaryResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
