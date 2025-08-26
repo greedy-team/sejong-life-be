@@ -7,7 +7,7 @@ import org.example.sejonglifebe.review.ReviewTag;
 
 public record ReviewResponse(
         Long reviewId,
-        Long rating,
+        int rating,
         String content,
         Long likeCount,
         String createdAt,

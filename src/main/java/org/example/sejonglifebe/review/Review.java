@@ -80,7 +80,7 @@ public class Review {
         this.content = content;
     }
 
-    public static Review createReview(Place place, User user, int rating, String content, List<Tag> tags, List<String> imageUrls) {
+    public static Review createReview(Place place, User user, int rating, String content) {
 
         Review review = Review.builder()
                 .place(place)
@@ -88,18 +88,6 @@ public class Review {
                 .rating(rating)
                 .content(content)
                 .build();
-
-        if (tags != null && !tags.isEmpty()) {
-            for (Tag tag : tags) {
-                review.addTag(tag);
-            }
-        }
-
-        if (imageUrls != null && !imageUrls.isEmpty()) {
-            for (String imageUrl : imageUrls) {
-                review.addImage(place, imageUrl);
-            }
-        }
 
         user.addReview(review);
         return review;

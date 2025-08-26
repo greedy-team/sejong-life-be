@@ -35,6 +35,7 @@ public class ReviewService {
     private final PlaceRepository placeRepository;
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
+    private final ReviewRepository reviewRepository;
 
     public List<ReviewResponse> getReviewsByPlaceId(String placeId) {
         Place place = placeRepository.findById(Long.parseLong(placeId))

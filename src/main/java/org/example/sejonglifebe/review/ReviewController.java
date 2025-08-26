@@ -3,7 +3,9 @@ package org.example.sejonglifebe.review;
 import java.util.List;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.common.dto.ApiResponse;
+import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.example.sejonglifebe.review.dto.ReviewResponse;
 import org.example.sejonglifebe.review.dto.ReviewSummaryResponse;
 import org.springframework.http.HttpStatus;
@@ -30,7 +32,7 @@ public class ReviewController {
         return ApiResponse.of(HttpStatus.OK, "리뷰 목록 조회 성공", reviewService.getReviewsByPlaceId(placeId));
     }
 
-    @PostMapping(value = "/api/places/{placeId}/reviews", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> createReview(@PathVariable(name = "placeId") Long placeId,
                                                           @Valid @RequestPart("review") ReviewRequest reviewRequest,
                                                           @RequestPart(value = "images", required = false) List<MultipartFile> images,
