@@ -2,6 +2,9 @@ package org.example.sejonglifebe.review;
 
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
+import java.util.List;
+import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.review.dto.RatingCount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +21,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
                 WHERE r.place = :place AND t = :tag
             """)
     long countByPlaceAndTag(@Param("place") Place place, @Param("tag") Tag tag);
+
+    List<Review> findByPlace(Place place);
+
+    Long countByPlace(Place place);
+
+    @Query("SELECT r.rating as rating, COUNT(r) as count FROM Review r WHERE r.place = :place GROUP BY r.rating")
+    List<RatingCount> findRatingCountsByPlace(@Param("place") Place place);
+
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.place = :place")
+    Double averageRatingByPlace(@Param("place") Place place);
 }

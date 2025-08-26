@@ -1,5 +1,7 @@
 package org.example.sejonglifebe.review;
 
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +80,8 @@ public class Review {
         this.content = content;
     }
 
-    public static Review createReview(Place place,User user, int rating, String content) {
+    public static Review createReview(Place place, User user, int rating, String content) {
+
         Review review = Review.builder()
                 .place(place)
                 .user(user)
