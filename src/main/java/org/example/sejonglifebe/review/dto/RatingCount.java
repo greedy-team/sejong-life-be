@@ -1,7 +1,7 @@
 package org.example.sejonglifebe.review.dto;
 
 public record RatingCount(
-        Long rating,
+        int rating,
         Long count
 ) {
 }
