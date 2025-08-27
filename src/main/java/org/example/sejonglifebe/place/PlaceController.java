@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.common.dto.ApiResponse;
+import org.example.sejonglifebe.place.dto.HotPlaceResponse;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
@@ -34,13 +35,19 @@ public class PlaceController {
         return ApiResponse.of(HttpStatus.OK, "장소 목록 조회 성공", response);
     }
 
+    @GetMapping("/hot")
+    public ResponseEntity<ApiResponse<List<HotPlaceResponse>>> getHotPlaces() {
+        List<HotPlaceResponse> hotPlaceResponses = placeService.getWeeklyHotPlaces();
+        return ApiResponse.of(HttpStatus.OK, "핫플레이스 조회 성공", hotPlaceResponses);
+    }
+
     @GetMapping("/{placeId}")
     public ResponseEntity<ApiResponse<PlaceDetailResponse>> getPlaceDetail(@PathVariable Long placeId,
                                                                            HttpServletRequest request,
                                                                            HttpServletResponse response)
     {
         PlaceDetailResponse placeDetailResponse =
-                placeService.getPlaceDetail(placeId, request, response);;
+                placeService.getPlaceDetail(placeId, request, response);
         return ApiResponse.of(HttpStatus.OK, "장소 상세 정보 조회 성공", placeDetailResponse);
     }
 

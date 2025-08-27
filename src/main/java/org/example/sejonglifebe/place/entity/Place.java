@@ -47,6 +47,9 @@ public class Place {
     @Column(nullable = false)
     private Long viewCount;
 
+    @Column(nullable = false)
+    private Long weeklyViewCount;
+
     @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
@@ -64,6 +67,7 @@ public class Place {
         this.address = address;
         this.mapLinks = mapLinks;
         this.viewCount = 0L;
+        this.weeklyViewCount = 0L;
     }
 
     public void addImage(String imageUrl, Boolean isThumbnail) {

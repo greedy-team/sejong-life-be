@@ -39,6 +39,13 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     List<Place> findByCategory(@Param("category") Category category);
 
     @Modifying(clearAutomatically = true)
-    @Query("update Place p set p.viewCount = p.viewCount + 1 where p.id = :id")
+    @Query("UPDATE Place p SET p.viewCount = p.viewCount + 1, p.weeklyViewCount = p.weeklyViewCount + 1 WHERE p.id = :id")
     void increaseViewCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("UPDATE Place p SET p.weeklyViewCount = 0")
+    void resetAllWeeklyViewCounts();
+
+    List<Place> findTop10ByOrderByWeeklyViewCountDesc();
+
 }

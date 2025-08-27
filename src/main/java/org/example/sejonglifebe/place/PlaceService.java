@@ -3,7 +3,6 @@ package org.example.sejonglifebe.place;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,6 +14,7 @@ import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.place.dto.HotPlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.entity.Place;
@@ -100,5 +100,11 @@ public class PlaceService {
 
             response.addCookie(updatedCookie);
         }
+    }
+
+    public List<HotPlaceResponse> getWeeklyHotPlaces() {
+        List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
+        return hotPlaces.stream()
+                .map(HotPlaceResponse::from).toList();
     }
 }
