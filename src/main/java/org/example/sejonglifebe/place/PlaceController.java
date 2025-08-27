@@ -2,6 +2,7 @@ package org.example.sejonglifebe.place;
 
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.common.dto.ApiResponse;
+import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;

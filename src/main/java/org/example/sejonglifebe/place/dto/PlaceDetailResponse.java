@@ -1,4 +1,4 @@
-package org.example.sejonglifebe.place;
+package org.example.sejonglifebe.place.dto;
 
 import java.util.List;
 
