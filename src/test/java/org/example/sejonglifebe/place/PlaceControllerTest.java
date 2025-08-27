@@ -1,11 +1,14 @@
 package org.example.sejonglifebe.place;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import jakarta.servlet.http.Cookie;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -211,5 +214,61 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND")) // 2. 커스텀 에러 코드 확인
                 .andExpect(jsonPath("$.message").exists()) // 3. 에러 메시지가 존재하는지 확인
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("장소 상세 조회 시 쿠키가 없으면 조회수가 1 증가하고 쿠키를 발급한다")
+    void getPlaceDetail_noCookie_increaseViewCount() throws Exception {
+        // given: detailPlace의 초기 조회수는 0
+        Long placeId = detailPlace.getId();
+
+        // when & then
+        mockMvc.perform(get("/api/places/" + placeId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.viewCount").value(1))
+                .andExpect(cookie().exists("placeView"))
+                .andExpect(cookie().value("placeView", "[" + placeId + "]"));
+
+        // DB 직접 검증
+        Place updatedPlace = placeRepository.findById(placeId).get();
+        assertThat(updatedPlace.getViewCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("장소 상세 조회 시 동일한 장소 ID 쿠키가 있으면 조회수가 증가하지 않는다")
+    void getPlaceDetail_withSamePlaceCookie_doesNotIncreaseViewCount() throws Exception {
+        // given
+        Long placeId = detailPlace.getId();
+        Cookie placeViewCookie = new Cookie("placeView", "[" + placeId + "]");
+
+        // when & then
+        mockMvc.perform(get("/api/places/" + placeId)
+                        .cookie(placeViewCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.viewCount").value(0)); // API 응답의 조회수는 기존 값(0)이어야 함
+
+        Place notUpdatedPlace = placeRepository.findById(placeId).get();
+        assertThat(notUpdatedPlace.getViewCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("장소 상세 조회 시 다른 장소 ID 쿠키가 있으면 조회수가 1 증가하고 쿠키를 갱신한다")
+    void getPlaceDetail_withAnotherPlaceCookie_increaseViewCount() throws Exception {
+        // given
+        Long placeId = detailPlace.getId();
+        Long anotherPlaceId = 99L;
+        Cookie placeViewCookie = new Cookie("placeView", "[" + anotherPlaceId + "]");
+
+        // when & then
+        mockMvc.perform(get("/api/places/" + placeId)
+                        .cookie(placeViewCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.viewCount").value(1))
+                .andExpect(cookie().exists("placeView"))
+                .andExpect(cookie().value("placeView", "[" + anotherPlaceId + "]_[" + placeId + "]"));
+
+        Place updatedPlace = placeRepository.findById(placeId).get();
+        assertThat(updatedPlace.getViewCount()).isEqualTo(1);
     }
 }
