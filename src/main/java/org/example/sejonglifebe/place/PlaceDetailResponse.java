@@ -9,6 +9,7 @@ import org.example.sejonglifebe.place.entity.PlaceImage;
 public record PlaceDetailResponse(
         Long id,
         String name,
+        Long viewCount,
         List<String> category,
         List<String> imageUrls,
         List<String> tags,
@@ -18,6 +19,7 @@ public record PlaceDetailResponse(
         return new PlaceDetailResponse(
                 place.getId(),
                 place.getName(),
+                place.getViewCount(),
                 place.getPlaceCategories().stream()
                         .map(placeCategory -> placeCategory.getCategory().getName())
                         .toList(),

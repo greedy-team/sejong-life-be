@@ -1,5 +1,7 @@
 package org.example.sejonglifebe.place;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.common.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -33,9 +35,13 @@ public class PlaceController {
     }
 
     @GetMapping("/{placeId}")
-    public ResponseEntity<ApiResponse<PlaceDetailResponse>> getPlaceDetail(@PathVariable("placeId") Long placeId) {
-        PlaceDetailResponse response = placeService.getPlaceDetail(placeId);
-        return ApiResponse.of(HttpStatus.OK, "장소 상세 정보 조회 성공", response);
+    public ResponseEntity<ApiResponse<PlaceDetailResponse>> getPlaceDetail(@PathVariable Long placeId,
+                                                                           HttpServletRequest request,
+                                                                           HttpServletResponse response)
+    {
+        PlaceDetailResponse placeDetailResponse =
+                placeService.getPlaceDetail(placeId, request, response);;
+        return ApiResponse.of(HttpStatus.OK, "장소 상세 정보 조회 성공", placeDetailResponse);
     }
 
 }

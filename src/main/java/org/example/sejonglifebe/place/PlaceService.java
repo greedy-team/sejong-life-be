@@ -1,9 +1,15 @@
 package org.example.sejonglifebe.place;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
@@ -65,9 +71,34 @@ public class PlaceService {
         return placeRepository.findPlacesByTagsAndCategory(category, tags);
     }
 
-    public PlaceDetailResponse getPlaceDetail(Long placeId) {
+    public PlaceDetailResponse getPlaceDetail(Long placeId, HttpServletRequest request, HttpServletResponse response) {
+        increaseViewCount(placeId, request, response);
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
         return PlaceDetailResponse.from(place);
+    }
+
+    public void increaseViewCount(Long placeId, HttpServletRequest request, HttpServletResponse response) {
+        Optional<Cookie> placeViewCookie = (request.getCookies() == null) ? Optional.empty() :
+                Arrays.stream(request.getCookies())
+                        .filter(cookie -> cookie.getName().equals("placeView"))
+                        .findFirst();
+
+        boolean shouldIncreaseViewCount = placeViewCookie
+                .map(cookie -> !cookie.getValue().contains("[" + placeId + "]"))
+                .orElse(true);
+
+        if (shouldIncreaseViewCount) {
+            placeRepository.increaseViewCount(placeId);
+
+            Cookie updatedCookie = placeViewCookie.orElseGet(() -> new Cookie("placeView", ""));
+
+            String currentIds = updatedCookie.getValue();
+            updatedCookie.setValue(currentIds.isEmpty() ? "[" + placeId + "]" : currentIds + "_[" + placeId + "]");
+            updatedCookie.setPath("/");
+            updatedCookie.setMaxAge(60 * 60 * 24);
+
+            response.addCookie(updatedCookie);
+        }
     }
 }
