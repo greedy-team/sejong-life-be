@@ -63,7 +63,7 @@ LOG_PATH="$LOG_DIR/server_log_${PROFILE}_$(date +%Y-%m-%d).txt"
 
 nohup java -jar -Dspring.profiles.active=$PROFILE "$JAR_FILE" >> "$LOG_PATH" 2>&1 &
 
-sleep 30
+sleep 60
 NEW_PID=$(lsof -t -i:$PORT || true)
 if [ -n "$NEW_PID" ]; then
     echo ">> New application started successfully with PID: $NEW_PID"
