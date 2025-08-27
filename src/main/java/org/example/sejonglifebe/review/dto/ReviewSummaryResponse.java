@@ -7,4 +7,5 @@ public record ReviewSummaryResponse(
         Double averageRate,
         Map<String, Long> ratingDistribution
 ) {
+
 }
