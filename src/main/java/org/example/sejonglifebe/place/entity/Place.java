@@ -41,9 +41,6 @@ public class Place {
     @Column(columnDefinition = "text")
     private MapLinks mapLinks;
 
-    @Column(unique = true)
-    private String mainImageUrl;
-
     @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
@@ -86,7 +83,7 @@ public class Place {
         }
     }
 
-    public String getThumbnailImageUrl() {
+    public String getThumbnailImage() {
         if (placeImages == null || placeImages.isEmpty()) {
             return null; // 이미지가 아예 없는 경우
         }

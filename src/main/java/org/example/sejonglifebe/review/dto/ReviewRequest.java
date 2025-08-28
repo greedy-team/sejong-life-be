@@ -16,4 +16,5 @@ public record ReviewRequest(
         String content,
         List<Long> tagIds
 ) {
+
 }

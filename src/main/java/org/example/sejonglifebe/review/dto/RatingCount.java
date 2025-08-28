@@ -4,4 +4,5 @@ public record RatingCount(
         int rating,
         Long count
 ) {
+
 }

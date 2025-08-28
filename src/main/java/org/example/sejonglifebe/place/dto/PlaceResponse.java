@@ -2,14 +2,14 @@ package org.example.sejonglifebe.place.dto;
 
 import java.util.List;
 
+import org.example.sejonglifebe.common.dto.CategoryInfo;
+import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.place.entity.Place;
-import org.example.sejonglifebe.place.entity.PlaceCategory;
-import org.example.sejonglifebe.place.entity.PlaceTag;
 
 public record PlaceResponse(
         Long placeId,
         String placeName,
-        String mainImageUrl,
+        String thumbnailImageUrl,
         List<CategoryInfo> categories,
         List<TagInfo> tags
 ) {
@@ -18,33 +18,13 @@ public record PlaceResponse(
         return new PlaceResponse(
                 place.getId(),
                 place.getName(),
-                place.getMainImageUrl(),
+                place.getThumbnailImage(),
                 place.getPlaceCategories().stream()
-                        .map(CategoryInfo::from)
+                        .map(pc -> new CategoryInfo(pc.getCategory().getId(), pc.getCategory().getName()))
                         .toList(),
                 place.getPlaceTags().stream()
-                        .map(TagInfo::from)
+                        .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
                         .toList()
         );
     }
-
-    public record TagInfo(
-            Long tagId,
-            String tagName
-    ) {
-        public static TagInfo from(PlaceTag placeTag) {
-            return new TagInfo(placeTag.getTag().getId(), placeTag.getTag().getName());
-        }
-    }
-
-    public record CategoryInfo(
-            Long categoryId,
-            String categoryName
-    ) {
-        public static CategoryInfo from(PlaceCategory placeCategory) {
-            return new CategoryInfo(placeCategory.getCategory().getId(), placeCategory.getCategory().getName());
-        }
-    }
 }
-
-
