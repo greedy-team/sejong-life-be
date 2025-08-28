@@ -47,6 +47,7 @@ public class PlaceControllerTest {
     private TagRepository tagRepository;
 
     private Place detailPlace;
+    private Place place2, place3, place4, place5, place6; // 테스트에서 사용하기 위해 필드로 선언
 
     @BeforeEach
     void setUp() {
@@ -67,11 +68,11 @@ public class PlaceControllerTest {
         Place place1 = createPlaceInDetail("식당1", "주소1", "url1", category1, List.of(tag1));
         detailPlace = placeRepository.save(place1);
 
-        Place place2 = createPlace("식당2", "주소2", "url2", category1, List.of(tag2));
-        Place place3 = createPlace("식당3", "주소3", "url3", category1, List.of(tag1, tag2));
-        Place place4 = createPlace("카페1", "주소4", "url4", category2, List.of(tag3));
-        Place place5 = createPlace("카페2", "주소5", "url5", category2, List.of(tag4));
-        Place place6 = createPlace("카페3", "주소6", "url6", category2, List.of(tag3, tag4));
+        place2 = createPlace("식당2", "주소2", "url2", category1, List.of(tag2));
+        place3 = createPlace("식당3", "주소3", "url3", category1, List.of(tag1, tag2));
+        place4 = createPlace("카페1", "주소4", "url4", category2, List.of(tag3));
+        place5 = createPlace("카페2", "주소5", "url5", category2, List.of(tag4));
+        place6 = createPlace("카페3", "주소6", "url6", category2, List.of(tag3, tag4));
 
         placeRepository.saveAll(List.of(place2, place3, place4, place5, place6));
     }
@@ -270,5 +271,31 @@ public class PlaceControllerTest {
 
         Place updatedPlace = placeRepository.findById(placeId).get();
         assertThat(updatedPlace.getViewCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("주간 핫플레이스 조회 시 weeklyViewCount가 높은 순으로 정렬되어 반환된다")
+    void getHotPlaces_success() throws Exception {
+        // given: 테스트를 위해 특정 장소들의 weeklyViewCount 값을 임의로 설정
+        // (엔티티에 protected setter나 테스트용 메서드가 있다고 가정)
+        detailPlace.setWeeklyViewCount(100L); // 식당1
+        place2.setWeeklyViewCount(50L);      // 식당2
+        place6.setWeeklyViewCount(200L);     // 카페3
+        placeRepository.saveAll(List.of(detailPlace, place2, place6));
+
+        // when & then
+        mockMvc.perform(get("/api/places/hot") // 핫플레이스 조회 API 엔드포인트
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("주간 핫플레이스 조회 성공"))
+                .andExpect(jsonPath("$.data.length()").value(3))
+                // 정렬 순서 및 weeklyViewCount 값 동시 검증
+                .andExpect(jsonPath("$.data[0].name").value("카페3"))
+                .andExpect(jsonPath("$.data[0].weeklyViewCount").value(200)) // <-- 추가된 검증
+                .andExpect(jsonPath("$.data[1].name").value("식당1"))
+                .andExpect(jsonPath("$.data[1].weeklyViewCount").value(100)) // <-- 추가된 검증
+                .andExpect(jsonPath("$.data[2].name").value("식당2"))
+                .andExpect(jsonPath("$.data[2].weeklyViewCount").value(50))   // <-- 추가된 검증
+                .andDo(print());
     }
 }
