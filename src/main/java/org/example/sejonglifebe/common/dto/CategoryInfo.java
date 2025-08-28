@@ -1,4 +1,4 @@
-package org.example.sejonglifebe.place.dto;
+package org.example.sejonglifebe.common.dto;
 
 import org.example.sejonglifebe.place.entity.PlaceCategory;
 

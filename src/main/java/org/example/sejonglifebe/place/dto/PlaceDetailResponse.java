@@ -2,6 +2,8 @@ package org.example.sejonglifebe.place.dto;
 
 import java.util.List;
 
+import org.example.sejonglifebe.common.dto.CategoryInfo;
+import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
 
