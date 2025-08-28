@@ -79,10 +79,10 @@ public class PlaceService {
     }
 
     public void increaseViewCount(Long placeId, HttpServletRequest request, HttpServletResponse response) {
-        Optional<Cookie> placeViewCookie = (request.getCookies() == null) ? Optional.empty() :
-                Arrays.stream(request.getCookies())
+        Optional<Cookie> placeViewCookie = Optional.ofNullable(request.getCookies())
+                .flatMap(cookies -> Arrays.stream(cookies)
                         .filter(cookie -> cookie.getName().equals("placeView"))
-                        .findFirst();
+                        .findFirst());
 
         boolean shouldIncreaseViewCount = placeViewCookie
                 .map(cookie -> !cookie.getValue().contains("[" + placeId + "]"))
