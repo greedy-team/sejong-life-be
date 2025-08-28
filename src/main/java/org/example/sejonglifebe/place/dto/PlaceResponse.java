@@ -20,10 +20,10 @@ public record PlaceResponse(
                 place.getName(),
                 place.getThumbnailImage(),
                 place.getPlaceCategories().stream()
-                        .map(CategoryInfo::from)
+                        .map(pc -> new CategoryInfo(pc.getCategory().getId(), pc.getCategory().getName()))
                         .toList(),
                 place.getPlaceTags().stream()
-                        .map(TagInfo::from)
+                        .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
                         .toList()
         );
     }

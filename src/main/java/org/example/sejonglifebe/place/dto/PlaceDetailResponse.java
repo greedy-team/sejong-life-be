@@ -21,13 +21,13 @@ public record PlaceDetailResponse(
                 place.getId(),
                 place.getName(),
                 place.getPlaceCategories().stream()
-                        .map(CategoryInfo::from)
+                        .map(pc -> new CategoryInfo(pc.getCategory().getId(), pc.getCategory().getName()))
                         .toList(),
                 place.getPlaceImages().stream()
                         .map(PlaceImageInfo::from)
                         .toList(),
                 place.getPlaceTags().stream()
-                        .map(TagInfo::from)
+                        .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
                         .toList(),
                 place.getMapLinks()
         );
