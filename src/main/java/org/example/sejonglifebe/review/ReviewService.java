@@ -1,8 +1,8 @@
 package org.example.sejonglifebe.review;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.exception.ErrorCode;
@@ -32,15 +32,25 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final ReviewRepository reviewRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
 
-    public List<ReviewResponse> getReviewsByPlaceId(Long placeId) {
+    public List<ReviewResponse> getReviewsByPlaceId(Long placeId, AuthUser authUser) {
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
         List<Review> reviews = reviewRepository.findByPlace(place);
+        Set<Long> likedReviewIds = (authUser == null)
+                ? Collections.emptySet()
+                : reviewLikeRepository.findByUserStudentId(authUser.studentId())
+                .stream()
+                .map(like -> like.getReview().getId())
+                .collect(Collectors.toSet());
 
         return reviews.stream()
-                .map(ReviewResponse::from)
+                .map(review -> {
+                    boolean liked = likedReviewIds.contains(review.getId());
+                    return ReviewResponse.from(review, liked);
+                })
                 .toList();
     }
 

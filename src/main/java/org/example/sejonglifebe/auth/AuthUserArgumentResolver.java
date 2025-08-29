@@ -28,7 +28,16 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null) {
+            return null;
+        }
+
         String token = jwtTokenExtractor.extractToken(authHeader);
-        return jwtTokenProvider.validateAndGetAuthUser(token);
+
+        try {
+            return jwtTokenProvider.validateAndGetAuthUser(token);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
