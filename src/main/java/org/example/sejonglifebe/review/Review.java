@@ -90,6 +90,7 @@ public class Review {
                 .content(content)
                 .build();
 
+        place.addReview(review);
         user.addReview(review);
         return review;
     }

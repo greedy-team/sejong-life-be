@@ -10,6 +10,8 @@ public record PlaceResponse(
         Long placeId,
         String placeName,
         String thumbnailImageUrl,
+        Long viewCount,
+        Long reviewCount,
         List<CategoryInfo> categories,
         List<TagInfo> tags
 ) {
@@ -19,6 +21,8 @@ public record PlaceResponse(
                 place.getId(),
                 place.getName(),
                 place.getThumbnailImage(),
+                place.getViewCount(),
+                (long) place.getReviews().size(),
                 place.getPlaceCategories().stream()
                         .map(pc -> new CategoryInfo(pc.getCategory().getId(), pc.getCategory().getName()))
                         .toList(),
