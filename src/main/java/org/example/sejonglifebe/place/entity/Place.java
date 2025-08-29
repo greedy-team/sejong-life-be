@@ -16,6 +16,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.util.MapLinkConverter;
 import org.example.sejonglifebe.tag.Tag;
@@ -41,6 +42,16 @@ public class Place {
     @Column(columnDefinition = "text")
     private MapLinks mapLinks;
 
+    @Column(unique = true)
+    private String mainImageUrl;
+
+    @Column(nullable = false)
+    private Long viewCount;
+
+    @Setter
+    @Column(nullable = false)
+    private Long weeklyViewCount;
+
     @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
@@ -57,6 +68,8 @@ public class Place {
         this.name = name;
         this.address = address;
         this.mapLinks = mapLinks;
+        this.viewCount = 0L;
+        this.weeklyViewCount = 0L;
     }
 
     public void addImage(String imageUrl, Boolean isThumbnail) {

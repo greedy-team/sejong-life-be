@@ -13,6 +13,7 @@ public record PlaceDetailResponse(
         List<CategoryInfo> categories,
         List<PlaceImageInfo> images,
         List<TagInfo> tags,
+        Long viewCount,
         MapLinks mapLinks
 ) {
 
@@ -29,6 +30,7 @@ public record PlaceDetailResponse(
                 place.getPlaceTags().stream()
                         .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
                         .toList(),
+                place.getViewCount(),
                 place.getMapLinks()
         );
     }
