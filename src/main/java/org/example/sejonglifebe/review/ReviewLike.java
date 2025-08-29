@@ -1,4 +1,4 @@
-package org.example.sejonglifebe.place.entity;
+package org.example.sejonglifebe.review;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,37 +13,33 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.example.sejonglifebe.tag.Tag;
+import org.example.sejonglifebe.user.User;
 
 @Getter
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"place_id", "tag_id"}))
-public class PlaceTag {
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"review_id", "user_id"}))
+public class ReviewLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "place_tag_id")
+    @Column(name = "review_like_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "place_id", nullable = false)
-    private Place place;
+    @JoinColumn(name = "review_id")
+    private Review review;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tag_id", nullable = false)
-    private Tag tag;
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    private PlaceTag(Place place, Tag tag) {
-        this.place = place;
-        this.tag = tag;
+    private ReviewLike(Review review, User user) {
+        this.review = review;
+        this.user = user;
     }
 
-    public static PlaceTag createPlaceTag(Place place, Tag tag) {
-        PlaceTag placeTag = new PlaceTag(place, tag);
-        place.getPlaceTags().add(placeTag);
-        tag.getPlaceTags().add(placeTag);
-
-        return placeTag;
+    public static ReviewLike createReviewLike(Review review, User user) {
+        return new ReviewLike(review, user);
     }
 }

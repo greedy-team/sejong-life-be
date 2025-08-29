@@ -1,7 +1,5 @@
 package org.example.sejonglifebe.review;
 
-import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,17 +58,20 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id", nullable = false)
-    Place place;
+    private Place place;
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.PERSIST)
-    List<PlaceImage> placeImages = new ArrayList<>();
+    private List<PlaceImage> placeImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<ReviewTag> reviewTags = new ArrayList<>();
+    private List<ReviewTag> reviewTags = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewLike> reviewLikes = new ArrayList<>();
 
     @Builder
     private Review(Place place, User user, int rating, String content) {
@@ -101,5 +102,14 @@ public class Review {
     public void addTag(Tag tag) {
         ReviewTag reviewTag = ReviewTag.createReviewTag(this, tag);
         reviewTags.add(reviewTag);
+    }
+
+    public void addLike(User user) {
+        ReviewLike reviewLike = ReviewLike.createReviewLike(this, user);
+        reviewLikes.add(reviewLike);
+    }
+
+    public void deleteReviewLike(ReviewLike reviewLike) {
+        reviewLikes.remove(reviewLike);
     }
 }

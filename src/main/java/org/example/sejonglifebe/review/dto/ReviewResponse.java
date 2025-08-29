@@ -15,12 +15,13 @@ public record ReviewResponse(
         String content,
         Long likeCount,
         String createdAt,
+        boolean liked,
         List<String> images,
         List<TagInfo> tags
 
 ) {
 
-    public static ReviewResponse from(Review review) {
+    public static ReviewResponse from(Review review,boolean liked) {
         return new ReviewResponse(
                 review.getId(),
                 review.getRating(),
@@ -30,6 +31,7 @@ public record ReviewResponse(
                 review.getContent(),
                 review.getLikeCount(),
                 review.getCreatedAt().toString(),
+                liked,
                 review.getPlaceImages().stream()
                         .map(PlaceImage::getUrl)
                         .toList(),
