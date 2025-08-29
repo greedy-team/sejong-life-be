@@ -3,7 +3,6 @@ package org.example.sejonglifebe.roulette.dto;
 import org.example.sejonglifebe.place.entity.Place;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public record RouletteResponse(List<RoulettePlaceDto> places) {
 
