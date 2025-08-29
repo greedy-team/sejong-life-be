@@ -1,33 +1,35 @@
-package org.example.sejonglifebe.place;
+package org.example.sejonglifebe.place.dto;
 
 import java.util.List;
 
+import org.example.sejonglifebe.common.dto.CategoryInfo;
+import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
-import org.example.sejonglifebe.place.entity.PlaceImage;
 
 public record PlaceDetailResponse(
         Long id,
         String name,
+        List<CategoryInfo> categories,
+        List<PlaceImageInfo> images,
+        List<TagInfo> tags,
         Long viewCount,
-        List<String> category,
-        List<String> imageUrls,
-        List<String> tags,
         MapLinks mapLinks
 ) {
+
     public static PlaceDetailResponse from(Place place) {
         return new PlaceDetailResponse(
                 place.getId(),
                 place.getName(),
                 place.getViewCount(),
                 place.getPlaceCategories().stream()
-                        .map(placeCategory -> placeCategory.getCategory().getName())
+                        .map(pc -> new CategoryInfo(pc.getCategory().getId(), pc.getCategory().getName()))
                         .toList(),
                 place.getPlaceImages().stream()
-                        .map(PlaceImage::getUrl)
+                        .map(PlaceImageInfo::from)
                         .toList(),
                 place.getPlaceTags().stream()
-                        .map(placeTag -> placeTag.getTag().getName())
+                        .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
                         .toList(),
                 place.getMapLinks()
         );

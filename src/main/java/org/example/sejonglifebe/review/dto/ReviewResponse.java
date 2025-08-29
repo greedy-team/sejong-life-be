@@ -1,9 +1,10 @@
 package org.example.sejonglifebe.review.dto;
 
 import java.util.List;
+
+import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.example.sejonglifebe.review.Review;
-import org.example.sejonglifebe.review.ReviewTag;
 
 public record ReviewResponse(
         Long reviewId,
@@ -33,20 +34,8 @@ public record ReviewResponse(
                         .map(PlaceImage::getUrl)
                         .toList(),
                 review.getReviewTags().stream()
-                        .map(TagInfo::from)
+                        .map(rt -> new TagInfo(rt.getTag().getId(), rt.getTag().getName()))
                         .toList()
         );
-    }
-
-    public record TagInfo(
-            Long tagId,
-            String tagName
-    ) {
-        public static TagInfo from(ReviewTag reviewTag) {
-            return new TagInfo(
-                    reviewTag.getTag().getId(),
-                    reviewTag.getTag().getName()
-            );
-        }
     }
 }

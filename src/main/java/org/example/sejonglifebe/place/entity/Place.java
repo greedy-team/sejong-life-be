@@ -16,7 +16,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.util.MapLinkConverter;
 import org.example.sejonglifebe.tag.Tag;
@@ -96,7 +95,7 @@ public class Place {
         }
     }
 
-    public String getThumbnailImageUrl() {
+    public String getThumbnailImage() {
         if (placeImages == null || placeImages.isEmpty()) {
             return null; // 이미지가 아예 없는 경우
         }
@@ -107,5 +106,4 @@ public class Place {
                 .map(PlaceImage::getUrl) // 그 이미지의 URL을 반환
                 .orElse(placeImages.get(0).getUrl()); // 만약 대표 이미지가 없다면, 그냥 첫 번째 이미지 반환
     }
-
 }
