@@ -21,6 +21,7 @@ import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -80,10 +81,7 @@ public class PlaceService {
     }
 
     public void increaseViewCount(Long placeId, HttpServletRequest request, HttpServletResponse response) {
-        Optional<Cookie> placeViewCookie = Optional.ofNullable(request.getCookies())
-                .flatMap(cookies -> Arrays.stream(cookies)
-                        .filter(cookie -> cookie.getName().equals("placeView"))
-                        .findFirst());
+        Optional<Cookie> placeViewCookie = extractCookie(request);
 
         boolean shouldIncreaseViewCount = placeViewCookie
                 .map(cookie -> !cookie.getValue().contains("[" + placeId + "]"))
@@ -101,6 +99,14 @@ public class PlaceService {
 
             response.addCookie(updatedCookie);
         }
+    }
+
+    private static Optional<Cookie> extractCookie(HttpServletRequest request) {
+        Optional<Cookie> placeViewCookie = Optional.ofNullable(request.getCookies())
+                .flatMap(cookies -> Arrays.stream(cookies)
+                        .filter(cookie -> cookie.getName().equals("placeView"))
+                        .findFirst());
+        return placeViewCookie;
     }
 
     public List<HotPlaceResponse> getWeeklyHotPlaces() {
