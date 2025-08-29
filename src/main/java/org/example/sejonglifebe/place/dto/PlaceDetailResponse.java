@@ -21,7 +21,6 @@ public record PlaceDetailResponse(
         return new PlaceDetailResponse(
                 place.getId(),
                 place.getName(),
-                place.getViewCount(),
                 place.getPlaceCategories().stream()
                         .map(pc -> new CategoryInfo(pc.getCategory().getId(), pc.getCategory().getName()))
                         .toList(),
@@ -31,6 +30,7 @@ public record PlaceDetailResponse(
                 place.getPlaceTags().stream()
                         .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
                         .toList(),
+                place.getViewCount(),
                 place.getMapLinks()
         );
     }

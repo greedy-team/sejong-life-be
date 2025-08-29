@@ -49,7 +49,7 @@ public class PlaceControllerTest {
     private TagRepository tagRepository;
 
     private Place detailPlace;
-    private Place place2, place3, place4, place5, place6; // 테스트에서 사용하기 위해 필드로 선언
+    private Place place1, place2, place3, place4, place5, place6; // 테스트에서 사용하기 위해 필드로 선언
 
     @BeforeEach
     void setUp() {
@@ -67,12 +67,12 @@ public class PlaceControllerTest {
         Tag tag4 = new Tag("콘센트 있는");
         tagRepository.saveAll(List.of(tag1, tag2, tag3, tag4));
 
-        Place place1 = createPlace("식당1", "주소1", category1, List.of(tag1), new MapLinks("naver.com", "kakao.com", "google.com"), mainImg("image1.jpg"), img("image2.jpg"));
-        Place place2 = createPlace("식당2", "주소2", category1, List.of(tag2), new MapLinks("n2.com", "k2.com", "g2.com"));
-        Place place3 = createPlace("식당3", "주소3", category1, List.of(tag1, tag2), null);
-        Place place4 = createPlace("카페1", "주소4", category2, List.of(tag3), new MapLinks("n4.com", "k4.com", "g4.com"), mainImg("image4.jpg"));
-        Place place5 = createPlace("카페2", "주소5", category2, List.of(tag4), null);
-        Place place6 = createPlace("카페3", "주소6", category2, List.of(tag3, tag4), null, mainImg("image6.jpg"));
+        place1 = createPlace("식당1", "주소1", category1, List.of(tag1), new MapLinks("naver.com", "kakao.com", "google.com"), mainImg("image1.jpg"), img("image2.jpg"));
+        place2 = createPlace("식당2", "주소2", category1, List.of(tag2), new MapLinks("n2.com", "k2.com", "g2.com"));
+        place3 = createPlace("식당3", "주소3", category1, List.of(tag1, tag2), null);
+        place4 = createPlace("카페1", "주소4", category2, List.of(tag3), new MapLinks("n4.com", "k4.com", "g4.com"), mainImg("image4.jpg"));
+        place5 = createPlace("카페2", "주소5", category2, List.of(tag4), null);
+        place6 = createPlace("카페3", "주소6", category2, List.of(tag3, tag4), null, mainImg("image6.jpg"));
         placeRepository.saveAll(List.of(place1, place2, place3, place4, place5, place6));
 
         detailPlace = place1;
