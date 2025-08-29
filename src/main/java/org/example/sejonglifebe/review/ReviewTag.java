@@ -19,11 +19,11 @@ public class ReviewTag {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_id")
-    Review review;
+    private Review review;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id")
-    Tag tag;
+    private Tag tag;
 
     private ReviewTag(Review review, Tag tag) {
         this.review = review;
