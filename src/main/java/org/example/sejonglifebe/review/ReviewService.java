@@ -84,6 +84,32 @@ public class ReviewService {
         checkAndAddTagToPlace(tags, place);
     }
 
+    @Transactional
+    public void createLike(Long reviewId, AuthUser authUser) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
+        User user = userRepository.findByStudentId(authUser.studentId())
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
+
+        if (reviewLikeRepository.existsByReviewAndUser(review, user)) {
+            throw new SejongLifeException(ErrorCode.DUPLICATE_LIKE);
+        }
+
+        review.addLike(user);
+        reviewRepository.incrementLikeCount(reviewId);
+    }
+
+    @Transactional
+    public void deleteLike(Long reviewId, AuthUser authUser) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
+        ReviewLike reviewLike = reviewLikeRepository.findByReviewIdAndUserStudentId(reviewId, authUser.studentId())
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_LIKE_NOT_FOUND));
+
+        review.deleteReviewLike(reviewLike);
+        reviewRepository.decrementLikeCount(reviewId);
+    }
+
     private void checkAndAddTagToPlace(List<Tag> tags, Place place) {
         for (Tag tag : tags) {
             long count = reviewRepository.countByPlaceAndTag(place, tag);

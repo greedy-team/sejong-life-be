@@ -72,6 +72,9 @@ public class Review {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewLike> reviewLikes = new ArrayList<>();
+
     @Builder
     private Review(Place place, User user, int rating, String content) {
         this.place = place;
@@ -101,5 +104,14 @@ public class Review {
     public void addTag(Tag tag) {
         ReviewTag reviewTag = ReviewTag.createReviewTag(this, tag);
         reviewTags.add(reviewTag);
+    }
+
+    public void addLike(User user) {
+        ReviewLike reviewLike = ReviewLike.createReviewLike(this, user);
+        reviewLikes.add(reviewLike);
+    }
+
+    public void deleteReviewLike(ReviewLike reviewLike) {
+        reviewLikes.remove(reviewLike);
     }
 }

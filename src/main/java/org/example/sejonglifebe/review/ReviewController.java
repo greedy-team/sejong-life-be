@@ -47,4 +47,18 @@ public class ReviewController {
         reviewService.createReview(placeId, reviewRequest, authUser);
         return ApiResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
     }
+
+    @LoginRequired
+    @PostMapping("/{reviewId}/likes")
+    public ResponseEntity<ApiResponse<Void>> createlike(@PathVariable("reviewId") Long reviewId, AuthUser authUser) {
+        reviewService.createLike(reviewId, authUser);
+        return ApiResponse.of(HttpStatus.OK, "리뷰 좋아요 성공", null);
+    }
+
+    @LoginRequired
+    @DeleteMapping("/{reviewId}/likes")
+    public ResponseEntity<ApiResponse<Void>> deleteLike(@PathVariable("reviewId") Long reviewId, AuthUser authUser) {
+        reviewService.deleteLike(reviewId, authUser);
+        return ApiResponse.of(HttpStatus.OK, "리뷰 좋아요 취소 성공", null);
+    }
 }
