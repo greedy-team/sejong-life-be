@@ -31,8 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -186,6 +185,100 @@ class ReviewControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("리뷰 좋아요 생성, 삭제 성공")
+    void likeAndUnlikeReview_success() throws Exception {
+        // given
+        User user = userRepository.save(User.builder().studentId("21011111").nickname("닉네임").build());
+        Place place = createPlaceFixture("맛집", "주소", "url", categoryRepository.save(new Category("식당")), List.of());
+        placeRepository.save(place);
+        Review review = createReview(place, user, "맛있어요", 5, List.of(), List.of());
+        reviewRepository.save(review);
+
+        // when
+        mockMvc.perform(post("/api/places/{placeId}/reviews/{reviewId}/likes", place.getId(), review.getId())
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("리뷰 좋아요 성공"));
+
+        // then
+        Review savedReview = reviewRepository.findById(review.getId()).orElseThrow();
+        assertThat(savedReview.getReviewLikes()).hasSize(1);
+        assertThat(savedReview.getLikeCount()).isEqualTo(1);
+
+        // when
+        mockMvc.perform(delete("/api/places/{placeId}/reviews/{reviewId}/likes", place.getId(), review.getId())
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("리뷰 좋아요 취소 성공"));
+
+        // then
+        savedReview = reviewRepository.findById(review.getId()).orElseThrow();
+        assertThat(savedReview.getReviewLikes()).isEmpty();
+        assertThat(savedReview.getLikeCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("리뷰 목록 조회시 해당 사용자가 좋아요 누른 리뷰는 liked=true 로 표시된다")
+    void getReviews_marksLikedTrue_whenUserLiked() throws Exception {
+        // given
+        User user = userRepository.save(User.builder()
+                .studentId("21011111").nickname("로그인유저").build());
+
+        Category category = categoryRepository.save(new Category("식당"));
+        Place place = createPlaceFixture("한식집", "세종대", "url", category, List.of());
+        placeRepository.save(place);
+
+        User writer = userRepository.save(User.builder()
+                .studentId("21011112").nickname("작성자").build());
+        Review review = createReview(place, writer, "좋아요눌림", 5, List.of(), List.of());
+        reviewRepository.save(review);
+
+        // when
+        mockMvc.perform(post("/api/places/{placeId}/reviews/{reviewId}/likes", place.getId(), review.getId())
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk());
+
+        // then: 목록 조회시 liked=true 로 표시
+        mockMvc.perform(get("/api/places/{placeId}/reviews", place.getId())
+                        .header("Authorization", "Bearer test-token")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("리뷰 목록 조회 성공"))
+                .andExpect(jsonPath("$.data", hasSize(1)))
+                .andExpect(jsonPath("$.data[0].reviewId").value(review.getId()))
+                .andExpect(jsonPath("$.data[0].liked").value(true))
+                .andExpect(jsonPath("$.data[0].likeCount").value(1));
+    }
+
+    @Test
+    @DisplayName("리뷰 목록 조회시 해당 사용자가 좋아요 누르지 않은 리뷰는 liked=false 로 표시된다")
+    void getReviews_marksLikedFalse_whenUserNotLiked() throws Exception {
+        // given
+        User user = userRepository.save(User.builder()
+                .studentId("21011111").nickname("닉네임").build());
+
+        Category category = categoryRepository.save(new Category("식당"));
+        Place place = createPlaceFixture("분식집", "세종대", "url", category, List.of());
+        placeRepository.save(place);
+
+        User writer = userRepository.save(User.builder()
+                .studentId("21011112").nickname("작성자").build());
+        Review review = createReview(place, writer, "좋아요안눌림", 4, List.of(), List.of());
+        reviewRepository.save(review);
+
+        // then
+        mockMvc.perform(get("/api/places/{placeId}/reviews", place.getId())
+                        .header("Authorization", "Bearer test-token")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("리뷰 목록 조회 성공"))
+                .andExpect(jsonPath("$.data", hasSize(1)))
+                .andExpect(jsonPath("$.data[0].reviewId").value(review.getId()))
+                .andExpect(jsonPath("$.data[0].liked").value(false))
+                .andExpect(jsonPath("$.data[0].likeCount").value(0));
     }
 
     private Place setupReviewListData() {
