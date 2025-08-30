@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.util.MapLinkConverter;
+import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.tag.Tag;
 import org.hibernate.annotations.BatchSize;
 
@@ -63,6 +64,9 @@ public class Place {
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceCategory> placeCategories = new ArrayList<>();
 
+    @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+
     @Builder
     public Place(String name, String address, MapLinks mapLinks, String mainImageUrl) {
         this.name = name;
@@ -94,6 +98,10 @@ public class Place {
         if (!exists) {
             PlaceCategory.createPlaceCategory(this, category);
         }
+    }
+
+    public void addReview(Review review) {
+        reviews.add(review);
     }
 
     public String getThumbnailImage() {
