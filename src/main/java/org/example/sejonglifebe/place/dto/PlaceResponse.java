@@ -2,18 +2,20 @@ package org.example.sejonglifebe.place.dto;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.example.sejonglifebe.common.dto.CategoryInfo;
 import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.place.entity.Place;
 
+@Schema(description = "장소 목록 아이템")
 public record PlaceResponse(
-        Long placeId,
-        String placeName,
-        String thumbnailImageUrl,
-        Long viewCount,
-        Long reviewCount,
-        List<CategoryInfo> categories,
-        List<TagInfo> tags
+        @Schema(description = "장소 ID", example = "101") Long placeId,
+        @Schema(description = "장소명", example = "세종 카페 101") String placeName,
+        @Schema(description = "썸네일 이미지 URL", example = "https://.../thumb.jpg") String thumbnailImageUrl,
+        @Schema(description = "조회수", example = "12345") Long viewCount,
+        @Schema(description = "리뷰 수", example = "12") Long reviewCount,
+        @Schema(description = "카테고리 목록") List<CategoryInfo> categories,
+        @Schema(description = "태그 목록") List<TagInfo> tags
 ) {
 
     public static PlaceResponse from(Place place) {
