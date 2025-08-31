@@ -41,4 +41,10 @@ public class TagController {
         List<TagResponse> tagResponses = tagService.getTagsByCategoryId(categoryId);
         return CommonResponse.of(HttpStatus.OK, "전체 태그 목록 조회 성공", tagResponses);
     }
+
+    @GetMapping("/recommended")
+    public ResponseEntity<CommonResponse<List<TagResponse>>> getFrequentlyUsedTagsByCategoryId(@RequestParam(value = "categoryId") Long categoryId) {
+        List<TagResponse> tagResponses = tagService.getFrequentlyUsedTagsByCategoryId(categoryId);
+        return CommonResponse.of(HttpStatus.OK, "추천 태그 목록 조회 성공", tagResponses);
+    }
 }

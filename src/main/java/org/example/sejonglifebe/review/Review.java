@@ -1,17 +1,33 @@
 package org.example.sejonglifebe.review;
 
-import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import lombok.Builder;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.example.sejonglifebe.tag.Tag;
+import org.example.sejonglifebe.user.User;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.EntityListeners;
+
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
@@ -25,7 +41,7 @@ public class Review {
     @Column(name = "review_id")
     private Long id;
 
-    private Double rating;
+    private int rating;
 
     @Column(nullable = false)
     private String content;
@@ -42,41 +58,40 @@ public class Review {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id", nullable = false)
-    Place place;
+    private Place place;
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.PERSIST)
-    List<PlaceImage> placeImages = new ArrayList<>();
+    private List<PlaceImage> placeImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<ReviewTag> reviewTags = new ArrayList<>();
+    private List<ReviewTag> reviewTags = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReviewLike> reviewLikes = new ArrayList<>();
 
     @Builder
-    private Review(Place place, Double rating, String content) {
+    private Review(Place place, User user, int rating, String content) {
         this.place = place;
+        this.user = user;
         this.rating = rating;
         this.content = content;
     }
 
-    public static Review createReview(Place place, Double rating, String content, List<Tag> tags, List<String> imageUrls) {
+    public static Review createReview(Place place, User user, int rating, String content) {
 
         Review review = Review.builder()
                 .place(place)
+                .user(user)
                 .rating(rating)
                 .content(content)
                 .build();
 
-        if (tags != null && !tags.isEmpty()) {
-            for (Tag tag : tags) {
-                review.addTag(tag);
-            }
-        }
-
-        if (imageUrls != null && !imageUrls.isEmpty()) {
-            for (String imageUrl : imageUrls) {
-                review.addImage(place, imageUrl);
-            }
-        }
-
+        place.addReview(review);
+        user.addReview(review);
         return review;
     }
 
@@ -88,5 +103,14 @@ public class Review {
     public void addTag(Tag tag) {
         ReviewTag reviewTag = ReviewTag.createReviewTag(this, tag);
         reviewTags.add(reviewTag);
+    }
+
+    public void addLike(User user) {
+        ReviewLike reviewLike = ReviewLike.createReviewLike(this, user);
+        reviewLikes.add(reviewLike);
+    }
+
+    public void deleteReviewLike(ReviewLike reviewLike) {
+        reviewLikes.remove(reviewLike);
     }
 }

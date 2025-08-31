@@ -16,8 +16,10 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.util.MapLinkConverter;
+import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.tag.Tag;
 import org.hibernate.annotations.BatchSize;
 
@@ -44,6 +46,13 @@ public class Place {
     @Column(unique = true)
     private String mainImageUrl;
 
+    @Column(nullable = false)
+    private Long viewCount;
+
+    @Setter
+    @Column(nullable = false)
+    private Long weeklyViewCount;
+
     @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
@@ -55,11 +64,16 @@ public class Place {
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceCategory> placeCategories = new ArrayList<>();
 
+    @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+
     @Builder
     public Place(String name, String address, MapLinks mapLinks, String mainImageUrl) {
         this.name = name;
         this.address = address;
         this.mapLinks = mapLinks;
+        this.viewCount = 0L;
+        this.weeklyViewCount = 0L;
     }
 
     public void addImage(String imageUrl, Boolean isThumbnail) {
@@ -71,14 +85,26 @@ public class Place {
     }
 
     public void addTag(Tag tag) {
-        PlaceTag.createPlaceTag(this, tag);
+        boolean exists = placeTags.stream()
+                .anyMatch(placeTag -> placeTag.getTag().equals(tag));
+        if (!exists) {
+            PlaceTag.createPlaceTag(this, tag);
+        }
     }
 
     public void addCategory(Category category) {
-        PlaceCategory.createPlaceCategory(this, category);
+        boolean exists = placeCategories.stream()
+                .anyMatch(placeCategory -> placeCategory.getCategory().equals(category));
+        if (!exists) {
+            PlaceCategory.createPlaceCategory(this, category);
+        }
     }
 
-    public String getThumbnailImageUrl() {
+    public void addReview(Review review) {
+        reviews.add(review);
+    }
+
+    public String getThumbnailImage() {
         if (placeImages == null || placeImages.isEmpty()) {
             return null; // 이미지가 아예 없는 경우
         }
