@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,11 @@ import java.util.List;
 @ConfigurationProperties(prefix = "swagger")
 public class SwaggerConfig {
 
-    private final List<Server> servers = new ArrayList<>();
+    private final List<Server> servers;
+
+    public SwaggerConfig() {
+        this.servers = new ArrayList<>();
+    }
 
     @Bean
     public OpenAPI customOpenAPI() {
