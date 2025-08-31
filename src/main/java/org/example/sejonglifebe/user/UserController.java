@@ -3,7 +3,7 @@ package org.example.sejonglifebe.user;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
-import org.example.sejonglifebe.common.dto.ApiResponse;
+import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
 import org.springframework.http.HttpStatus;
@@ -24,7 +24,7 @@ public class UserController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<String>> signup(
+    public ResponseEntity<CommonResponse<String>> signup(
             @RequestHeader("Authorization") String signUpToken,
             @Valid @RequestBody SignUpRequest request) {
 
@@ -37,7 +37,7 @@ public class UserController {
         }
 
         String accessToken = userService.createUser(request);
-        return ApiResponse.of(HttpStatus.CREATED, "회원가입 및 로그인 성공", accessToken);
+        return CommonResponse.of(HttpStatus.CREATED, "회원가입 및 로그인 성공", accessToken);
     }
 
     private String resolveToken(String bearerToken) {

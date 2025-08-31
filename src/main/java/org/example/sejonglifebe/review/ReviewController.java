@@ -6,7 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.auth.LoginRequired;
-import org.example.sejonglifebe.common.dto.ApiResponse;
+import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.example.sejonglifebe.review.dto.ReviewResponse;
 import org.example.sejonglifebe.review.dto.ReviewSummaryResponse;
@@ -30,40 +30,39 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviews(
+    public ResponseEntity<CommonResponse<List<ReviewResponse>>> getReviews(
             @PathVariable("placeId") Long placeId,
             AuthUser authUser) {
-        return ApiResponse.of(HttpStatus.OK, "리뷰 목록 조회 성공", reviewService.getReviewsByPlaceId(placeId, authUser));
+        return CommonResponse.of(HttpStatus.OK, "리뷰 목록 조회 성공", reviewService.getReviewsByPlaceId(placeId, authUser));
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<ApiResponse<ReviewSummaryResponse>> getReviewSummary(
+    public ResponseEntity<CommonResponse<ReviewSummaryResponse>> getReviewSummary(
             @PathVariable("placeId") Long placeId) {
-        return ApiResponse.of(HttpStatus.OK, "리뷰 요약 정보 조회 성공", reviewService.getReviewSummaryByPlaceId(placeId));
+        return CommonResponse.of(HttpStatus.OK, "리뷰 요약 정보 조회 성공", reviewService.getReviewSummaryByPlaceId(placeId));
     }
 
     @LoginRequired
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<Void>> createReview(@PathVariable("placeId") Long placeId,
+    public ResponseEntity<CommonResponse<Void>> createReview(@PathVariable("placeId") Long placeId,
                                                           @Valid @RequestPart("review") ReviewRequest reviewRequest,
                                                           @RequestPart(value = "images", required = false) List<MultipartFile> images,
                                                           AuthUser authUser) {
-
         reviewService.createReview(placeId, reviewRequest, authUser);
-        return ApiResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
+        return CommonResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
     }
 
     @LoginRequired
     @PostMapping("/{reviewId}/likes")
-    public ResponseEntity<ApiResponse<Void>> createlike(@PathVariable("reviewId") Long reviewId, AuthUser authUser) {
+    public ResponseEntity<CommonResponse<Void>> createlike(@PathVariable("reviewId") Long reviewId, AuthUser authUser) {
         reviewService.createLike(reviewId, authUser);
-        return ApiResponse.of(HttpStatus.OK, "리뷰 좋아요 성공", null);
+        return CommonResponse.of(HttpStatus.OK, "리뷰 좋아요 성공", null);
     }
 
     @LoginRequired
     @DeleteMapping("/{reviewId}/likes")
-    public ResponseEntity<ApiResponse<Void>> deleteLike(@PathVariable("reviewId") Long reviewId, AuthUser authUser) {
+    public ResponseEntity<CommonResponse<Void>> deleteLike(@PathVariable("reviewId") Long reviewId, AuthUser authUser) {
         reviewService.deleteLike(reviewId, authUser);
-        return ApiResponse.of(HttpStatus.OK, "리뷰 좋아요 취소 성공", null);
+        return CommonResponse.of(HttpStatus.OK, "리뷰 좋아요 취소 성공", null);
     }
 }

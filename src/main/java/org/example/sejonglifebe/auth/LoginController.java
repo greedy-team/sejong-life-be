@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.auth.dto.LoginRequest;
-import org.example.sejonglifebe.common.dto.ApiResponse;
+import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,8 +20,8 @@ public class LoginController {
     private final LoginService loginService;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<CommonResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = loginService.login(request);
-        return ApiResponse.of(HttpStatus.OK, "로그인 성공", response);
+        return CommonResponse.of(HttpStatus.OK, "로그인 성공", response);
     }
 }

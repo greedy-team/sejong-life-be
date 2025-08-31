@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MapLinks {
+
     private String naverMap;
     private String kakaoMap;
     private String googleMap;
