@@ -17,8 +17,12 @@ public class SwaggerConfig {
         localServer.setUrl("http://localhost:8080");
         localServer.setDescription("Local Server");
 
+        Server devServer = new Server();
+        devServer.setUrl("http://3.37.62.143:8081");
+        devServer.setDescription("Development Server");
+
         Server apiServer = new Server();
-        apiServer.setUrl("http://sejong-life.site");
+        apiServer.setUrl("https://sejong-life.site");
         apiServer.setDescription("Production Server");
 
         return new OpenAPI()
