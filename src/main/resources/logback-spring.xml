@@ -1,0 +1,91 @@
+<configuration scan="true" scanPeriod="60 seconds" packagingData="true">
+
+    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="sejong-life-be"/>
+    <property name="LOG_PATH" value="/tmp/sejong-logs"/>
+    <property name="MAX_HISTORY" value="${LOG_MAX_HISTORY:-7}"/>
+    <property name="TOTAL_SIZE_CAP" value="${LOG_TOTAL_CAP:-1GB}"/>
+    <property name="MAX_FILE_SIZE" value="${LOG_MAX_FILE_SIZE:-50MB}"/>
+
+    <!-- 콘솔(JSON) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp><pattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</pattern><timeZone>Asia/Seoul</timeZone></timestamp>
+                <logLevel/>
+                <mdc>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>uri</includeMdcKeyName>
+                    <includeMdcKeyName>statuscode</includeMdcKeyName>
+                </mdc>
+                <message/>
+                <provider class="net.logstash.logback.composite.GlobalCustomFieldsJsonProvider">
+                    <customFields>{"app":"${APP_NAME}","env":"${SPRING_PROFILES_ACTIVE:-local}"}</customFields>
+                </provider>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- INFO 파일 -->
+    <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/info.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <logLevel>INFO</logLevel><onMatch>ACCEPT</onMatch><onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp><pattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</pattern><timeZone>Asia/Seoul</timeZone></timestamp>
+                <logLevel/>
+                <mdc>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>uri</includeMdcKeyName>
+                    <includeMdcKeyName>statuscode</includeMdcKeyName>
+                </mdc>
+                <message/>
+                <provider class="net.logstash.logback.composite.GlobalCustomFieldsJsonProvider">
+                    <customFields>{"app":"${APP_NAME}","env":"${SPRING_PROFILES_ACTIVE:-local}"}</customFields>
+                </provider>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- ERROR 파일 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <logLevel>ERROR</logLevel><onMatch>ACCEPT</onMatch><onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp><pattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</pattern><timeZone>Asia/Seoul</timeZone></timestamp>
+                <logLevel/>
+                <mdc>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
+                    <includeMdcKeyName>uri</includeMdcKeyName>
+                </mdc>
+                <message/>
+                <stackTrace><fieldName>stacktrace</fieldName></stackTrace>
+                <provider class="net.logstash.logback.composite.GlobalCustomFieldsJsonProvider">
+                    <customFields>{"app":"${APP_NAME}","env":"${SPRING_PROFILES_ACTIVE:-local}"}</customFields>
+                </provider>
+            </providers>
+        </encoder>
+    </appender>
+
+    <root logLevel="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="INFO_FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+</configuration>
