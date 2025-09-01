@@ -1,16 +1,19 @@
 package org.example.sejonglifebe.place.dto;
 
 import java.util.List;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.entity.PlaceCategory;
 import org.example.sejonglifebe.place.entity.PlaceTag;
 
+@Schema(description = "주간 핫플레이스 요약")
 public record HotPlaceResponse(
-        Long placeId,
-        String placeName,
-        String mainImageUrl,
-        List<CategoryInfo> categories,
-        List<TagInfo> tags
+        @Schema(description = "장소 ID", example = "3") Long placeId,
+        @Schema(description = "장소명", example = "세종 카페 101") String placeName,
+        @Schema(description = "대표 이미지 URL", example = "https://.../main.jpg") String mainImageUrl,
+        @Schema(description = "카테고리 목록") List<CategoryInfo> categories,
+        @Schema(description = "태그 목록") List<TagInfo> tags
 ) {
 
     public static HotPlaceResponse from(Place place) {

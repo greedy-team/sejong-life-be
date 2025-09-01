@@ -1,5 +1,7 @@
 package org.example.sejonglifebe.place;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +24,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/places")
+@Tag(name = "Place", description = "장소")
 public class PlaceController {
 
     private final PlaceService placeService;
 
+    @Operation(summary = "장소 목록 조회")
     @GetMapping
     public ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
             @RequestParam(value = "tags", required = false) List<String> tags,
@@ -35,16 +39,19 @@ public class PlaceController {
         return CommonResponse.of(HttpStatus.OK, "장소 목록 조회 성공", response);
     }
 
+    @Operation(summary = "주간 핫플레이스 조회")
     @GetMapping("/hot")
     public ResponseEntity<CommonResponse<List<HotPlaceResponse>>> getHotPlaces() {
         List<HotPlaceResponse> hotPlaceResponses = placeService.getWeeklyHotPlaces();
         return CommonResponse.of(HttpStatus.OK, "핫플레이스 조회 성공", hotPlaceResponses);
     }
 
+    @Operation(summary = "장소 상세 정보 조회")
     @GetMapping("/{placeId}")
-    public ResponseEntity<CommonResponse<PlaceDetailResponse>> getPlaceDetail(@PathVariable Long placeId,
-                                                                           HttpServletRequest request,
-                                                                           HttpServletResponse response) {
+    public ResponseEntity<CommonResponse<PlaceDetailResponse>> getPlaceDetail(
+            @PathVariable Long placeId,
+            HttpServletRequest request,
+            HttpServletResponse response) {
         PlaceDetailResponse placeDetailResponse = placeService.getPlaceDetail(placeId, request, response);
         return CommonResponse.of(HttpStatus.OK, "장소 상세 정보 조회 성공", placeDetailResponse);
     }

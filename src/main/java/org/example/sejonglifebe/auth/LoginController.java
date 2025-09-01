@@ -1,5 +1,7 @@
 package org.example.sejonglifebe.auth;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.dto.LoginResponse;
@@ -15,12 +17,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth", description = "인증/인가")
 public class LoginController {
 
     private final LoginService loginService;
 
+    @Operation(summary = "로그인")
     @PostMapping("/login")
-    public ResponseEntity<CommonResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<CommonResponse<LoginResponse>> login(
+            @Valid @RequestBody LoginRequest request) {
         LoginResponse response = loginService.login(request);
         return CommonResponse.of(HttpStatus.OK, "로그인 성공", response);
     }
