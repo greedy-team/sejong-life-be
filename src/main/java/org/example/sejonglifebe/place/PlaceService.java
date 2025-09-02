@@ -22,6 +22,7 @@ import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -72,6 +73,7 @@ public class PlaceService {
         return placeRepository.findPlacesByTagsAndCategory(category, tags);
     }
 
+    @Transactional
     public PlaceDetailResponse getPlaceDetail(Long placeId, HttpServletRequest request, HttpServletResponse response) {
         increaseViewCount(placeId, request, response);
         Place place = placeRepository.findById(placeId)
