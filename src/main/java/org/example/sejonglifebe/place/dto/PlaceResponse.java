@@ -11,7 +11,7 @@ import org.example.sejonglifebe.place.entity.Place;
 public record PlaceResponse(
         @Schema(description = "장소 ID", example = "101") Long placeId,
         @Schema(description = "장소명", example = "세종 카페 101") String placeName,
-        @Schema(description = "썸네일 이미지 URL", example = "https://.../thumb.jpg") String thumbnailImageUrl,
+        @Schema(description = "썸네일 이미지 URL", example = "https://.../thumb.jpg") String mainImageUrl,
         @Schema(description = "조회수", example = "12345") Long viewCount,
         @Schema(description = "리뷰 수", example = "12") Long reviewCount,
         @Schema(description = "카테고리 목록") List<CategoryInfo> categories,
