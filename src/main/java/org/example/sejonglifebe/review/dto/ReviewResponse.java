@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.example.sejonglifebe.common.dto.TagInfo;
+import org.example.sejonglifebe.place.dto.PlaceImageInfo;
 import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.example.sejonglifebe.review.Review;
 
@@ -18,7 +19,7 @@ public record ReviewResponse(
         @Schema(description = "좋아요 수", example = "7") Long likeCount,
         @Schema(description = "작성일시(ISO 문자열)", example = "2025-08-24T13:45:00") String createdAt,
         @Schema(description = "내가 좋아요 눌렀는지", example = "true") boolean liked,
-        @Schema(description = "이미지 URL 목록") List<String> images,
+        @Schema(description = "이미지 URL 목록") List<PlaceImageInfo> images,
         @Schema(description = "태그 목록") List<TagInfo> tags
 ) {
 
@@ -34,7 +35,7 @@ public record ReviewResponse(
                 review.getCreatedAt().toString(),
                 liked,
                 review.getPlaceImages().stream()
-                        .map(PlaceImage::getUrl)
+                        .map(PlaceImageInfo::from)
                         .toList(),
                 review.getReviewTags().stream()
                         .map(rt -> new TagInfo(rt.getTag().getId(), rt.getTag().getName()))
