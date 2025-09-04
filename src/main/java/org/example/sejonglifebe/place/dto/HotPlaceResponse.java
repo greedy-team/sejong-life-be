@@ -20,7 +20,7 @@ public record HotPlaceResponse(
         return new HotPlaceResponse(
                 place.getId(),
                 place.getName(),
-                place.getMainImageUrl(),
+                place.getThumbnailImage(),
                 place.getPlaceCategories().stream()
                         .map(CategoryInfo::from)
                         .toList(),
