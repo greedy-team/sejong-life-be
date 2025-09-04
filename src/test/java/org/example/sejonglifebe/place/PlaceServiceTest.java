@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +49,7 @@ class PlaceServiceTest {
         @DisplayName("존재하지 않는 태그 이름이 포함되면 TAG_NOT_FOUND 예외를 던진다")
         void getPlaces_tagNotFound() {
             // given
-            PlaceRequest request = new PlaceRequest(List.of("존재X"),"전체");
+            PlaceRequest request = new PlaceRequest(List.of("존재X"), "전체");
 
             given(tagRepository.findByNameIn(anyList()))
                     .willReturn(List.of());
@@ -80,7 +82,7 @@ class PlaceServiceTest {
         void getPlaces_allCategory_withTags() {
             // given
             Tag tag = new Tag("가성비");
-            PlaceRequest request = new PlaceRequest( List.of("가성비"),"전체");
+            PlaceRequest request = new PlaceRequest(List.of("가성비"), "전체");
 
             given(tagRepository.findByNameIn(request.tags())).willReturn(List.of(tag));
 
@@ -95,7 +97,7 @@ class PlaceServiceTest {
         @DisplayName("카테고리 존재하지 않으면 CATEGORY_NOT_FOUND 예외를 던진다")
         void getPlaces_categoryNotFound() {
             // given
-            PlaceRequest request = new PlaceRequest(List.of(),"맛집");
+            PlaceRequest request = new PlaceRequest(List.of(), "맛집");
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.empty());
@@ -111,7 +113,7 @@ class PlaceServiceTest {
         void getPlaces_selectedCategory_noTags() {
             // given
             Category category = new Category("맛집");
-            PlaceRequest request = new PlaceRequest(List.of(),"맛집");
+            PlaceRequest request = new PlaceRequest(List.of(), "맛집");
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
@@ -129,7 +131,7 @@ class PlaceServiceTest {
             // given
             Category category = new Category("맛집");
             Tag tag = new Tag("가성비");
-            PlaceRequest request = new PlaceRequest(List.of("가성비"),"맛집");
+            PlaceRequest request = new PlaceRequest(List.of("가성비"), "맛집");
 
             given(tagRepository.findByNameIn(request.tags())).willReturn(List.of(tag));
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
@@ -151,9 +153,11 @@ class PlaceServiceTest {
         void getPlaceDetail_notFound() {
             // given
             given(placeRepository.findById(1L)).willReturn(Optional.empty());
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            MockHttpServletResponse response = new MockHttpServletResponse();
 
             // then
-            assertThatThrownBy(() -> placeService.getPlaceDetail(1L))
+            assertThatThrownBy(() -> placeService.getPlaceDetail(1L, request, response))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.PLACE_NOT_FOUND.getErrorMessage());
         }
@@ -164,9 +168,11 @@ class PlaceServiceTest {
             // given
             Place place = Place.builder().name("맛집").address("주소").mainImageUrl("url").build();
             given(placeRepository.findById(1L)).willReturn(Optional.of(place));
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            MockHttpServletResponse response = new MockHttpServletResponse();
 
             // when
-            placeService.getPlaceDetail(1L);
+            placeService.getPlaceDetail(1L, request, response);
 
             // then
             verify(placeRepository).findById(1L);
