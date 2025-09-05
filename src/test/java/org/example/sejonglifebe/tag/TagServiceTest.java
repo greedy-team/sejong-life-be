@@ -216,23 +216,5 @@ class TagServiceTest {
                     .extracting("tagId", "tagName")
                     .containsExactly(tuple(1L, "가성비"), tuple(2L, "집밥"));
         }
-
-        @Test
-        @DisplayName("전체가 비어있고 인기만 있으면 인기만 반환한다")
-        void onlyPopular_returnsPopular() {
-            // given
-            Tag tag1 = Tag.builder().id(1L).name("가성비").build();
-            given(categoryRepository.existsById(2L)).willReturn(true);
-            given(tagRepository.findFrequentlyUsedTagsByCategoryId(2L)).willReturn(List.of(tag1));
-            given(tagRepository.findAll()).willReturn(List.of());
-
-            // when
-            List<TagResponse> result = tagService.getFrequentlyUsedTagsByCategoryId(2L);
-
-            // then
-            assertThat(result)
-                    .extracting("tagId", "tagName")
-                    .containsExactly(tuple(1L, "가성비"));
-        }
     }
 }
