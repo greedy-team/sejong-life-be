@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +39,7 @@ public class UserController {
 
         if (!portalInfoFromToken.getStudentId().equals(request.getStudentId()) ||
                 !portalInfoFromToken.getName().equals(request.getName())) {
-            throw new SecurityException("토큰의 정보와 요청된 사용자 정보가 일치하지 않습니다.");
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
         }
 
         String accessToken = userService.createUser(request);
@@ -48,6 +50,6 @@ public class UserController {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-        throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
+        throw new SejongLifeException(ErrorCode.INVALID_AUTH_HEADER);
     }
 }
