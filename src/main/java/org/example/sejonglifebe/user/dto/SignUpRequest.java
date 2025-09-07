@@ -4,10 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
+@Builder
 @NoArgsConstructor
 @Schema(description = "회원가입 요청")
 public class SignUpRequest {
@@ -25,4 +27,10 @@ public class SignUpRequest {
     @Size(min = 2, max = 10, message = "닉네임은 2자 이상 10자 이하로 입력해주세요.")
     @Pattern(regexp = "^[가-힣a-zA-Z0-9]*$", message = "닉네임은 한글, 영문, 숫자만 사용 가능합니다.")
     private String nickname;
+
+    public SignUpRequest(String studentId, String name, String nickname) {
+        this.studentId = studentId;
+        this.name = name;
+        this.nickname = nickname;
+    }
 }
