@@ -31,7 +31,10 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3308/sejong_life_db?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          SPRING_JACKSON_SERIALIZATION_INDENT_OUTPUT: true
           JWT_SECRET: ${{ secrets.JWT_SECRET_KEY }}
+          JWT_EXPIRATION: 3600000
+          SIGNUP-EXPIRATION: 600000
 
       - name: Stop MySQL container
         if: always()
