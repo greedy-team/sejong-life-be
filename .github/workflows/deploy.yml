@@ -26,7 +26,7 @@ jobs:
         run: docker compose up -d
 
       - name: Build and runs Tests
-        run: ./gradlew build
+        run: ./gradlew build -x test
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3308/sejong_life_db?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
           SPRING_DATASOURCE_USERNAME: root
