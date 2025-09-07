@@ -34,7 +34,7 @@ jobs:
           SPRING_JACKSON_SERIALIZATION_INDENT_OUTPUT: true
           JWT_SECRET: ${{ secrets.JWT_SECRET_KEY }}
           JWT_EXPIRATION: 3600000
-          SIGNUP-EXPIRATION: 600000
+          SIGNUP_EXPIRATION: 600000
 
       - name: Stop MySQL container
         if: always()
