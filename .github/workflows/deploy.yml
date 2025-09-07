@@ -23,7 +23,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Start MySQL container
-        run: docker-compose up -d
+        run: docker compose up -d
 
       - name: Build and runs Tests
         run: ./gradlew build
@@ -34,7 +34,7 @@ jobs:
 
       - name: Stop MySQL container
         if: always()
-        run: docker-compose down
+        run: docker compose down
 
       - name: Deploy to EC2
         uses: appleboy/scp-action@master
