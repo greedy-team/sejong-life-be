@@ -51,7 +51,7 @@ class UserServiceTest {
 
         @Test
         @DisplayName("유저가 정상적으로 생성된다")
-        void gcreateUser_success() {
+        void createUser_success() {
             // given
             SignUpRequest request = SignUpRequest.builder()
                     .studentId("21111111")

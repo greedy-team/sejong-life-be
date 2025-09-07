@@ -6,6 +6,7 @@ import org.example.sejonglifebe.common.dto.ErrorResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -99,5 +100,14 @@ public class GlobalExceptionHandler {
                 ErrorCode.INVALID_INPUT_VALUE.getHttpStatus(),
                 ErrorCode.INVALID_INPUT_VALUE.name(),
                 errorMessage);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleMissingHeader(MissingRequestHeaderException ex, HttpServletRequest request) {
+        return ErrorResponse.of(
+                INVALID_AUTH_HEADER.getHttpStatus(),
+                INVALID_AUTH_HEADER.name(),
+                INVALID_AUTH_HEADER.getErrorMessage()
+        );
     }
 }
