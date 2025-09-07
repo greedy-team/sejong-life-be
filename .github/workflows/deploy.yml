@@ -25,21 +25,6 @@ jobs:
       - name: Start MySQL container
         run: docker compose up -d
 
-      - name: Wait for MySQL health check
-        run: |
-          echo "Waiting for MySQL to start..."
-          for i in {1..10}; do
-            if docker compose logs | grep "ready for connections"; then
-              echo "MySQL is ready!"
-              exit 0
-            fi
-            echo "Waiting... (attempt $i)"
-            sleep 10
-          done
-          echo "MySQL did not start in time."
-          docker compose logs
-          exit 1
-
       - name: Build and runs Tests
         run: ./gradlew build
         env:
