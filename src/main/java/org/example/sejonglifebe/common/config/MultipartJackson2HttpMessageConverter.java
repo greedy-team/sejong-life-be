@@ -14,11 +14,11 @@ public class MultipartJackson2HttpMessageConverter extends MappingJackson2HttpMe
 
     public MultipartJackson2HttpMessageConverter(ObjectMapper objectMapper) {
         super(objectMapper);
-        setSupportedMediaTypes(List.of(MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM));
+        setSupportedMediaTypes(List.of(MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM, MediaType.MULTIPART_FORM_DATA));
     }
 
     @Override
     public boolean canRead(Class<?> clazz, @Nullable MediaType mediaType) {
-        return clazz == ReviewRequest.class && super.canRead(clazz, mediaType);
+        return ReviewRequest.class.isAssignableFrom(clazz);
     }
 }
