@@ -1,39 +1,31 @@
 package org.example.sejonglifebe.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.sejonglifebe.review.dto.ReviewRequest;
-import org.springframework.http.HttpInputMessage;
-import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.AbstractHttpMessageConverter;
+import org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import java.lang.reflect.Type;
 
 @Component
-public class MultipartJackson2HttpMessageConverter extends AbstractHttpMessageConverter<Object> {
-
-    private final ObjectMapper objectMapper;
+public class MultipartJackson2HttpMessageConverter extends AbstractJackson2HttpMessageConverter {
 
     public MultipartJackson2HttpMessageConverter(ObjectMapper objectMapper) {
-        super(MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM);
-        this.objectMapper = objectMapper;
+        super(objectMapper, MediaType.APPLICATION_OCTET_STREAM);
     }
 
     @Override
-    protected boolean supports(Class<?> clazz) {
-        return clazz == ReviewRequest.class;
+    public boolean canWrite(Class<?> clazz, MediaType mediaType) {
+        return false;
     }
 
     @Override
-    protected Object readInternal(Class<?> clazz, HttpInputMessage inputMessage)
-            throws IOException {
-        return objectMapper.readValue(inputMessage.getBody(), clazz);
+    public boolean canWrite(Type type, Class<?> clazz, MediaType mediaType) {
+        return false;
     }
 
     @Override
-    protected void writeInternal(Object o, HttpOutputMessage outputMessage)
-            throws IOException {
-        outputMessage.getBody().write(objectMapper.writeValueAsBytes(o));
+    protected boolean canWrite(MediaType mediaType) {
+        return false;
     }
 }
