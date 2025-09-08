@@ -63,7 +63,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: "build/libs/server.jar"
+          source: "build/libs/*.jar"
           target: "~/sejong-life-dev"
 
       - name: Execute Server
