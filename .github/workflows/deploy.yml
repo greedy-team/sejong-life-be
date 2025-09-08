@@ -3,7 +3,7 @@ name: Deploy dev Server
 on:
   push:
     branches:
-      - chore/runner-change
+      - develop
 
 jobs:
   deploy:
