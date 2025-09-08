@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthInterceptor;
 import org.example.sejonglifebe.auth.AuthUserArgumentResolver;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -31,10 +30,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/**");
     }
 
-    @Override
-    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
-        converters.add(0, new MultipartJackson2HttpMessageConverter(objectMapper));
-    }
+//    @Override
+//    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+//        converters.add(0, new MultipartJackson2HttpMessageConverter(objectMapper));
+//    }
 
     /*
     @Override
