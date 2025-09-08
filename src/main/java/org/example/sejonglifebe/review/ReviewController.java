@@ -3,9 +3,6 @@ package org.example.sejonglifebe.review;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,26 +47,12 @@ public class ReviewController {
         return CommonResponse.of(HttpStatus.OK, "리뷰 요약 정보 조회 성공", reviewService.getReviewSummaryByPlaceId(placeId));
     }
 
-    @Operation(
-            summary = "리뷰 작성",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    content = @Content(
-                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                            schema = @Schema(implementation = ReviewRequest.class)
-                    )
-            )
-    )
+    @Operation(summary = "리뷰 작성")
     @LoginRequired
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<Void>> createReview(
             @PathVariable("placeId") Long placeId,
             @Valid @RequestPart("review") ReviewRequest reviewRequest,
-
-            @Parameter(
-                    description = "업로드할 이미지 파일들",
-                    content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                            schema = @Schema(type = "string", format = "binary"))
-            )
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             AuthUser authUser) {
         reviewService.createReview(placeId, reviewRequest, authUser);
