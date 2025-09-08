@@ -3,15 +3,23 @@ package org.example.sejonglifebe.common.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.AbstractJackson2HttpMessageConverter;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Type;
 
-@Component
 public class MultipartJackson2HttpMessageConverter extends AbstractJackson2HttpMessageConverter {
-
     public MultipartJackson2HttpMessageConverter(ObjectMapper objectMapper) {
-        super(objectMapper, MediaType.APPLICATION_OCTET_STREAM);
+        super(objectMapper,
+                MediaType.APPLICATION_JSON,
+                MediaType.TEXT_PLAIN,
+                MediaType.APPLICATION_OCTET_STREAM);
+    }
+
+    @Override
+    protected boolean canRead(MediaType mediaType) {
+        return (mediaType == null ||
+                mediaType.isCompatibleWith(MediaType.APPLICATION_JSON) ||
+                mediaType.isCompatibleWith(MediaType.TEXT_PLAIN) ||
+                mediaType.isCompatibleWith(MediaType.APPLICATION_OCTET_STREAM));
     }
 
     @Override
