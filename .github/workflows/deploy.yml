@@ -3,7 +3,7 @@ name: Deploy dev Server
 on:
   push:
     branches:
-      - develop
+      - chore/runner-change
 
 jobs:
   deploy:
@@ -23,18 +23,35 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Start MySQL container
-        run: docker compose up -d
+        run: docker compose up -d --wait
+        env:
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
       - name: Build and runs Tests
-        run: ./gradlew build -x test
+        run: |
+          ./gradlew build \
+            -Dspring.jpa.properties.hibernate.show_sql=true \
+            -Dlogging.level.org.hibernate.SQL=DEBUG \
+            -Dlogging.level.org.hibernate.type.descriptor.sql=TRACE
         env:
+          SPRING_APPLICATION_NAME: sejong-life-be
+
+          SPRING_DATASOURCE_DRIVER-CLASS-NAME: com.mysql.cj.jdbc.Driver
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3308/sejong_life_db?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          SPRING_JACKSON_SERIALIZATION_INDENT_OUTPUT: true
+
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create
+          SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+          SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
+          SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL: true
+
           JWT_SECRET: ${{ secrets.JWT_SECRET_KEY }}
           JWT_EXPIRATION: 3600000
-          SIGNUP_EXPIRATION: 600000
+          JWT_SIGNUP_EXPIRATION: 600000
+
+          LOGGING_LEVEL_ORG_HIBERNATE_SQL: DEBUG
+          LOGGING_LEVEL_ORG_HIBERNATE_TYPE_DESCRIPTOR_SQL: TRACE
 
       - name: Stop MySQL container
         if: always()
@@ -46,7 +63,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: "build/libs/*.jar"
+          source: "build/libs/server.jar"
           target: "~/sejong-life-dev"
 
       - name: Execute Server
@@ -65,6 +82,5 @@ jobs:
             fi
             
             echo "Starting new server..."
-            nohup java -jar -Dspring.profiles.active=dev ~/sejong-life-dev/*.jar > ~/sejong-life-dev/nohup.out 2>&1 &
-            
+            nohup java -Dspring.profiles.active=dev -jar ~/sejong-life-dev/build/libs/server.jar --spring.config.location=file:/home/ubuntu/sejong-life-dev/application-dev.yml > ~/sejong-life-dev/logs/nohup.out 2>&1 &
             echo "Deployment complete."
