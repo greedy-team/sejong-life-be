@@ -16,10 +16,7 @@ public class MultipartJackson2HttpMessageConverter extends AbstractJackson2HttpM
 
     @Override
     protected boolean canRead(MediaType mediaType) {
-        return (mediaType == null ||
-                mediaType.isCompatibleWith(MediaType.APPLICATION_JSON) ||
-                mediaType.isCompatibleWith(MediaType.TEXT_PLAIN) ||
-                mediaType.isCompatibleWith(MediaType.APPLICATION_OCTET_STREAM));
+        return true;
     }
 
     @Override
