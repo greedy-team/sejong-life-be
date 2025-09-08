@@ -37,6 +37,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/**");
     }
 
+    @Override
+    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+        converters.add(0, new MultipartJackson2HttpMessageConverter(objectMapper));
+    }
+
     /*
     @Override
     public void addCorsMappings(CorsRegistry registry) {
