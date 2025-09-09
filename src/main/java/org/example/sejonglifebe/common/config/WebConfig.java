@@ -1,9 +1,9 @@
 package org.example.sejonglifebe.common.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthInterceptor;
 import org.example.sejonglifebe.auth.AuthUserArgumentResolver;
-import org.example.sejonglifebe.common.logging.LogInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -17,7 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final AuthUserArgumentResolver authUserArgumentResolver;
     private final AuthInterceptor authInterceptor;
-    private final LogInterceptor logInterceptor;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
@@ -26,12 +26,29 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(logInterceptor)
-                .order(1)
-                .addPathPatterns("/api/**");
-
         registry.addInterceptor(authInterceptor)
-                .order(2)
                 .addPathPatterns("/api/**");
     }
+
+//    @Override
+//    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+//        converters.add(0, new MultipartJackson2HttpMessageConverter(objectMapper));
+//    }
+
+    /*
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins(
+                        "http://localhost:5173",
+                        "http://sejonglife.site",
+                        "https://sejonglife.site",
+                        "http://api.sejonglife.site"
+                )
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600);
+    }
+    */
 }
