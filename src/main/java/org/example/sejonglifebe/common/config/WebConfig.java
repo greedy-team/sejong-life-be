@@ -1,12 +1,10 @@
 package org.example.sejonglifebe.common.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthInterceptor;
 import org.example.sejonglifebe.auth.AuthUserArgumentResolver;
 import org.example.sejonglifebe.common.logging.LogInterceptor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
