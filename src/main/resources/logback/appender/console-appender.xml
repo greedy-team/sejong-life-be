@@ -1,7 +1,7 @@
 <included>
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level){FATAL=red, ERROR=red, WARN=yellow, INFO=blue, DEBUG=green, TRACE=white} --- [%15.15t] %cyan(%-40.40logger{39}) : %m%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level){ERROR=red, WARN=yellow, INFO=blue, DEBUG=green, TRACE=white} --- [%15.15t] %cyan(%-40.40logger{39}) : %m%n</pattern>
         </encoder>
     </appender>
 </included>
