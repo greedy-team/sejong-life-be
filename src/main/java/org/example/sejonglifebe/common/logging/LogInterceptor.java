@@ -24,4 +24,13 @@ public class LogInterceptor implements HandlerInterceptor {
 
         return true;
     }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+        MDC.remove("userId");
+        MDC.remove("requestUrl");
+        MDC.remove("httpMethod");
+        MDC.remove("clientIp");
+        MDC.remove("userAgent");
+    }
 }
