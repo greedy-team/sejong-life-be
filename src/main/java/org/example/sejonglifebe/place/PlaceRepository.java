@@ -5,7 +5,6 @@ import java.util.List;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -47,11 +46,6 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("UPDATE Place p SET p.weeklyViewCount = 0")
     void resetAllWeeklyViewCounts();
 
-    @Query("SELECT DISTINCT p FROM Place p " +
-            "LEFT JOIN FETCH p.reviews " +
-            "LEFT JOIN FETCH p.placeCategories pc LEFT JOIN FETCH pc.category " +
-            "LEFT JOIN FETCH p.placeTags pt LEFT JOIN FETCH pt.tag " +
-            "ORDER BY p.weeklyViewCount DESC")
-    List<Place> findHotPlaces();
+    List<Place> findTop10ByOrderByWeeklyViewCountDesc();
 
 }
