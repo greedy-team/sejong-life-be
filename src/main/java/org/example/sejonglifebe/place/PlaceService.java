@@ -110,6 +110,7 @@ public class PlaceService {
         return placeViewCookie;
     }
 
+    @Transactional
     public List<HotPlaceResponse> getWeeklyHotPlaces() {
         List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
         return hotPlaces.stream()
