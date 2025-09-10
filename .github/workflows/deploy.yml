@@ -29,7 +29,7 @@ jobs:
 
       - name: Build and runs Tests
         run: |
-          ./gradlew clean build \
+          ./gradlew build \
             -Dspring.jpa.properties.hibernate.show_sql=true \
             -Dlogging.level.org.hibernate.SQL=DEBUG \
             -Dlogging.level.org.hibernate.type.descriptor.sql=TRACE

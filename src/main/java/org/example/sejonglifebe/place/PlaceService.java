@@ -111,9 +111,9 @@ public class PlaceService {
     }
 
     @Transactional
-    public List<HotPlaceResponse> getWeeklyHotPlaces() {
+    public List<PlaceResponse> getWeeklyHotPlaces() {
         List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
         return hotPlaces.stream()
-                .map(HotPlaceResponse::from).toList();
+                .map(PlaceResponse::from).toList();
     }
 }
