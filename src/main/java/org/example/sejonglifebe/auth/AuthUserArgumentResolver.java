@@ -33,6 +33,9 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
         }
 
         String token = jwtTokenExtractor.extractToken(authHeader);
+        if (token.isBlank()) {
+            return null;
+        }
 
         try {
             return jwtTokenProvider.validateAndGetAuthUser(token);
