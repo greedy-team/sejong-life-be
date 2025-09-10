@@ -25,6 +25,7 @@ repositories {
 
 bootJar {
     enabled = true
+    archiveFileName = "server.jar"
 }
 
 jar {
