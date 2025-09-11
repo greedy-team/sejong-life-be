@@ -2,8 +2,9 @@ package org.example.sejonglifebe.auth;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.auth.dto.LoginRequest;
+import org.example.sejonglifebe.auth.dto.LoginResult;
+import org.example.sejonglifebe.auth.dto.PortalStudentInfo;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
@@ -19,27 +20,27 @@ import java.util.Optional;
 public class LoginService {
 
     private final PortalClient portalClient;
-    private final PortalHtmlParser htmlParser;
+    private final PortalHtmlParser portalHtmlParser;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public LoginResponse login(LoginRequest request) {
+    public LoginResult login(LoginRequest request) {
         try {
             String html = fetchPortal(request);
-            PortalStudentInfo studentInfo = htmlParser.parseStudentInfo(html);
+            PortalStudentInfo studentInfo = portalHtmlParser.parseStudentInfo(html);
 
             // 가입 여부 확인
-            Optional<User> userOptional = userService.findUserByStudentId(studentInfo.getStudentId());
+            Optional<User> userOptional = userService.findUserByStudentId(studentInfo.studentId());
 
             if (userOptional.isPresent()) {
-                // 기존 회원: JWT 발급 후 로그인 성공 응답
+                // 기존 회원: accessToken 담은 LoginResult 반환
                 User user = userOptional.get();
                 String accessToken = jwtTokenProvider.createToken(user);
-                return LoginResponse.loginSuccess(accessToken);
+                return LoginResult.forExistingUser(accessToken);
             } else {
-                // 신규 회원: 회원가입 토큰 발급 후 가입 필요 응답
+                // 신규 회원: signUpToken과 기본 정보 담은 LoginResult 반환
                 String signUpToken = jwtTokenProvider.createSignUpToken(studentInfo);
-                return LoginResponse.signUpRequired(signUpToken, studentInfo);
+                return LoginResult.forNewUser(signUpToken, studentInfo);
             }
 
         } catch (SejongLifeException e) {
