@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.user;
 
 import lombok.RequiredArgsConstructor;
+import org.example.sejonglifebe.auth.dto.PortalStudentInfo;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
@@ -23,18 +24,19 @@ public class UserService {
     }
 
     @Transactional
-    public String createUser(SignUpRequest requestDto) {
-        if (userRepository.existsByNickname(requestDto.getNickname())) {
-            throw new SejongLifeException(ErrorCode.DUPLICATE_NICKNAME);
+    public User createUser(String signUpToken, SignUpRequest request) {
+        PortalStudentInfo studentInfo = jwtTokenProvider.validateAndGetPortalInfo(signUpToken);
+
+        if (!studentInfo.studentId().equals(request.getStudentId()) ||
+                !studentInfo.studentName().equals(request.getName())) {
+            throw new SejongLifeException(ErrorCode.USER_INFO_MISMATCH);
         }
 
         User newUser = User.builder()
-                .studentId(requestDto.getStudentId())
-                .nickname(requestDto.getNickname())
+                .studentId(request.getStudentId())
+                .nickname(request.getNickname())
                 .build();
 
-        User savedUser = userRepository.save(newUser);
-
-        return jwtTokenProvider.createToken(savedUser);
+        return userRepository.save(newUser);
     }
 }
