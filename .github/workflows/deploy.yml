@@ -3,7 +3,7 @@ name: Deploy dev Server
 on:
   push:
     branches:
-      - develop
+      - chore/zero-downtime-deployment
 
 jobs:
   deploy:
@@ -29,10 +29,7 @@ jobs:
 
       - name: Build and runs Tests
         run: |
-          ./gradlew build \
-            -Dspring.jpa.properties.hibernate.show_sql=true \
-            -Dlogging.level.org.hibernate.SQL=DEBUG \
-            -Dlogging.level.org.hibernate.type.descriptor.sql=TRACE
+          ./gradlew build
         env:
           SPRING_APPLICATION_NAME: sejong-life-be
 
@@ -50,9 +47,6 @@ jobs:
           JWT_EXPIRATION: 3600000
           JWT_SIGNUP_EXPIRATION: 600000
 
-          LOGGING_LEVEL_ORG_HIBERNATE_SQL: DEBUG
-          LOGGING_LEVEL_ORG_HIBERNATE_TYPE_DESCRIPTOR_SQL: TRACE
-
       - name: Stop MySQL container
         if: always()
         run: docker compose down
@@ -63,8 +57,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: "build/libs/*.jar"
-          target: "~/sejong-life-dev"
+          source: "build/libs/server.jar"
+          target: "~/sejong-life-prod"
 
       - name: Execute Server
         uses: appleboy/ssh-action@master
@@ -72,15 +66,5 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script: |
-            PORT=8081
-            PID=$(lsof -t -i:$PORT || true)
-            if [ -n "$PID" ]; then
-              echo "Stopping current server with PID: $PID"
-              kill -15 $PID
-              sleep 5
-            fi
+          script: sudo bash /home/ubuntu/sejong-life-prod/deploy.sh
             
-            echo "Starting new server..."
-            nohup java -Dspring.profiles.active=dev -jar ~/sejong-life-dev/build/libs/server.jar --spring.config.location=file:/home/ubuntu/sejong-life-dev/application-dev.yml > ~/sejong-life-dev/logs/nohup.out 2>&1 &
-            echo "Deployment complete."
