@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.auth.dto.LoginUser;
 import org.example.sejonglifebe.auth.LoginRequired;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.review.dto.ReviewRequest;
@@ -37,8 +37,8 @@ public class ReviewController {
     @GetMapping
     public ResponseEntity<CommonResponse<List<ReviewResponse>>> getReviews(
             @PathVariable("placeId") Long placeId,
-            AuthUser authUser) {
-        return CommonResponse.of(HttpStatus.OK, "리뷰 목록 조회 성공", reviewService.getReviewsByPlaceId(placeId, authUser));
+            LoginUser loginUser) {
+        return CommonResponse.of(HttpStatus.OK, "리뷰 목록 조회 성공", reviewService.getReviewsByPlaceId(placeId, loginUser));
     }
 
     @Operation(summary = "리뷰 요약 정보 조회")
@@ -64,8 +64,8 @@ public class ReviewController {
             @Parameter(description = "업로드할 이미지 파일 목록")
             List<MultipartFile> images,
 
-            AuthUser authUser) {
-        reviewService.createReview(placeId, reviewRequest, authUser);
+            LoginUser loginUser) {
+        reviewService.createReview(placeId, reviewRequest, loginUser);
         return CommonResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
     }
 
@@ -73,8 +73,8 @@ public class ReviewController {
     @LoginRequired
     @PostMapping("/{reviewId}/likes")
     public ResponseEntity<CommonResponse<Void>> createlike(
-            @PathVariable("reviewId") Long reviewId, AuthUser authUser) {
-        reviewService.createLike(reviewId, authUser);
+            @PathVariable("reviewId") Long reviewId, LoginUser loginUser) {
+        reviewService.createLike(reviewId, loginUser);
         return CommonResponse.of(HttpStatus.OK, "리뷰 좋아요 성공", null);
     }
 
@@ -82,8 +82,8 @@ public class ReviewController {
     @LoginRequired
     @DeleteMapping("/{reviewId}/likes")
     public ResponseEntity<CommonResponse<Void>> deleteLike(
-            @PathVariable("reviewId") Long reviewId, AuthUser authUser) {
-        reviewService.deleteLike(reviewId, authUser);
+            @PathVariable("reviewId") Long reviewId, LoginUser loginUser) {
+        reviewService.deleteLike(reviewId, loginUser);
         return CommonResponse.of(HttpStatus.OK, "리뷰 좋아요 취소 성공", null);
     }
 }

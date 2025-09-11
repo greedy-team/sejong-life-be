@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
-import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.auth.dto.LoginUser;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.PlaceRepository;
@@ -38,14 +38,14 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
 
-    public List<ReviewResponse> getReviewsByPlaceId(Long placeId, AuthUser authUser) {
+    public List<ReviewResponse> getReviewsByPlaceId(Long placeId, LoginUser loginUser) {
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
         List<Review> reviews = reviewRepository.findByPlace(place);
-        Set<Long> likedReviewIds = (authUser == null)
+        Set<Long> likedReviewIds = (loginUser == null)
                 ? Collections.emptySet()
-                : reviewLikeRepository.findByUserStudentId(authUser.studentId())
+                : reviewLikeRepository.findByUserStudentId(loginUser.studentId())
                 .stream()
                 .map(like -> like.getReview().getId())
                 .collect(Collectors.toSet());
@@ -78,9 +78,9 @@ public class ReviewService {
     }
 
     @Transactional
-    public void createReview(Long placeId, ReviewRequest reviewRequest, AuthUser authUser) {
+    public void createReview(Long placeId, ReviewRequest reviewRequest, LoginUser loginUser) {
 
-        User user = userRepository.findByStudentId(authUser.studentId())
+        User user = userRepository.findByStudentId(loginUser.studentId())
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
@@ -99,10 +99,10 @@ public class ReviewService {
     }
 
     @Transactional
-    public void createLike(Long reviewId, AuthUser authUser) {
+    public void createLike(Long reviewId, LoginUser loginUser) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
-        User user = userRepository.findByStudentId(authUser.studentId())
+        User user = userRepository.findByStudentId(loginUser.studentId())
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
 
         if (reviewLikeRepository.existsByReviewAndUser(review, user)) {
@@ -114,10 +114,10 @@ public class ReviewService {
     }
 
     @Transactional
-    public void deleteLike(Long reviewId, AuthUser authUser) {
+    public void deleteLike(Long reviewId, LoginUser loginUser) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
-        ReviewLike reviewLike = reviewLikeRepository.findByReviewIdAndUserStudentId(reviewId, authUser.studentId())
+        ReviewLike reviewLike = reviewLikeRepository.findByReviewIdAndUserStudentId(reviewId, loginUser.studentId())
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_LIKE_NOT_FOUND));
 
         review.deleteReviewLike(reviewLike);
