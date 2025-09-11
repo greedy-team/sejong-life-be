@@ -55,7 +55,7 @@ public class ReviewController {
             @Valid @RequestPart("review") ReviewRequest reviewRequest,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             AuthUser authUser) {
-        reviewService.createReview(placeId, reviewRequest, authUser);
+        reviewService.createReview(placeId, reviewRequest, authUser, images);
         return CommonResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
     }
 

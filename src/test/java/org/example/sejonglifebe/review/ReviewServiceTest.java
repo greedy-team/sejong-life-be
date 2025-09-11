@@ -230,7 +230,7 @@ class ReviewServiceTest {
             given(tagRepository.findByIdIn(request.tagIds())).willReturn(List.of(tag));
 
             // when
-            reviewService.createReview(placeId, request, authUser);
+            reviewService.createReview(placeId, request, authUser, null);
 
             // then
             ArgumentCaptor<Review> captor = ArgumentCaptor.forClass(Review.class);
@@ -259,7 +259,7 @@ class ReviewServiceTest {
             given(placeRepository.findById(placeId)).willReturn(Optional.empty());
 
             // then
-            assertThatThrownBy(() -> reviewService.createReview(placeId, request, authUser))
+            assertThatThrownBy(() -> reviewService.createReview(placeId, request, authUser, null))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.PLACE_NOT_FOUND.getErrorMessage());
         }

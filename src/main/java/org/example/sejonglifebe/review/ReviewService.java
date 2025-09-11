@@ -14,6 +14,7 @@ import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.dto.ReviewRequest;
+import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.User;
@@ -23,6 +24,7 @@ import org.example.sejonglifebe.review.dto.ReviewResponse;
 import org.example.sejonglifebe.review.dto.ReviewSummaryResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +39,7 @@ public class ReviewService {
     private final TagRepository tagRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
+    private final S3Service s3Service;
 
     public List<ReviewResponse> getReviewsByPlaceId(Long placeId, AuthUser authUser) {
         Place place = placeRepository.findById(placeId)
@@ -78,8 +81,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public void createReview(Long placeId, ReviewRequest reviewRequest, AuthUser authUser) {
-
+    public void createReview(Long placeId, ReviewRequest reviewRequest, AuthUser authUser, List<MultipartFile> images) {
         User user = userRepository.findByStudentId(authUser.studentId())
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
         Place place = placeRepository.findById(placeId)
@@ -92,6 +94,13 @@ public class ReviewService {
         Review review = Review.createReview(place, user, reviewRequest.rating(), reviewRequest.content());
         if (!tags.isEmpty()) {
             tags.forEach(review::addTag);
+        }
+
+        if (images != null && !images.isEmpty()) {
+            for (MultipartFile image : images) {
+                String key = s3Service.uploadImage(placeId, image);
+                review.addImage(key);
+            }
         }
 
         reviewRepository.save(review);

@@ -25,7 +25,10 @@ public enum ErrorCode {
     CATEGORY_NAME_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 카테고리명입니다.(룰렛)"),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
     INVALID_AUTH_HEADER(HttpStatus.UNAUTHORIZED, "유효하지 않은 Authorization 헤더입니다."),
-    INVALID_TOKEN(HttpStatus.FORBIDDEN, "인증에 실패했습니다.");
+    INVALID_TOKEN(HttpStatus.FORBIDDEN, "인증에 실패했습니다."),
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "서버에서 파일을 처리하지 못했습니다."),
+    S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3에 파일 업로드 중 오류가 발생했습니다."),
+    FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 가능한 최대 파일 크기를 초과했습니다.");
 
     private final HttpStatus httpStatus;
     private final String errorMessage;
