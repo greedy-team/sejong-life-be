@@ -10,7 +10,7 @@ public class VersionController {
     @Value("${spring.profiles.active}")
     private String activeProfile;
 
-    @GetMapping("/version")
+    @GetMapping("/api/version")
     public String getVersion() {
         return activeProfile;
     }

@@ -3,7 +3,7 @@ name: Deploy dev Server
 on:
   push:
     branches:
-      - chore/zero-downtime-deployment
+      - develop
 
 jobs:
   deploy:
