@@ -31,7 +31,6 @@ public class PortalClient {
     private final OkHttpClient client;
 
     public void login(String portalId, String portalPassword) {
-        String loginUrl = LOGIN_URL;
 
         RequestBody formBody = new FormBody.Builder()
                 .add("mainLogin", "Y")
@@ -41,7 +40,7 @@ public class PortalClient {
                 .build();
 
         Request request = new Request.Builder()
-                .url(loginUrl)
+                .url(LOGIN_URL)
                 .post(formBody)
                 .header("Host", HOST)
                 .header("Referer", REFERER)
@@ -49,21 +48,19 @@ public class PortalClient {
                 .build();
 
         try (Response response = executeWithRetry(request)) {
-            if (!response.isSuccessful()) { // 포털 로그인 실패
-                throw new SejongLifeException(ErrorCode.PORTAL_LOGIN_FAILED);
+            if (!response.isSuccessful()) {
+                throw new SejongLifeException(ErrorCode.PORTAL_INVALID_CREDENTIALS);
             }
         }
 
         // 로그인 이후 SSO 요청 (세션 연결 유지 목적)
-        String ssoUrl = SSO_URL;
-        Request ssoRequest = new Request.Builder().url(ssoUrl).get().build();
-
+        Request ssoRequest = new Request.Builder().url(SSO_URL).get().build();
         try (Response ssoResponse = client.newCall(ssoRequest).execute()) {
             if (!ssoResponse.isSuccessful()) { // SSO 요청 실패
-                throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
+                throw new SejongLifeException(ErrorCode.PORTAL_SSO_FAILED);
             }
         } catch (IOException e) {
-            throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR, e);
+            throw new SejongLifeException(ErrorCode.PORTAL_NETWORK_ERROR, e);
         }
     }
 
@@ -73,11 +70,11 @@ public class PortalClient {
 
         try (Response response = client.newCall(request).execute()) {
             if (response.body() == null || response.code() != 200) { //고전독서 인증현황 페이지 조회 실패
-                throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
+                throw new SejongLifeException(ErrorCode.PORTAL_NETWORK_ERROR);
             }
             return response.body().string();
         } catch (IOException e) {
-            throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR, e);
+            throw new SejongLifeException(ErrorCode.PORTAL_NETWORK_ERROR, e);
         }
     }
 
@@ -94,6 +91,6 @@ public class PortalClient {
                 log.warn("[PortalLogin] 네트워크 오류 발생 -> 재시도... ({}회), 오류: {}", tryCount, e.getMessage());
             }
         }
-        throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
+        throw new SejongLifeException(ErrorCode.PORTAL_NETWORK_ERROR);
     }
 }
