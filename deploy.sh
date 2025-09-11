@@ -39,7 +39,7 @@ echo "> Port: $HEALTH_CHECK_PORT"
 echo "> Wait For Start Server..."
 
 RETRY_COUNT=1
-MAX_RETRY_COUNT=12
+MAX_RETRY_COUNT=24
 
 while [ $RETRY_COUNT -le $MAX_RETRY_COUNT ]
 do
