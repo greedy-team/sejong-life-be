@@ -3,9 +3,9 @@ package org.example.sejonglifebe.common.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.auth.dto.LoginUser;
 import jakarta.annotation.PostConstruct;
-import org.example.sejonglifebe.auth.PortalStudentInfo;
+import org.example.sejonglifebe.auth.dto.PortalStudentInfo;
 import org.example.sejonglifebe.user.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -38,22 +38,20 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
-                .subject(user.getStudentId())
-                .claim("nickname", user.getNickname()) // 닉네임 포함 여부 논의 필요
+                .subject(user.getId().toString())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
                 .compact();
     }
 
-    // 회원가입용 임시 토큰
     public String createSignUpToken(PortalStudentInfo portalInfo) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + signUpTokenExpirationTime);
 
         return Jwts.builder()
-                .subject(portalInfo.getStudentId())
-                .claim("name", portalInfo.getName())
+                .subject(portalInfo.studentId())
+                .claim("name", portalInfo.studentName())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
@@ -61,27 +59,23 @@ public class JwtTokenProvider {
     }
 
     public PortalStudentInfo validateAndGetPortalInfo(String token) {
-
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return PortalStudentInfo.builder()
-                .studentId(claims.getSubject())
-                .name(claims.get("name", String.class))
-                .build();
+        Claims claims = getClaims(token);
+        return new PortalStudentInfo(
+                claims.getSubject(),
+                claims.get("name", String.class)
+        );
     }
 
-    public AuthUser validateAndGetAuthUser(String token) {
+    public LoginUser validateAndGetAuthUser(String token) {
+        Claims claims = getClaims(token);
+        return new LoginUser(claims.getSubject());
+    }
 
-        Claims claims = Jwts.parser()
+    private Claims getClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-
-        return new AuthUser(claims.getSubject());
     }
 }
