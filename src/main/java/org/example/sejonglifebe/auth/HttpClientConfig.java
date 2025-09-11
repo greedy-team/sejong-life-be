@@ -2,6 +2,8 @@ package org.example.sejonglifebe.auth;
 
 import okhttp3.JavaNetCookieJar;
 import okhttp3.OkHttpClient;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -36,7 +38,7 @@ public class HttpClientConfig {
                     .build();
 
         } catch (Exception e) {
-            throw new RuntimeException("OkHttpClient 초기화 실패", e);
+            throw new SejongLifeException(ErrorCode.PORTAL_CLIENT_INIT_ERROR, e);
         }
     }
 
