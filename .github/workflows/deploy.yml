@@ -32,6 +32,7 @@ jobs:
           ./gradlew build
         env:
           SPRING_APPLICATION_NAME: sejong-life-be
+          SPRING_PROFILES_ACTIVE: default
 
           SPRING_DATASOURCE_DRIVER-CLASS-NAME: com.mysql.cj.jdbc.Driver
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3308/sejong_life_db?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
