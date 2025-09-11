@@ -41,8 +41,8 @@ public class PlaceController {
 
     @Operation(summary = "주간 핫플레이스 조회")
     @GetMapping("/hot")
-    public ResponseEntity<CommonResponse<List<HotPlaceResponse>>> getHotPlaces() {
-        List<HotPlaceResponse> hotPlaceResponses = placeService.getWeeklyHotPlaces();
+    public ResponseEntity<CommonResponse<List<PlaceResponse>>> getHotPlaces() {
+        List<PlaceResponse> hotPlaceResponses = placeService.getWeeklyHotPlaces();
         return CommonResponse.of(HttpStatus.OK, "핫플레이스 조회 성공", hotPlaceResponses);
     }
 

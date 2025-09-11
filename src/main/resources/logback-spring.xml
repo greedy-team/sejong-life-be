@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <include resource="logback/appender/console-appender.xml"/>
+    <include resource="logback/appender/info-appender.xml"/>
+    <include resource="logback/appender/error-appender.xml"/>
+
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="INFO_LOG_FILE"/>
+            <appender-ref ref="ERROR_LOG_FILE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="INFO_LOG_FILE"/>
+            <appender-ref ref="ERROR_LOG_FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>

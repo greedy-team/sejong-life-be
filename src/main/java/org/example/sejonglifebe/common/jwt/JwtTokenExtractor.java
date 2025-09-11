@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtTokenExtractor {
 
-    private static final String BEARER_PREFIX = "Bearer ";
+    private static final String BEARER_PREFIX = "Bearer";
 
     public String extractToken(String authHeader) {
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {

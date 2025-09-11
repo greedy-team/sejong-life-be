@@ -110,9 +110,10 @@ public class PlaceService {
         return placeViewCookie;
     }
 
-    public List<HotPlaceResponse> getWeeklyHotPlaces() {
+    @Transactional
+    public List<PlaceResponse> getWeeklyHotPlaces() {
         List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
         return hotPlaces.stream()
-                .map(HotPlaceResponse::from).toList();
+                .map(PlaceResponse::from).toList();
     }
 }

@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.review;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,9 +52,18 @@ public class ReviewController {
     @LoginRequired
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<Void>> createReview(
+            @Parameter(description = "리뷰를 작성할 장소의 ID", required = true, example = "1")
             @PathVariable("placeId") Long placeId,
-            @Valid @RequestPart("review") ReviewRequest reviewRequest,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+
+            @Valid
+            @RequestPart("review")
+            @Parameter(description = "리뷰 내용(JSON 형식)")
+            ReviewRequest reviewRequest,
+
+            @RequestPart(value = "images", required = false)
+            @Parameter(description = "업로드할 이미지 파일 목록")
+            List<MultipartFile> images,
+
             AuthUser authUser) {
         reviewService.createReview(placeId, reviewRequest, authUser, images);
         return CommonResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
