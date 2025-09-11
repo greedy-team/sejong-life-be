@@ -2,20 +2,19 @@ package org.example.sejonglifebe.user;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.sejonglifebe.auth.PortalStudentInfo;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
-import org.example.sejonglifebe.exception.ErrorCode;
-import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.common.util.CookieUtil;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
+import org.example.sejonglifebe.user.dto.UserResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,29 +26,22 @@ public class UserController {
 
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final CookieUtil cookieUtil;
 
     @Operation(summary = "회원가입")
     @PostMapping("/signup")
-    public ResponseEntity<CommonResponse<String>> signup(
-            @RequestHeader("Authorization") String signUpToken,
-            @Valid @RequestBody SignUpRequest request) {
+    public ResponseEntity<CommonResponse<UserResponse>> signup(
+            @CookieValue("signUpToken") String signUpToken,
+            @Valid @RequestBody SignUpRequest request,
+            HttpServletResponse httpServletResponse) {
 
-        String pureToken = resolveToken(signUpToken);
-        PortalStudentInfo portalInfoFromToken = jwtTokenProvider.validateAndGetPortalInfo(pureToken);
+        User newUser = userService.createUser(signUpToken, request);
+        String accessToken = jwtTokenProvider.createToken(newUser);
 
-        if (!portalInfoFromToken.getStudentId().equals(request.getStudentId()) ||
-                !portalInfoFromToken.getName().equals(request.getName())) {
-            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
-        }
+        cookieUtil.addCookie(httpServletResponse, "accessToken", accessToken);
+        cookieUtil.expireCookie(httpServletResponse, "signUpToken");
 
-        String accessToken = userService.createUser(request);
-        return CommonResponse.of(HttpStatus.CREATED, "회원가입 및 로그인 성공", accessToken);
-    }
-
-    private String resolveToken(String bearerToken) {
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        throw new SejongLifeException(ErrorCode.INVALID_AUTH_HEADER);
+        UserResponse responseBody = UserResponse.fromEntity(newUser);
+        return CommonResponse.of(HttpStatus.CREATED, "회원가입 및 로그인 성공", responseBody);
     }
 }
