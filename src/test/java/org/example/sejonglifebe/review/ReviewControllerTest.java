@@ -90,12 +90,10 @@ class ReviewControllerTest {
         ReviewRequest request = new ReviewRequest(3, "맛있음", List.of(tag1.getId(), tag2.getId()));
         MockMultipartFile reviewPart = new MockMultipartFile("review", "", "application/json",
                 objectMapper.writeValueAsBytes(request));
-        MockMultipartFile imagePart = new MockMultipartFile("images", "file1.jpg", "image/jpeg", "test".getBytes());
 
         // when & then
         mockMvc.perform(multipart("/api/places/{placeId}/reviews", place.getId())
                         .file(reviewPart)
-                        .file(imagePart)
                         .header("Authorization", "Bearer test-token"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("리뷰 작성 성공"));
@@ -312,7 +310,7 @@ class ReviewControllerTest {
     private Review createReview(Place place, User user, String content, int rating, List<String> images,
                                 List<Tag> tags) {
         Review review = Review.builder().place(place).user(user).content(content).rating(rating).build();
-        images.forEach(image -> review.addImage(place, image));
+        images.forEach(review::addImage);
         tags.forEach(review::addTag);
         return review;
     }

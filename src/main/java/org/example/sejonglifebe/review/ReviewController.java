@@ -65,7 +65,7 @@ public class ReviewController {
             List<MultipartFile> images,
 
             AuthUser authUser) {
-        reviewService.createReview(placeId, reviewRequest, authUser);
+        reviewService.createReview(placeId, reviewRequest, authUser, images);
         return CommonResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
     }
 

@@ -95,7 +95,7 @@ public class Review {
         return review;
     }
 
-    public void addImage(Place place, String imageUrl) {
+    public void addImage(String imageUrl) {
         PlaceImage placeImage = new PlaceImage(place, this, imageUrl, false);
         placeImages.add(placeImage);
     }
