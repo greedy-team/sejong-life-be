@@ -11,6 +11,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.UUID;
 
 @Service
@@ -37,8 +38,11 @@ public class S3Service {
                 .contentType(image.getContentType())
                 .build();
 
-        try {
-            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(image.getBytes()));
+        try (InputStream inputStream = image.getInputStream()) {
+            s3Client.putObject(
+                    putObjectRequest,
+                    RequestBody.fromInputStream(inputStream, image.getSize())
+            );
             return key;
         } catch (IOException e) {
             throw new SejongLifeException(ErrorCode.FILE_UPLOAD_FAILED);
