@@ -53,7 +53,7 @@ public class S3Service {
                     .build();
             s3Client.putObjectAcl(aclRequest);
 
-            return key;
+            return "https://sejong-life-bucket.s3.ap-northeast-2.amazonaws.com/" + key;
         } catch (IOException e) {
             throw new SejongLifeException(ErrorCode.FILE_UPLOAD_FAILED);
         } catch (S3Exception e) {
@@ -63,7 +63,7 @@ public class S3Service {
 
     private String generateKey(Long placeId, MultipartFile image) {
         String ext = org.springframework.util.StringUtils.getFilenameExtension(image.getOriginalFilename());
-        return "https://sejong-life-bucket.s3.ap-northeast-2.amazonaws.com/" +  placeId + KEY_DELIMITER + UUID.randomUUID() + (ext != null ? "." + ext : "");
+        return placeId + KEY_DELIMITER + UUID.randomUUID() + (ext != null ? "." + ext : "");
     }
 
     private void validate(MultipartFile image) {
