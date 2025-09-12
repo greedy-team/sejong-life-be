@@ -48,6 +48,9 @@ jobs:
           JWT_EXPIRATION: 3600000
           JWT_SIGNUP_EXPIRATION: 600000
 
+          CLOUD_AWS_S3_BUCKET: sejonglife-dev-bucket
+          CLOUD_AWS_REGION_STATIC: ap-northeast-2
+
       - name: Stop MySQL container
         if: always()
         run: docker compose down
