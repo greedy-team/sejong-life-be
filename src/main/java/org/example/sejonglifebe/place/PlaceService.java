@@ -21,6 +21,7 @@ import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,14 +92,17 @@ public class PlaceService {
         if (shouldIncreaseViewCount) {
             placeRepository.increaseViewCount(placeId);
 
-            Cookie updatedCookie = placeViewCookie.orElseGet(() -> new Cookie("placeView", ""));
+            String existingValue = placeViewCookie.map(Cookie::getValue).orElse("");
+            String updatedValue = existingValue.isEmpty() ? "[" + placeId + "]" : existingValue + "_[" + placeId + "]";
 
-            String currentIds = updatedCookie.getValue();
-            updatedCookie.setValue(currentIds.isEmpty() ? "[" + placeId + "]" : currentIds + "_[" + placeId + "]");
-            updatedCookie.setPath("/");
-            updatedCookie.setMaxAge(60 * 60 * 24);
+            ResponseCookie cookie = ResponseCookie.from("placeView", updatedValue)
+                    .path("/")
+                    .maxAge(60 * 60 * 6)
+                    .secure(true)
+                    .sameSite("None")
+                    .build();
 
-            response.addCookie(updatedCookie);
+            response.addHeader("Set-Cookie", cookie.toString());
         }
     }
 

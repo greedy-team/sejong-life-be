@@ -14,17 +14,28 @@
 
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
-                <timestamp/>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <pattern>yyyy-MM-dd HH:mm:ss.SSS</pattern>
+                    <timeZone>Asia/Seoul</timeZone>
+                </timestamp>
+                <level/>
+                <mdc>
+                    <includeMdcKeyName>userId</includeMdcKeyName>
+                    <includeMdcKeyName>requestUrl</includeMdcKeyName>
+                    <includeMdcKeyName>errorCode</includeMdcKeyName>
+                </mdc>
                 <pattern>
-                    <pattern>
-                        {
-                        "userId": "%X{userId:-}",
-                        "requestUrl": "%X{requestUrl:-}",
-                        "errorMessage": "%message"
-                        }
-                    </pattern>
+                    <pattern>{"errorMessage":"%message"}</pattern>
                 </pattern>
-                <stackTrace/> </providers>
+                <stackTrace>
+                    <fieldName>stacktrace</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                    </throwableConverter>
+                </stackTrace>
+            </providers>
         </encoder>
     </appender>
 </included>

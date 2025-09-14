@@ -18,7 +18,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final AuthUserArgumentResolver authUserArgumentResolver;
     private final AuthInterceptor authInterceptor;
-    private final ObjectMapper objectMapper;
     private final LogInterceptor logInterceptor;
 
     @Override
@@ -36,26 +35,4 @@ public class WebConfig implements WebMvcConfigurer {
                 .order(2)
                 .addPathPatterns("/api/**");
     }
-
-//    @Override
-//    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
-//        converters.add(0, new MultipartJackson2HttpMessageConverter(objectMapper));
-//    }
-
-    /*
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins(
-                        "http://localhost:5173",
-                        "http://sejonglife.site",
-                        "https://sejonglife.site",
-                        "http://api.sejonglife.site"
-                )
-                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
-    }
-    */
 }
