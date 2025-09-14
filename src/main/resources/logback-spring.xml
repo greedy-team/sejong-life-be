@@ -8,6 +8,8 @@
     <springProfile name="local">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="INFO_LOG_FILE"/>
+            <appender-ref ref="ERROR_LOG_FILE"/>
         </root>
     </springProfile>
 
@@ -19,7 +21,7 @@
         </root>
     </springProfile>
 
-    <springProfile name="prod">
+    <springProfile name="blue,green">
         <root level="INFO">
             <appender-ref ref="INFO_LOG_FILE"/>
             <appender-ref ref="ERROR_LOG_FILE"/>
