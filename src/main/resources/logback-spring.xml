@@ -21,7 +21,7 @@
         </root>
     </springProfile>
 
-    <springProfile name="prod">
+    <springProfile name="blue,green">
         <root level="INFO">
             <appender-ref ref="INFO_LOG_FILE"/>
             <appender-ref ref="ERROR_LOG_FILE"/>
