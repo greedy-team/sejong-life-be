@@ -18,7 +18,7 @@ public enum ErrorCode {
     MISSING_REQUIRED_PARAMETER(HttpStatus.BAD_REQUEST, "필수 파라미터가 누락되었습니다."),
     DUPLICATE_VALUE(HttpStatus.BAD_REQUEST, "중복된 값이 존재합니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
-    DUPLICATE_LIKE(HttpStatus.CONFLICT,"중복된 좋아요 요청입니다."),
+    DUPLICATE_LIKE(HttpStatus.CONFLICT, "중복된 좋아요 요청입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
     PORTAL_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "포털 로그인 실패: 아이디 또는 비밀번호를 확인해주세요."),
     PORTAL_CONNECTION_ERROR(HttpStatus.BAD_GATEWAY, "세종대학교 포털 서버에 접속할 수 없습니다."),
@@ -28,7 +28,8 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.FORBIDDEN, "인증에 실패했습니다."),
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "서버에서 파일을 처리하지 못했습니다."),
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3에 파일 업로드 중 오류가 발생했습니다."),
-    FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 가능한 최대 파일 크기를 초과했습니다.");
+    FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 가능한 최대 파일 크기를 초과했습니다."),
+    HEIC_CONVERT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "HEIC → JPEG 변환에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String errorMessage;
