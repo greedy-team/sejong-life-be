@@ -36,7 +36,7 @@ public class Place {
     @Column(name = "place_name", nullable = false)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String address;
 
     @Convert(converter = MapLinkConverter.class)
