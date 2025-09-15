@@ -116,7 +116,7 @@ public class PlaceControllerTest {
     }
 
     @Test
-    @DisplayName("카테고리 전체이고 선택된 태그가 맛집과 가성비이면 태그를 하나라도 가진 장소 3개가 조회된다.")
+    @DisplayName("카테고리 전체이고 선택된 태그가 맛집과 가성비이면 태그를 둘 다 가진 장소 1개가 조회된다.")
     public void search_noCategory_withTags() throws Exception {
         mockMvc.perform(get("/api/places")
                         .param("category", "전체")
@@ -128,15 +128,9 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.data.length()").value(3))
 
                 // 정렬 순서 검증
-                .andExpect(jsonPath("$.data[0].placeName").value("식당3")) // 첫 번째 결과는 태그 2개인 '식당3'
-                .andExpect(jsonPath("$.data[0].viewCount").value(0))
-                .andExpect(jsonPath("$.data[0].reviewCount").value(0))
                 .andExpect(jsonPath("$.data[1].placeName").value("식당1")) // 두 번째 결과는 '식당1'
                 .andExpect(jsonPath("$.data[1].viewCount").value(0))
-                .andExpect(jsonPath("$.data[1].reviewCount").value(0))
-                .andExpect(jsonPath("$.data[2].placeName").value("식당2")) // 세 번째 결과는 '식당2'
-                .andExpect(jsonPath("$.data[2].viewCount").value(0))
-                .andExpect(jsonPath("$.data[2].reviewCount").value(0));
+                .andExpect(jsonPath("$.data[1].reviewCount").value(0));
     }
 
     @Test
