@@ -17,22 +17,23 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("SELECT p FROM Place p " +
             "JOIN p.placeCategories pc " +
             "JOIN p.placeTags pt " +
-            "WHERE pc.category = :category AND pt.tag IN :tags " +
+            "WHERE pc.category = :category AND pt.tag IN :tags " + // 1️⃣ 카테고리와 태그로 1차 필터링
             "GROUP BY p.id " +
-            "ORDER BY COUNT(DISTINCT pt.tag) DESC")
-    List<Place> findPlacesByTagsAndCategory(
+            "HAVING COUNT(DISTINCT pt.tag) = :tagCount") // 2️⃣ 모든 태그를 가졌는지 최종 확인
+    List<Place> findPlacesByTagsAndCategoryContainingAllTags(
             @Param("category") Category category,
-            @Param("tags") List<Tag> tags
-
+            @Param("tags") List<Tag> tags,
+            @Param("tagCount") Long tagCount // 🎯 태그 개수 파라미터 추가
     );
 
     @Query("SELECT p FROM Place p " +
             "JOIN p.placeTags pt " +
             "WHERE pt.tag IN :tags " +
             "GROUP BY p.id " +
-            "ORDER BY COUNT(DISTINCT pt.tag) DESC")
+            "HAVING COUNT(DISTINCT pt.tag) = :tagCount")
     List<Place> findByTags(
-            @Param("tags") List<Tag> tags
+            @Param("tags") List<Tag> tags,
+            @Param("tagCount") Long tagCount
     );
 
     @Query("SELECT p FROM Place p JOIN p.placeCategories pc WHERE pc.category = :category")

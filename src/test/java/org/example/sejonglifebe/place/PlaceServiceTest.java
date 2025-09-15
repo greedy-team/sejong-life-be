@@ -90,7 +90,7 @@ class PlaceServiceTest {
             placeService.getPlacesFilteredByCategoryAndTags(request);
 
             // then
-            verify(placeRepository).findByTags(List.of(tag));
+            verify(placeRepository).findByTags(List.of(tag), (long) List.of(tag).size());
         }
 
         @Test
@@ -140,7 +140,7 @@ class PlaceServiceTest {
             placeService.getPlacesFilteredByCategoryAndTags(request);
 
             // then
-            verify(placeRepository).findPlacesByTagsAndCategory(category, List.of(tag));
+            verify(placeRepository).findPlacesByTagsAndCategoryContainingAllTags(category, List.of(tag), (long) List.of(tag).size());
         }
     }
 

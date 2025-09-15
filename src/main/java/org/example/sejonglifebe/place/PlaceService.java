@@ -64,14 +64,14 @@ public class PlaceService {
         if (tags.isEmpty()) {
             return placeRepository.findAll();
         }
-        return placeRepository.findByTags(tags);
+        return placeRepository.findByTags(tags, (long) tags.size());
     }
 
     private List<Place> getPlacesBySelectedCategory(Category category, List<Tag> tags) {
         if (tags.isEmpty()) {
             return placeRepository.findByCategory(category);
         }
-        return placeRepository.findPlacesByTagsAndCategory(category, tags);
+        return placeRepository.findPlacesByTagsAndCategoryContainingAllTags(category, tags, (long)tags.size());
     }
 
     @Transactional
