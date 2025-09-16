@@ -17,13 +17,13 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("SELECT p FROM Place p " +
             "JOIN p.placeCategories pc " +
             "JOIN p.placeTags pt " +
-            "WHERE pc.category = :category AND pt.tag IN :tags " + // 1️⃣ 카테고리와 태그로 1차 필터링
+            "WHERE pc.category = :category AND pt.tag IN :tags " +
             "GROUP BY p.id " +
-            "HAVING COUNT(DISTINCT pt.tag) = :tagCount") // 2️⃣ 모든 태그를 가졌는지 최종 확인
+            "HAVING COUNT(DISTINCT pt.tag) = :tagCount")
     List<Place> findPlacesByTagsAndCategoryContainingAllTags(
             @Param("category") Category category,
             @Param("tags") List<Tag> tags,
-            @Param("tagCount") Long tagCount // 🎯 태그 개수 파라미터 추가
+            @Param("tagCount") Long tagCount
     );
 
     @Query("SELECT p FROM Place p " +
@@ -48,5 +48,4 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     void resetAllWeeklyViewCounts();
 
     List<Place> findTop10ByOrderByWeeklyViewCountDesc();
-
 }
