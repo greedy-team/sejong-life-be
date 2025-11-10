@@ -35,7 +35,7 @@ public record PlaceDetailResponse(
                         .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
                         .toList(),
                 place.getViewCount(),
-                (place.getMapLinks()),
+                place.getMapLinks(),
                 place.isPartnership(),
                 place.getPartnershipContent()
         );
