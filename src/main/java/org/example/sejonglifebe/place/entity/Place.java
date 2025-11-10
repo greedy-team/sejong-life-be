@@ -53,6 +53,11 @@ public class Place {
     @Column(nullable = false)
     private Long weeklyViewCount;
 
+    @Column(nullable = false)
+    private boolean isPartnership;
+
+    private String partnershipContent;
+
     @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
     private List<PlaceImage> placeImages = new ArrayList<>();
 

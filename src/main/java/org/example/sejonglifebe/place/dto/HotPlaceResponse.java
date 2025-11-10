@@ -15,7 +15,10 @@ public record HotPlaceResponse(
         @Schema(description = "조회수", example = "12345") Long viewCount,
         @Schema(description = "리뷰 수", example = "12") Long reviewCount,
         @Schema(description = "카테고리 목록") List<CategoryInfo> categories,
-        @Schema(description = "태그 목록") List<TagInfo> tags
+        @Schema(description = "태그 목록") List<TagInfo> tags,
+        @Schema(description = "제휴 여부")boolean isPartnership,
+        @Schema(description = "제휴 내용")String partnershipContent
+
 ) {
 
     public static HotPlaceResponse from(Place place) {
@@ -30,7 +33,9 @@ public record HotPlaceResponse(
                         .toList(),
                 place.getPlaceTags().stream()
                         .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
-                        .toList()
+                        .toList(),
+                place.isPartnership(),
+                place.getPartnershipContent()
         );
     }
 
