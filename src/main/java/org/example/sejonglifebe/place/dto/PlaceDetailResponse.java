@@ -16,7 +16,9 @@ public record PlaceDetailResponse(
         @Schema(description = "이미지 정보 목록") List<PlaceImageInfo> images,
         @Schema(description = "태그 목록") List<TagInfo> tags,
         @Schema(description = "조회수", example = "12345") Long viewCount,
-        @Schema(description = "지도 링크(카카오/네이버/구글 등)") MapLinks mapLinks
+        @Schema(description = "지도 링크(카카오/네이버/구글 등)") MapLinks mapLinks,
+        @Schema(description = "제휴 여부") boolean isPartnership,
+        @Schema(description = "제휴 내용") String partnershipContent
 ) {
 
     public static PlaceDetailResponse from(Place place) {
@@ -33,7 +35,9 @@ public record PlaceDetailResponse(
                         .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
                         .toList(),
                 place.getViewCount(),
-                place.getMapLinks()
+                place.getMapLinks(),
+                place.isPartnership(),
+                place.getPartnershipContent()
         );
     }
 }
