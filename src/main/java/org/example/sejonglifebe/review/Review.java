@@ -60,7 +60,7 @@ public class Review {
     @JoinColumn(name = "place_id", nullable = false)
     private Place place;
 
-    @OneToMany(mappedBy = "review", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -112,5 +112,15 @@ public class Review {
 
     public void deleteReviewLike(ReviewLike reviewLike) {
         reviewLikes.remove(reviewLike);
+    }
+
+    public void updateReview(int rating, String content) {
+        this.rating = rating;
+        this.content = content;
+    }
+
+    public void updateTags(List<Tag> newTags) {
+        this.reviewTags.clear();
+        newTags.forEach(this::addTag);
     }
 }

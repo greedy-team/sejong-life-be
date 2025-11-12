@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
-import org.example.sejonglifebe.place.dto.HotPlaceResponse;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;

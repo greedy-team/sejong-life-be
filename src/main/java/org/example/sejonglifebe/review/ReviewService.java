@@ -3,6 +3,8 @@ package org.example.sejonglifebe.review;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,6 +15,7 @@ import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
@@ -53,10 +56,16 @@ public class ReviewService {
                 .map(like -> like.getReview().getId())
                 .collect(Collectors.toSet());
 
+
         return reviews.stream()
                 .map(review -> {
                     boolean liked = likedReviewIds.contains(review.getId());
-                    return ReviewResponse.from(review, liked);
+                    boolean isAuthor = false;
+                    if(authUser != null) {
+                        isAuthor = review.getUser().getStudentId()
+                                .equals(authUser.studentId());
+                    }
+                    return ReviewResponse.from(review, liked, isAuthor);
                 })
                 .toList();
     }
@@ -105,6 +114,45 @@ public class ReviewService {
 
         reviewRepository.save(review);
         checkAndAddTagToPlace(tags, place);
+    }
+
+    @Transactional
+    public void deleteReview(Long reviewId, AuthUser authUser) {
+        Review review = reviewRepository.findByIdWithUserAndPlace(reviewId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
+
+        if (!review.getUser().getStudentId().equals(authUser.studentId())) {
+            throw new SejongLifeException(ErrorCode.PERMISSION_DENIED);
+        }
+
+        Place place = review.getPlace();
+        List<PlaceImage> images = place.getPlaceImages().stream()
+                .filter(image -> image.getReview() != null && image.getReview().getId().equals(reviewId))
+                .toList();
+        s3Service.deleteImages(images);
+        for(PlaceImage image : images) {
+            place.removeImage(image);
+        }
+        review.getUser().removeReview(review);
+        place.removeReview(review);
+        reviewRepository.delete(review);
+    }
+
+    @Transactional
+    public void updateReview(Long reviewId, ReviewRequest request, AuthUser authUser) {
+        Review review = reviewRepository.findByIdWithUserAndTags(reviewId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
+
+        if (!review.getUser().getStudentId().equals(authUser.studentId())) {
+            throw new SejongLifeException(ErrorCode.PERMISSION_DENIED);
+        }
+
+        review.updateReview(request.rating(), request.content());
+        List<Tag> newTags = tagRepository.findByIdIn(request.tagIds());
+        if (newTags.size() != request.tagIds().size()) {
+            throw new SejongLifeException(ErrorCode.TAG_NOT_FOUND);
+        }
+        review.updateTags(newTags);
     }
 
     @Transactional
