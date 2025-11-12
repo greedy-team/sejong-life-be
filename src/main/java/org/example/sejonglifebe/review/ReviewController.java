@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -67,6 +69,29 @@ public class ReviewController {
             AuthUser authUser) {
         reviewService.createReview(placeId, reviewRequest, authUser, images);
         return CommonResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
+    }
+
+    @PutMapping("/{reviewId}")
+    public ResponseEntity<CommonResponse<Void>> updateReview(
+            @PathVariable Long placeId,
+            @PathVariable Long reviewId,
+            @Valid @RequestBody ReviewRequest reviewRequest,
+            AuthUser authUser) {
+
+        reviewService.updateReview(placeId, reviewId, reviewRequest, authUser);
+
+        return CommonResponse.of(HttpStatus.OK, "리뷰 수정 성공", null);
+    }
+
+    @DeleteMapping("/{reviewId}")
+    public ResponseEntity<CommonResponse<Void>> deleteReview(
+            @PathVariable Long placeId,
+            @PathVariable Long reviewId,
+            AuthUser authUser) {
+
+        reviewService.deleteReview(placeId, reviewId, authUser);
+
+        return CommonResponse.of(HttpStatus.OK, "리뷰 삭제 성공", null);
     }
 
     @Operation(summary = "리뷰 좋아요")

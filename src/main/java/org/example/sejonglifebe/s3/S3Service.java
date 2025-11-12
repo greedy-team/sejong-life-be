@@ -1,6 +1,5 @@
 package org.example.sejonglifebe.s3;
 
-import static org.example.sejonglifebe.common.logging.AccessLogFilter.log;
 
 import java.util.ArrayList;
 import java.util.List;

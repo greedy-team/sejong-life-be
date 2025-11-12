@@ -1,18 +1,24 @@
 package org.example.sejonglifebe.review;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
+import java.util.Optional;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.dto.ReviewRequest;
+import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.User;
 import org.example.sejonglifebe.user.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,14 +29,21 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -61,6 +74,12 @@ class ReviewControllerTest {
 
     @Autowired
     private ReviewRepository reviewRepository;
+
+    @Autowired
+    private EntityManager em; // (Service 테스트에서 썼던 것과 동일하게)
+
+    @MockitoBean
+    private S3Service s3Service; // [추가] S3Service Mocking
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
@@ -159,6 +178,62 @@ class ReviewControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"));
+
+
+    }
+
+    @Test
+    @DisplayName("리뷰 목록 조회 - isAuthor 로직 검증 ")
+    @Transactional
+    void getReviews_isAuthor_TrueAndFalse() throws Exception {
+        // given
+        // '21011111'로 로그인 (setUp()에서 Mocking)
+        User loggedInUser = userRepository.save(User.builder().studentId("21011111").nickname("로그인유저").build());
+        User otherUser = userRepository.save(User.builder().studentId("22222222").nickname("다른유저").build());
+
+        Place place = createPlaceFixture("맛집", "주소", "url", categoryRepository.save(new Category("식당")), List.of());
+        placeRepository.save(place);
+
+        // 1번 리뷰 (내가 쓴 글)
+        Review myReview = createReview(place, loggedInUser, "내가 쓴 글", 5, List.of(), List.of());
+        reviewRepository.save(myReview);
+
+        // 2번 리뷰 (남이 쓴 글)
+        Review othersReview = createReview(place, otherUser, "남이 쓴 글", 1, List.of(), List.of());
+        reviewRepository.save(othersReview);
+
+        // when & then
+        mockMvc.perform(get("/api/places/{placeId}/reviews", place.getId())
+                        .header("Authorization", "Bearer test-token") // '21011111'로 로그인
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("리뷰 목록 조회 성공"))
+                .andExpect(jsonPath("$.data", hasSize(2)))
+                // 1번 리뷰(myReview)는 isAuthor=true 여야 함
+                // (JSONPath 필터링: data 배열에서 reviewId가 myReview.getId()와 일치하는 요소를 찾아 isAuthor 값을 검증)
+                .andExpect(jsonPath("$.data[?(@.reviewId == " + myReview.getId() + ")].isAuthor").value(true))
+                // 2번 리뷰(othersReview)는 isAuthor=false 여야 함
+                .andExpect(jsonPath("$.data[?(@.reviewId == " + othersReview.getId() + ")].isAuthor").value(false));
+    }
+
+    @Test
+    @DisplayName("리뷰 목록 조회 - isAuthor 로직 검증 (로그인 X")
+    @Transactional
+    void getReviews_isAuthor_Guest() throws Exception {
+        // given
+        User writer = userRepository.save(User.builder().studentId("21011111").nickname("작성자").build());
+        Place place = createPlaceFixture("맛집", "주소", "url", categoryRepository.save(new Category("식당")), List.of());
+        placeRepository.save(place);
+        Review review = createReview(place, writer, "리뷰 내용", 5, List.of(), List.of());
+        reviewRepository.save(review);
+
+        // when & then
+        mockMvc.perform(get("/api/places/{placeId}/reviews", place.getId())
+                        // (헤더에 Authorization 없음 = 비회원)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", hasSize(1)))
+                .andExpect(jsonPath("$.data[0].isAuthor").value(false)); // 비로그인 시 무조건 false
     }
 
     @Test
@@ -314,4 +389,5 @@ class ReviewControllerTest {
         tags.forEach(review::addTag);
         return review;
     }
+
 }

@@ -117,9 +117,13 @@ public class ReviewService {
     }
 
     @Transactional
-    public void deleteReview(Long reviewId, AuthUser authUser) {
+    public void deleteReview(Long reviewId, Long placeId, AuthUser authUser) {
         Review review = reviewRepository.findByIdWithUserAndPlace(reviewId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
+
+        if(review.getPlace().getId() != placeId) {
+            throw new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND);
+        }
 
         if (!review.getUser().getStudentId().equals(authUser.studentId())) {
             throw new SejongLifeException(ErrorCode.PERMISSION_DENIED);
@@ -139,9 +143,13 @@ public class ReviewService {
     }
 
     @Transactional
-    public void updateReview(Long reviewId, ReviewRequest request, AuthUser authUser) {
+    public void updateReview(Long reviewId, Long placeId, ReviewRequest request, AuthUser authUser) {
         Review review = reviewRepository.findByIdWithUserAndTags(reviewId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
+
+        if(review.getPlace().getId() != placeId) {
+            throw new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND);
+        }
 
         if (!review.getUser().getStudentId().equals(authUser.studentId())) {
             throw new SejongLifeException(ErrorCode.PERMISSION_DENIED);
