@@ -7,11 +7,6 @@ build/
 application.yml
 application-*.yml
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
 ### STS ###
 .apt_generated
 .classpath
