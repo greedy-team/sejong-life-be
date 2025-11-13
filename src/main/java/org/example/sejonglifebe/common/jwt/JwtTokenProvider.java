@@ -1,11 +1,16 @@
 package org.example.sejonglifebe.common.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.example.sejonglifebe.auth.AuthUser;
 import jakarta.annotation.PostConstruct;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.user.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -61,27 +66,53 @@ public class JwtTokenProvider {
     }
 
     public PortalStudentInfo validateAndGetPortalInfo(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
 
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+            return PortalStudentInfo.builder()
+                    .studentId(claims.getSubject())
+                    .name(claims.get("name", String.class))
+                    .build();
 
-        return PortalStudentInfo.builder()
-                .studentId(claims.getSubject())
-                .name(claims.get("name", String.class))
-                .build();
+        } catch (ExpiredJwtException e) {
+            throw new SejongLifeException(ErrorCode.EXPIRED_TOKEN);
+
+        } catch (MalformedJwtException e) {
+            throw new SejongLifeException(ErrorCode.MALFORMED_TOKEN);
+
+        } catch (SignatureException e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+
+        } catch (Exception e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+        }
     }
 
     public AuthUser validateAndGetAuthUser(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
 
-        Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+            return new AuthUser(claims.getSubject());
 
-        return new AuthUser(claims.getSubject());
+        } catch (ExpiredJwtException e) {
+            throw new SejongLifeException(ErrorCode.EXPIRED_TOKEN);
+
+        } catch (MalformedJwtException e) {
+            throw new SejongLifeException(ErrorCode.MALFORMED_TOKEN);
+
+        } catch (SignatureException e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+
+        } catch (Exception e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+        }
     }
 }
