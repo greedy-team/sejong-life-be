@@ -71,6 +71,8 @@ public class ReviewController {
         return CommonResponse.of(HttpStatus.CREATED, "리뷰 작성 성공", null);
     }
 
+    @Operation(summary = "리뷰 수정")
+    @LoginRequired
     @PutMapping("/{reviewId}")
     public ResponseEntity<CommonResponse<Void>> updateReview(
             @PathVariable Long placeId,
@@ -83,6 +85,8 @@ public class ReviewController {
         return CommonResponse.of(HttpStatus.OK, "리뷰 수정 성공", null);
     }
 
+    @Operation(summary = "리뷰 삭제")
+    @LoginRequired
     @DeleteMapping("/{reviewId}")
     public ResponseEntity<CommonResponse<Void>> deleteReview(
             @PathVariable Long placeId,

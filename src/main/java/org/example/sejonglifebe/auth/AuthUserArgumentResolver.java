@@ -27,6 +27,14 @@ public class AuthUserArgumentResolver implements HandlerMethodArgumentResolver {
     @Override
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
+
+        // Interceptor에서 이미 파싱한 AuthUser가 있으면 재사용
+        AuthUser authUser = (AuthUser) request.getAttribute(AuthInterceptor.AUTH_USER_ATTRIBUTE);
+        if (authUser != null) {
+            return authUser;
+        }
+
+        // Interceptor를 거치지 않은 경우 (@LoginRequired가 없는 경우) 직접 파싱
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null) {
             return null;
