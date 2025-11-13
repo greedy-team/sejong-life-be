@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.review;
 
+import java.util.Optional;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
 import java.util.List;
@@ -24,6 +25,12 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByPlace(Place place);
 
+    @Query("SELECT r FROM Review r JOIN FETCH r.user JOIN FETCH r.place WHERE r.id = :reviewId")
+    Optional<Review> findByIdWithUserAndPlace(Long reviewId);
+
+    @Query("SELECT r FROM Review r JOIN FETCH r.user LEFT JOIN FETCH r.reviewTags WHERE r.id = :reviewId")
+    Optional<Review> findByIdWithUserAndTags(Long reviewId);
+
     Long countByPlace(Place place);
 
     @Query("SELECT r.rating as rating, COUNT(r) as count FROM Review r WHERE r.place = :place GROUP BY r.rating")
@@ -39,4 +46,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Review r SET r.likeCount = r.likeCount - 1 WHERE r.id = :reviewId AND r.likeCount > 0")
     int decrementLikeCount(@Param("reviewId") Long reviewId);
+
+
+
 }

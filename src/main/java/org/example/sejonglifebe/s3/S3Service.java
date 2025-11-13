@@ -1,14 +1,22 @@
 package org.example.sejonglifebe.s3;
 
+
+import java.util.ArrayList;
+import java.util.List;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectAclRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -74,6 +82,28 @@ public class S3Service {
             throw new SejongLifeException(ErrorCode.FILE_UPLOAD_FAILED);
         } catch (S3Exception e) {
             throw new SejongLifeException(ErrorCode.S3_UPLOAD_FAILED, e);
+        }
+    }
+
+    public void deleteImages(List<PlaceImage> images) {
+        if (images == null || images.isEmpty()) {
+            return;
+        }
+        List<ObjectIdentifier> identifiers = images.stream()
+                .map(image -> ObjectIdentifier.builder().key(image.getUrl()).build())
+                .toList();
+        Delete deleteRequest = Delete.builder()
+                .objects(identifiers)
+                .quiet(false)
+                .build();
+        DeleteObjectsRequest bulkDeleteRequest = DeleteObjectsRequest.builder()
+                .bucket(bucket)
+                .delete(deleteRequest)
+                .build();
+        try {
+            s3Client.deleteObjects(bulkDeleteRequest);
+        } catch (S3Exception e) {
+            throw new SejongLifeException(ErrorCode.S3_DELETE_FAILED);
         }
     }
 

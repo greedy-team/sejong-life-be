@@ -7,6 +7,7 @@ import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.place.dto.PlaceImageInfo;
 import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.example.sejonglifebe.review.Review;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value.Bool;
 
 @Schema(description = "리뷰 응답")
 public record ReviewResponse(
@@ -20,10 +21,11 @@ public record ReviewResponse(
         @Schema(description = "작성일시(ISO 문자열)", example = "2025-08-24T13:45:00") String createdAt,
         @Schema(description = "내가 좋아요 눌렀는지", example = "true") boolean liked,
         @Schema(description = "이미지 URL 목록") List<PlaceImageInfo> images,
-        @Schema(description = "태그 목록") List<TagInfo> tags
+        @Schema(description = "태그 목록") List<TagInfo> tags,
+        @Schema(description = "작성자 여부") boolean isAuthor
 ) {
 
-    public static ReviewResponse from(Review review,boolean liked) {
+    public static ReviewResponse from(Review review,boolean liked, boolean isAuthor) {
         return new ReviewResponse(
                 review.getId(),
                 review.getRating(),
@@ -39,7 +41,8 @@ public record ReviewResponse(
                         .toList(),
                 review.getReviewTags().stream()
                         .map(rt -> new TagInfo(rt.getTag().getId(), rt.getTag().getName()))
-                        .toList()
+                        .toList(),
+                isAuthor
         );
     }
 }

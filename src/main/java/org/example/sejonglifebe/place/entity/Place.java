@@ -89,6 +89,10 @@ public class Place {
         this.placeImages.add(placeImage);
     }
 
+    public void removeImage(PlaceImage image) {
+        placeImages.remove(image);
+    }
+
     public void addTag(Tag tag) {
         boolean exists = placeTags.stream()
                 .anyMatch(placeTag -> placeTag.getTag().equals(tag));
@@ -109,6 +113,10 @@ public class Place {
         reviews.add(review);
     }
 
+    public void removeReview(Review review) {
+        reviews.remove(review);
+    }
+
     public String getThumbnailImage() {
         if (placeImages == null || placeImages.isEmpty()) {
             return null; // 이미지가 아예 없는 경우
@@ -120,4 +128,5 @@ public class Place {
                 .map(PlaceImage::getUrl) // 그 이미지의 URL을 반환
                 .orElse(placeImages.get(0).getUrl()); // 만약 대표 이미지가 없다면, 그냥 첫 번째 이미지 반환
     }
+
 }
