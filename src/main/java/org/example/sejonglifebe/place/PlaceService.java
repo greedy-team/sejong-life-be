@@ -15,7 +15,6 @@ import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
-import org.example.sejonglifebe.place.dto.HotPlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.entity.Place;
@@ -62,7 +61,7 @@ public class PlaceService {
 
     private List<Place> getPlacesByAllCategory(List<Tag> tags) {
         if (tags.isEmpty()) {
-            return placeRepository.findAll();
+            return placeRepository.findAllOrderByReviewCountDesc();
         }
         return placeRepository.findByTags(tags, (long) tags.size());
     }
