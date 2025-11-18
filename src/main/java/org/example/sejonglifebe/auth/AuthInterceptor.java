@@ -14,6 +14,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @RequiredArgsConstructor
 public class AuthInterceptor implements HandlerInterceptor {
 
+    public static final String AUTH_USER_ATTRIBUTE = "AUTH_USER";
+
     private final JwtTokenExtractor jwtTokenExtractor;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -30,7 +32,11 @@ public class AuthInterceptor implements HandlerInterceptor {
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         String token = jwtTokenExtractor.extractToken(authHeader);
-        jwtTokenProvider.validateAndGetAuthUser(token);
+        AuthUser authUser = jwtTokenProvider.validateAndGetAuthUser(token);
+
+        // Request Attribute에 저장하여 ArgumentResolver에서 재사용
+        request.setAttribute(AUTH_USER_ATTRIBUTE, authUser);
+
         return true;
     }
 }

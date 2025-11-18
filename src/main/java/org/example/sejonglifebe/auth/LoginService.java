@@ -24,27 +24,21 @@ public class LoginService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public LoginResponse login(LoginRequest request) {
-        try {
-            String html = fetchPortal(request);
-            PortalStudentInfo studentInfo = htmlParser.parseStudentInfo(html);
+        String html = fetchPortal(request);
+        PortalStudentInfo studentInfo = htmlParser.parseStudentInfo(html);
 
-            // 가입 여부 확인
-            Optional<User> userOptional = userService.findUserByStudentId(studentInfo.getStudentId());
+        // 가입 여부 확인
+        Optional<User> userOptional = userService.findUserByStudentId(studentInfo.getStudentId());
 
-            if (userOptional.isPresent()) {
-                // 기존 회원: JWT 발급 후 로그인 성공 응답
-                User user = userOptional.get();
-                String accessToken = jwtTokenProvider.createToken(user);
-                return LoginResponse.loginSuccess(accessToken);
-            } else {
-                // 신규 회원: 회원가입 토큰 발급 후 가입 필요 응답
-                String signUpToken = jwtTokenProvider.createSignUpToken(studentInfo);
-                return LoginResponse.signUpRequired(signUpToken, studentInfo);
-            }
-
-        } catch (SejongLifeException e) {
-            log.error("세종포털 인증 중 예측하지 못한 오류 발생", e);
-            throw new SejongLifeException(ErrorCode.INTERNAL_SERVER_ERROR, e);
+        if (userOptional.isPresent()) {
+            // 기존 회원: JWT 발급 후 로그인 성공 응답
+            User user = userOptional.get();
+            String accessToken = jwtTokenProvider.createToken(user);
+            return LoginResponse.loginSuccess(accessToken);
+        } else {
+            // 신규 회원: 회원가입 토큰 발급 후 가입 필요 응답
+            String signUpToken = jwtTokenProvider.createSignUpToken(studentInfo);
+            return LoginResponse.signUpRequired(signUpToken, studentInfo);
         }
     }
 

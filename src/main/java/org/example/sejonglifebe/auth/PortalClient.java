@@ -82,18 +82,40 @@ public class PortalClient {
     }
 
     private Response executeWithRetry(Request request) {
-        int tryCount = 0;
-        while (tryCount < RETRY_COUNT) {
+        Response lastResponse = null;
+
+        for (int tryCount = 1; tryCount <= RETRY_COUNT; tryCount++) {
             try {
                 Response response = client.newCall(request).execute();
+
                 if (response.isSuccessful()) {
                     return response;
                 }
+
+                // 실패한 응답은 리소스 해제
+                lastResponse = response;
+                response.close();
+
+                log.warn("[PortalLogin] HTTP 오류 발생 -> 재시도 {}/{}, 상태 코드: {}",
+                        tryCount, RETRY_COUNT, response.code());
+
             } catch (IOException e) {
-                tryCount++;
-                log.warn("[PortalLogin] 네트워크 오류 발생 -> 재시도... ({}회), 오류: {}", tryCount, e.getMessage());
+                log.warn("[PortalLogin] 네트워크 오류 발생 -> 재시도 {}/{}, 오류: {}",
+                        tryCount, RETRY_COUNT, e.getMessage());
+            }
+
+            // 마지막 시도가 아니면 대기 (Exponential backoff)
+            if (tryCount < RETRY_COUNT) {
+                try {
+                    long waitTime = (long) Math.pow(2, tryCount - 1) * 1000; // 1초, 2초, 4초
+                    Thread.sleep(waitTime);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
+                }
             }
         }
+
         throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
     }
 }
