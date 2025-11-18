@@ -74,7 +74,7 @@ class PlaceServiceTest {
             placeService.getPlacesFilteredByCategoryAndTags(request);
 
             // then
-            verify(placeRepository).findAll();
+            verify(placeRepository).findAllOrderByReviewCountDesc();
         }
 
         @Test
