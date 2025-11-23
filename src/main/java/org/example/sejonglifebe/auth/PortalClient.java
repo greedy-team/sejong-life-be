@@ -9,12 +9,15 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.List;
 
 @Slf4j
 @Component
+@Scope("prototype")
 @RequiredArgsConstructor
 public class PortalClient {
 

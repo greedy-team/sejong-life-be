@@ -4,6 +4,7 @@ import okhttp3.JavaNetCookieJar;
 import okhttp3.OkHttpClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Scope;
 
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -12,6 +13,7 @@ import java.net.CookiePolicy;
 public class HttpClientConfig {
 
     @Bean
+    @Scope("prototype")
     public OkHttpClient okHttpClient() {
         CookieManager cookieManager = new CookieManager();
         cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
