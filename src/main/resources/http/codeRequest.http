@@ -1,7 +1,7 @@
 ### ========================================
 ### 환경 변수 설정
 ### ========================================
-@baseUrl = http://localhost:8080
+@baseUrl = http://localhost:8081
 @contentType = application/json
 
 ### ========================================
@@ -13,8 +13,8 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: {{contentType}}
 
 {
-  "sejongPortalId": "21011581",
-  "sejongPortalPw": "kjw010424~"
+  "sejongPortalId": "학번",
+  "sejongPortalPw": "비밀번호"
 }
 
 > {%
