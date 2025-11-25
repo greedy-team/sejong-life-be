@@ -93,7 +93,7 @@ public class ReviewController {
             @PathVariable Long reviewId,
             AuthUser authUser) {
 
-        reviewService.deleteReview(placeId, reviewId, authUser);
+        reviewService.deleteReview(reviewId, placeId, authUser);
 
         return CommonResponse.of(HttpStatus.OK, "리뷰 삭제 성공", null);
     }
