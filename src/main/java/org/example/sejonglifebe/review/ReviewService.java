@@ -121,7 +121,7 @@ public class ReviewService {
         Review review = reviewRepository.findByIdWithUserAndPlace(reviewId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
 
-        if(review.getPlace().getId() != placeId) {
+        if(!review.getPlace().getId().equals(placeId)) {
             throw new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND);
         }
 
