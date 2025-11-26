@@ -21,10 +21,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectAclRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
@@ -34,19 +30,17 @@ public class S3Service {
 
     private final static int MAX_SIZE = 10 * 1024 * 1024;
     private final static String KEY_DELIMITER = "-";
-    private static final String EXT_HEIC = "heic";
-    private static final String EXT_JPG = "jpg";
-    private static final String CONTENT_TYPE_JPEG = "image/jpeg";
-
 
     private final S3Client s3Client;
     private final String bucket;
     private final ImageConverter imageConverter;
 
-    public S3Service(S3Client s3Client, @Value("${cloud.aws.s3.bucket}") String bucket) {
+    public S3Service(S3Client s3Client,
+                     @Value("${cloud.aws.s3.bucket}") String bucket,
+                     ImageConverter imageConverter) {
         this.s3Client = s3Client;
         this.bucket = bucket;
-        this.imageConverter = new ImageConverter();
+        this.imageConverter = imageConverter;
     }
 
     public String uploadImage(Long placeId, MultipartFile image) {
