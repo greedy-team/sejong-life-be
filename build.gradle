@@ -71,6 +71,9 @@ dependencies {
     // ======== Testing ========
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // ======== Image Type Converting ========
+    implementation 'com.twelvemonkeys.imageio:imageio-webp:3.10.1'
 }
 
 tasks.named('test') {
