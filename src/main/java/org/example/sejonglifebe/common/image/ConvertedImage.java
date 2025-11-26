@@ -1,4 +1,4 @@
-package org.example.sejonglifebe.s3;
+package org.example.sejonglifebe.common.image;
 
 import java.io.InputStream;
 

@@ -32,7 +32,7 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "서버에서 파일을 처리하지 못했습니다."),
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3에 파일 업로드 중 오류가 발생했습니다."),
     FILE_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 가능한 최대 파일 크기를 초과했습니다."),
-    HEIC_CONVERT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "HEIC → JPEG 변환에 실패했습니다."),
+    IMAGE_CONVERT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 변환에 실패했습니다."),
     S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 파일 삭제 중 오류가 발생했습니다."),
     PERMISSION_DENIED(HttpStatus.FORBIDDEN, "리뷰 수정, 삭제 권한이 없습니다");
     private final HttpStatus httpStatus;
