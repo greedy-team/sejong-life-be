@@ -34,7 +34,6 @@ public class LoginController {
     @PostMapping("/logout")
     public ResponseEntity<CommonResponse<Void>> logout() {
         // 클라이언트 기반 로그아웃 (토큰 삭제는 클라이언트가 처리)
-        // TODO: Redis 기반 토큰 블랙리스트 구현 시 여기서 토큰 무효화 처리
         return CommonResponse.of(HttpStatus.OK, "로그아웃 성공", null);
     }
 }

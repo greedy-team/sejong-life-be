@@ -5,10 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.auth.dto.LoginRequest;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
-import org.example.sejonglifebe.exception.ErrorCode;
-import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.user.User;
 import org.example.sejonglifebe.user.UserService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -18,7 +17,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class LoginService {
 
-    private final PortalClient portalClient;
+    private final ObjectProvider<PortalClient> portalClientProvider;  // 매번 새로운 인스턴스 제공
     private final PortalHtmlParser htmlParser;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -44,6 +43,7 @@ public class LoginService {
 
     // 인증 로직
     private String fetchPortal(LoginRequest request) {
+        PortalClient portalClient = portalClientProvider.getObject();
         portalClient.login(request.getSejongPortalId(), request.getSejongPortalPw());
         return portalClient.fetchHtml();
     }

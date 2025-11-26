@@ -1,33 +1,255 @@
-GET http://localhost:8080/api/places/1
-Accept: application/json
+### ========================================
+### 환경 변수 설정
+### ========================================
+@baseUrl = http://localhost:8081
+@contentType = application/json
 
-###
-GET http://localhost:8080/api/tags
-Accept: application/json
+### ========================================
+### 1. Auth API
+### ========================================
 
-### 1단계: 포털 로그인 요청 (signUpToken 얻기)
-POST http://localhost:8080/api/auth/login
-Content-Type: application/json
+### 1-1. 로그인 (signUpToken 및 accessToken 획득)
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
 
 {
   "sejongPortalId": "학번",
-  "sejongPortalPw": "포털비밀번호"
+  "sejongPortalPw": "비밀번호"
 }
 
 > {%
-    // 응답에서 signUpToken을 변수로 저장
-    client.global.set("signUpToken", response.body.data.signUpToken);
-    client.global.set("studentId", response.body.data.userInfo.studentId);
-    client.global.set("name", response.body.data.userInfo.name);
+    // 응답에서 필요한 토큰과 정보 저장
+    if (response.body.data.signUpToken) {
+        client.global.set("signUpToken", response.body.data.signUpToken);
+    }
+    if (response.body.data.accessToken) {
+        client.global.set("accessToken", response.body.data.accessToken);
+    }
+    if (response.body.data.userInfo) {
+        client.global.set("studentId", response.body.data.userInfo.studentId);
+        client.global.set("name", response.body.data.userInfo.name);
+    }
 %}
 
-### 2단계: 최종 회원가입 요청
-POST http://localhost:8080/api/users/signup
-Content-Type: application/json
+### 1-2. 로그아웃
+POST {{baseUrl}}/api/auth/logout
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+### ========================================
+### 2. User API
+### ========================================
+
+### 2-1. 회원가입
+POST {{baseUrl}}/api/users/signup
+Content-Type: {{contentType}}
 Authorization: Bearer {{signUpToken}}
 
 {
   "studentId": "{{studentId}}",
   "name": "{{name}}",
-  "nickname": "임시닉네임"
+  "nickname": "테스트닉네임123"
 }
+
+> {%
+    // 회원가입 성공 시 accessToken 저장
+    if (response.body.data) {
+        client.global.set("accessToken", response.body.data);
+    }
+%}
+
+### ========================================
+### 3. Category API
+### ========================================
+
+### 3-1. 카테고리 목록 조회
+GET {{baseUrl}}/api/categories
+Accept: {{contentType}}
+
+> {%
+    // 첫 번째 카테고리 ID 저장 (다른 요청에서 사용)
+    if (response.body.data && response.body.data.length > 0) {
+        client.global.set("categoryId", response.body.data[0].categoryId);
+        client.global.set("categoryName", response.body.data[0].name);
+    }
+%}
+
+### ========================================
+### 4. Tag API
+### ========================================
+
+### 4-1. 전체 태그 목록 조회
+GET {{baseUrl}}/api/tags
+Accept: {{contentType}}
+
+### 4-2. 카테고리별 태그 목록 조회
+GET {{baseUrl}}/api/tags?categoryId={{categoryId}}
+Accept: {{contentType}}
+
+> {%
+    // 첫 번째 태그 이름 저장
+    if (response.body.data && response.body.data.length > 0) {
+        client.global.set("tagName", response.body.data[0].name);
+    }
+%}
+
+### 4-3. 추천 태그 목록 조회
+GET {{baseUrl}}/api/tags/recommended?categoryId={{categoryId}}
+Accept: {{contentType}}
+
+### ========================================
+### 5. Place API
+### ========================================
+
+### 5-1. 장소 목록 조회 (카테고리 필터)
+GET {{baseUrl}}/api/places?category={{categoryName}}
+Accept: {{contentType}}
+
+> {%
+    // 첫 번째 장소 ID 저장
+    if (response.body.data && response.body.data.length > 0) {
+        client.global.set("placeId", response.body.data[0].placeId);
+    }
+%}
+
+### 5-2. 장소 목록 조회 (카테고리 + 태그 필터)
+GET {{baseUrl}}/api/places?category={{categoryName}}&tags={{tagName}}
+Accept: {{contentType}}
+
+### 5-3. 주간 핫플레이스 조회
+GET {{baseUrl}}/api/places/hot
+Accept: {{contentType}}
+
+### 5-4. 장소 상세 정보 조회
+GET {{baseUrl}}/api/places/{{placeId}}
+Accept: {{contentType}}
+
+### ========================================
+### 6. Review API
+### ========================================
+
+### 6-1. 리뷰 목록 조회 (비로그인)
+GET {{baseUrl}}/api/places/{{placeId}}/reviews
+Accept: {{contentType}}
+
+> {%
+    // 첫 번째 리뷰 ID 저장
+    if (response.body.data && response.body.data.length > 0) {
+        client.global.set("reviewId", response.body.data[0].reviewId);
+    }
+%}
+
+### 6-2. 리뷰 목록 조회 (로그인)
+GET {{baseUrl}}/api/places/{{placeId}}/reviews
+Accept: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+### 6-3. 리뷰 요약 정보 조회
+GET {{baseUrl}}/api/places/{{placeId}}/reviews/summary
+Accept: {{contentType}}
+
+### 6-4. 리뷰 작성 (multipart/form-data)
+POST {{baseUrl}}/api/places/{{placeId}}/reviews
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="review"
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "content": "정말 좋은 장소입니다! 추천합니다.",
+  "tags": ["분위기좋은", "조용한"]
+}
+--WebAppBoundary--
+
+### 6-5. 리뷰 작성 (이미지 포함 - 실제 파일 경로 필요)
+# POST {{baseUrl}}/api/places/{{placeId}}/reviews
+# Authorization: Bearer {{accessToken}}
+# Content-Type: multipart/form-data; boundary=WebAppBoundary
+#
+# --WebAppBoundary
+# Content-Disposition: form-data; name="review"
+# Content-Type: application/json
+#
+# {
+#   "rating": 5,
+#   "content": "이미지와 함께 리뷰 작성",
+#   "tags": ["분위기좋은"]
+# }
+# --WebAppBoundary
+# Content-Disposition: form-data; name="images"; filename="test.jpg"
+# Content-Type: image/jpeg
+#
+# < ./test.jpg
+# --WebAppBoundary--
+
+### 6-6. 리뷰 수정
+PUT {{baseUrl}}/api/places/{{placeId}}/reviews/{{reviewId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{accessToken}}
+
+{
+  "rating": 4,
+  "content": "리뷰 내용을 수정했습니다.",
+  "tags": ["가성비좋은"]
+}
+
+### 6-7. 리뷰 좋아요
+POST {{baseUrl}}/api/places/{{placeId}}/reviews/{{reviewId}}/likes
+Authorization: Bearer {{accessToken}}
+
+### 6-8. 리뷰 좋아요 취소
+DELETE {{baseUrl}}/api/places/{{placeId}}/reviews/{{reviewId}}/likes
+Authorization: Bearer {{accessToken}}
+
+### 6-9. 리뷰 삭제
+DELETE {{baseUrl}}/api/places/{{placeId}}/reviews/{{reviewId}}
+Authorization: Bearer {{accessToken}}
+
+### ========================================
+### 7. Roulette API
+### ========================================
+
+### 7-1. 카테고리 기반 룰렛 추천
+GET {{baseUrl}}/api/roulette/places/{{categoryName}}
+Accept: {{contentType}}
+
+### ========================================
+### 8. Version API
+### ========================================
+
+### 8-1. 버전 조회
+GET {{baseUrl}}/api/version
+Accept: {{contentType}}
+
+### ========================================
+### 추가 테스트 시나리오
+### ========================================
+
+### 시나리오 1: 전체 플로우 (신규 사용자)
+# 1. POST /api/auth/login -> signUpToken 획득
+# 2. POST /api/users/signup -> accessToken 획득
+# 3. GET /api/categories -> 카테고리 목록
+# 4. GET /api/places?category=식당 -> 장소 목록
+# 5. GET /api/places/{placeId} -> 장소 상세
+# 6. POST /api/places/{placeId}/reviews -> 리뷰 작성
+# 7. POST /api/places/{placeId}/reviews/{reviewId}/likes -> 좋아요
+
+### 시나리오 2: 기존 사용자 로그인
+# 1. POST /api/auth/login -> accessToken 획득 (이미 가입된 경우)
+# 2. GET /api/places/hot -> 핫플레이스 조회
+# 3. GET /api/places/{placeId}/reviews -> 리뷰 목록
+
+### 시나리오 3: 검색 및 필터링
+# 1. GET /api/categories
+# 2. GET /api/tags?categoryId=1
+# 3. GET /api/places?category=카페&tags=조용한,와이파이
+
+### 시나리오 4: 리뷰 관리
+# 1. POST /api/places/{placeId}/reviews (작성)
+# 2. PUT /api/places/{placeId}/reviews/{reviewId} (수정)
+# 3. POST /api/places/{placeId}/reviews/{reviewId}/likes (좋아요)
+# 4. DELETE /api/places/{placeId}/reviews/{reviewId}/likes (좋아요 취소)
+# 5. DELETE /api/places/{placeId}/reviews/{reviewId} (삭제)
