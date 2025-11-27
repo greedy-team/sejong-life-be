@@ -28,7 +28,7 @@ import java.util.UUID;
 @Service
 public class S3Service {
 
-    private final static int MAX_SIZE = 10 * 1024 * 1024;
+    private final static int MAX_SIZE = 30 * 1024 * 1024;
     private final static String KEY_DELIMITER = "-";
 
     private final S3Client s3Client;
