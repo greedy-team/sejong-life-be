@@ -17,8 +17,12 @@ public class ImageConverter {
     private static final int COMPRESSION_QUALITY = 80;
 
     public ConvertedImage convert(MultipartFile image, String ext) {
+        return convert(image, ext, 0, 0);
+    }
+
+    public ConvertedImage convert(MultipartFile image, String ext, int width, int height) {
         try {
-            if (ext != null && ext.equalsIgnoreCase(EXT_WEBP)) {
+            if (ext != null && ext.equalsIgnoreCase(EXT_WEBP) && width <= 0) {
                 byte[] bytes = image.getBytes();
                 return new ConvertedImage(
                         new ByteArrayInputStream(bytes),
@@ -27,9 +31,14 @@ public class ImageConverter {
                         EXT_WEBP
                 );
             }
-            byte[] webpBytes = ImmutableImage.loader()
-                    .fromBytes(image.getBytes())
-                    .bytes(WebpWriter.DEFAULT.withQ(COMPRESSION_QUALITY)); // Q: Quality
+
+            ImmutableImage immutableImage = ImmutableImage.loader().fromBytes(image.getBytes());
+
+            if (width > 0 && height > 0) {
+                immutableImage = immutableImage.scaleTo(width, height);
+            }
+
+            byte[] webpBytes = immutableImage.bytes(WebpWriter.DEFAULT.withQ(COMPRESSION_QUALITY));
 
             return new ConvertedImage(
                     new ByteArrayInputStream(webpBytes),
@@ -37,6 +46,7 @@ public class ImageConverter {
                     CONTENT_TYPE_WEBP,
                     EXT_WEBP
             );
+
         } catch (IOException e) {
             throw new SejongLifeException(ErrorCode.IMAGE_CONVERT_FAILED, e);
         }
