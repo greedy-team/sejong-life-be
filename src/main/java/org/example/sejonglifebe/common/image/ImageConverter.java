@@ -13,16 +13,14 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImageConverter {
     private static final String EXT_WEBP = "webp";
     private static final String CONTENT_TYPE_WEBP = "image/webp";
+    private static final int MAX_WIDTH = 800;
+    private static final int MAX_HEIGHT = 600;
 
     private static final int COMPRESSION_QUALITY = 80;
 
     public ConvertedImage convert(MultipartFile image, String ext) {
-        return convert(image, ext, 0, 0);
-    }
-
-    public ConvertedImage convert(MultipartFile image, String ext, int width, int height) {
         try {
-            if (ext != null && ext.equalsIgnoreCase(EXT_WEBP) && width <= 0) {
+            if (ext != null && ext.equalsIgnoreCase(EXT_WEBP) && MAX_WIDTH <= 0) {
                 byte[] bytes = image.getBytes();
                 return new ConvertedImage(
                         new ByteArrayInputStream(bytes),
@@ -34,9 +32,7 @@ public class ImageConverter {
 
             ImmutableImage immutableImage = ImmutableImage.loader().fromBytes(image.getBytes());
 
-            if (width > 0 && height > 0) {
-                immutableImage = immutableImage.scaleTo(width, height);
-            }
+            immutableImage = immutableImage.scaleTo(MAX_WIDTH, MAX_HEIGHT);
 
             byte[] webpBytes = immutableImage.bytes(WebpWriter.DEFAULT.withQ(COMPRESSION_QUALITY));
 
