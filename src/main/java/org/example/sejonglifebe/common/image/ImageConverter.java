@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImageConverter {
     private static final String EXT_WEBP = "webp";
     private static final String CONTENT_TYPE_WEBP = "image/webp";
+
     private static final int MAX_WIDTH = 800;
     private static final int MAX_HEIGHT = 600;
 
@@ -20,19 +21,16 @@ public class ImageConverter {
 
     public ConvertedImage convert(MultipartFile image, String ext) {
         try {
-            if (ext != null && ext.equalsIgnoreCase(EXT_WEBP) && MAX_WIDTH <= 0) {
-                byte[] bytes = image.getBytes();
-                return new ConvertedImage(
-                        new ByteArrayInputStream(bytes),
-                        bytes.length,
-                        CONTENT_TYPE_WEBP,
-                        EXT_WEBP
-                );
-            }
-
             ImmutableImage immutableImage = ImmutableImage.loader().fromBytes(image.getBytes());
 
-            immutableImage = immutableImage.scaleTo(MAX_WIDTH, MAX_HEIGHT);
+            int currentWidth = immutableImage.width;
+            int currentHeight = immutableImage.height;
+
+
+            if (currentWidth > MAX_WIDTH || currentHeight > MAX_HEIGHT) {
+                // scaleTo는 비율을 유지하며 지정된 박스 안에 들어가도록 줄여줍니다.
+                immutableImage = immutableImage.scaleTo(MAX_WIDTH, MAX_HEIGHT);
+            }
 
             byte[] webpBytes = immutableImage.bytes(WebpWriter.DEFAULT.withQ(COMPRESSION_QUALITY));
 
