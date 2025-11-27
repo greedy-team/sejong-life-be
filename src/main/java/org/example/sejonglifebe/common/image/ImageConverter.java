@@ -27,9 +27,9 @@ public class ImageConverter {
             int currentHeight = immutableImage.height;
 
 
-            if (currentWidth > MAX_WIDTH || currentHeight > MAX_HEIGHT) {
-                immutableImage = immutableImage.fit(MAX_WIDTH, MAX_HEIGHT);
-            }
+            //if (currentWidth > MAX_WIDTH || currentHeight > MAX_HEIGHT) {
+            //    immutableImage = immutableImage.fit(MAX_WIDTH, MAX_HEIGHT);
+            //}
 
             byte[] webpBytes = immutableImage.bytes(WebpWriter.DEFAULT.withQ(COMPRESSION_QUALITY));
 
