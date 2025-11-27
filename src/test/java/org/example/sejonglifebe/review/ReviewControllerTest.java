@@ -162,12 +162,12 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$.data", hasSize(2)))
                 .andExpect(jsonPath("$.data[0].content").value("맛있어요"))
                 .andExpect(jsonPath("$.data[0].userName").value("닉네임"))
-                .andExpect(jsonPath("$.data[0].studentId").value("21011111"))
+                .andExpect(jsonPath("$.data[0].studentId").value("21"))
                 .andExpect(jsonPath("$.data[0].tags[*].tagName", containsInAnyOrder("맛집", "가성비")))
                 .andExpect(jsonPath("$.data[1].content").value("별로에요"))
                 .andExpect(jsonPath("$.data[1].tags[*].tagName", containsInAnyOrder("가성비")))
                 .andExpect(jsonPath("$.data[1].userName").value("닉네임2"))
-                .andExpect(jsonPath("$.data[1].studentId").value("21011112"))
+                .andExpect(jsonPath("$.data[1].studentId").value("21"))
                 .andDo(print());
     }
 
