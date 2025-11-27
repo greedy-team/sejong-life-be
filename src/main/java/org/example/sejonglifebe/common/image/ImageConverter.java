@@ -28,8 +28,7 @@ public class ImageConverter {
 
 
             if (currentWidth > MAX_WIDTH || currentHeight > MAX_HEIGHT) {
-                // scaleTo는 비율을 유지하며 지정된 박스 안에 들어가도록 줄여줍니다.
-                immutableImage = immutableImage.scaleTo(MAX_WIDTH, MAX_HEIGHT);
+                immutableImage = immutableImage.fit(MAX_WIDTH, MAX_HEIGHT);
             }
 
             byte[] webpBytes = immutableImage.bytes(WebpWriter.DEFAULT.withQ(COMPRESSION_QUALITY));
