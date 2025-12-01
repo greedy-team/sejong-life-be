@@ -2,13 +2,10 @@ package org.example.sejonglifebe.review;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
-import java.util.Optional;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
-import org.example.sejonglifebe.exception.ErrorCode;
-import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
@@ -18,7 +15,6 @@ import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.User;
 import org.example.sejonglifebe.user.UserRepository;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,22 +24,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -178,8 +170,6 @@ class ReviewControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"));
-
-
     }
 
     @Test
@@ -354,7 +344,45 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$.data[0].likeCount").value(0));
     }
 
-    private Place setupReviewListData() {
+    @Test
+    @DisplayName("리뷰 목록이 생성일자 기준 최신순으로 정렬되어 조회된다")
+    void getReviews_orderedByCreatedAtDesc() throws Exception {
+        // given
+        User user = userRepository.save(User.builder()
+                .studentId("21011111").nickname("테스터").build());
+
+        Category category = categoryRepository.save(new Category("식당"));
+        Place place = createPlaceFixture("맛집", "세종대", "url", category, List.of());
+        placeRepository.save(place);
+
+        // 2024년 1월 작성된 오래된 리뷰
+        Review oldReview = createReview(place, user, "오래된 리뷰", 3, List.of(), List.of());
+        ReflectionTestUtils.setField(oldReview, "createdAt", LocalDateTime.of(2024, 1, 1, 10, 0));
+        reviewRepository.save(oldReview);
+
+        // 2024년 6월 작성된 중간 리뷰
+        Review middleReview = createReview(place, user, "중간 리뷰", 4, List.of(), List.of());
+        ReflectionTestUtils.setField(middleReview, "createdAt", LocalDateTime.of(2024, 6, 1, 10, 0));
+        reviewRepository.save(middleReview);
+
+        // 2024년 12월 작성된 최신 리뷰
+        Review newReview = createReview(place, user, "최신 리뷰", 5, List.of(), List.of());
+        ReflectionTestUtils.setField(newReview, "createdAt", LocalDateTime.of(2024, 12, 1, 10, 0));
+        reviewRepository.save(newReview);
+
+        // when & then
+        mockMvc.perform(get("/api/places/{placeId}/reviews", place.getId())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("리뷰 목록 조회 성공"))
+                .andExpect(jsonPath("$.data", hasSize(3)))
+                .andExpect(jsonPath("$.data[0].content").value("최신 리뷰"))
+                .andExpect(jsonPath("$.data[1].content").value("중간 리뷰"))
+                .andExpect(jsonPath("$.data[2].content").value("오래된 리뷰"))
+                .andDo(print());
+    }
+
+    private Place setupReviewListData() throws InterruptedException {
 
         User user1 = userRepository.save(User.builder().studentId("21011111").nickname("닉네임").build());
         User user2 = userRepository.save(User.builder().studentId("21011112").nickname("닉네임2").build());
@@ -369,8 +397,9 @@ class ReviewControllerTest {
 
         Review review1 = createReview(place, user1, "맛있어요", 5, List.of("url1", "url2"), List.of(tag1, tag2));
         Review review2 = createReview(place, user2, "별로에요", 2, List.of("url3"), List.of(tag2));
-        reviewRepository.saveAll(List.of(review1, review2));
-
+        reviewRepository.save(review2);
+        sleep(100);
+        reviewRepository.save(review1);
         return place;
     }
 
@@ -382,8 +411,7 @@ class ReviewControllerTest {
         return place;
     }
 
-    private Review createReview(Place place, User user, String content, int rating, List<String> images,
-                                List<Tag> tags) {
+    private Review createReview(Place place, User user, String content, int rating, List<String> images, List<Tag> tags) {
         Review review = Review.builder().place(place).user(user).content(content).rating(rating).build();
         images.forEach(review::addImage);
         tags.forEach(review::addTag);
