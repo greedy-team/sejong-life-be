@@ -97,7 +97,7 @@ class ReviewServiceTest {
             ReflectionTestUtils.setField(review, "createdAt", LocalDateTime.now());
 
             given(placeRepository.findById(1L)).willReturn(Optional.of(place));
-            given(reviewRepository.findByPlace(place)).willReturn(List.of(review));
+            given(reviewRepository.findByPlaceOrderByCreatedAtDesc(place)).willReturn(List.of(review));
             given(reviewLikeRepository.findByUserStudentId("21011111"))
                     .willReturn(List.of(ReviewLike.createReviewLike(review, user)));
 
@@ -128,7 +128,7 @@ class ReviewServiceTest {
             ReflectionTestUtils.setField(review, "createdAt", LocalDateTime.now());
 
             given(placeRepository.findById(1L)).willReturn(Optional.of(place));
-            given(reviewRepository.findByPlace(place)).willReturn(List.of(review));
+            given(reviewRepository.findByPlaceOrderByCreatedAtDesc(place)).willReturn(List.of(review));
 
             // when
             var result = reviewService.getReviewsByPlaceId(1L, null);
@@ -159,7 +159,7 @@ class ReviewServiceTest {
             ReflectionTestUtils.setField(review, "createdAt", LocalDateTime.now());
 
             given(placeRepository.findById(1L)).willReturn(Optional.of(place));
-            given(reviewRepository.findByPlace(place)).willReturn(List.of(review));
+            given(reviewRepository.findByPlaceOrderByCreatedAtDesc(place)).willReturn(List.of(review));
             given(reviewLikeRepository.findByUserStudentId("21011111"))
                     .willReturn(List.of(ReviewLike.createReviewLike(review, user)));
 
@@ -192,7 +192,7 @@ class ReviewServiceTest {
             ReflectionTestUtils.setField(review, "createdAt", LocalDateTime.now());
 
             given(placeRepository.findById(1L)).willReturn(Optional.of(place));
-            given(reviewRepository.findByPlace(place)).willReturn(List.of(review));
+            given(reviewRepository.findByPlaceOrderByCreatedAtDesc(place)).willReturn(List.of(review));
 
             given(reviewLikeRepository.findByUserStudentId("11111111"))
                     .willReturn(Collections.emptyList());
