@@ -1,7 +1,5 @@
 package org.example.sejonglifebe.category;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.category.dto.CategoryResponse;
 import org.example.sejonglifebe.common.dto.CommonResponse;
@@ -16,12 +14,10 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/categories")
-@Tag(name = "Category", description = "카테고리")
-public class CategoryController {
+public class CategoryController implements CategoryControllerSwagger {
 
     private final CategoryService categoryService;
 
-    @Operation(summary = "카테고리 목록 조회")
     @GetMapping
     public ResponseEntity<CommonResponse<List<CategoryResponse>>> getCategories() {
         List<CategoryResponse> categoryResponses = categoryService.getCategories();
