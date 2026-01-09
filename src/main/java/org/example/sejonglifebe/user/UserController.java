@@ -1,7 +1,5 @@
 package org.example.sejonglifebe.user;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
@@ -22,14 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@Tag(name = "User", description = "회원")
-public class UserController {
+public class UserController implements UserControllerSwagger{
 
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtTokenExtractor jwtTokenExtractor;
 
-    @Operation(summary = "회원가입")
     @PostMapping("/signup")
     public ResponseEntity<CommonResponse<String>> signup(
             @RequestHeader("Authorization") String signUpToken,
