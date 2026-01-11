@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
@@ -31,7 +32,7 @@ public class PlaceController {
     @Operation(summary = "장소 목록 조회")
     @GetMapping
     public ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
-            @ModelAttribute PlaceSearchConditions conditions) {
+            @Valid @ModelAttribute PlaceSearchConditions conditions) {
         List<PlaceResponse> response = placeService.getPlaceByConditions(conditions);
         return CommonResponse.of(HttpStatus.OK, "장소 목록 조회 성공", response);
     }
