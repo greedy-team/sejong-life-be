@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.place;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.category.Category;
@@ -22,10 +23,17 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
 
     @Override
     public List<Place> getPlacesByConditions(Category category, List<Tag> tags, String keyword) {
-        return queryFactory.selectFrom(place)
-                .distinct()
-                .leftJoin(place.placeCategories, placeCategory)
-                .leftJoin(place.placeTags, placeTag)
+        JPAQuery<Place> query = queryFactory.selectFrom(place);
+
+        if (category != null) {
+            query = query.leftJoin(place.placeCategories, placeCategory);
+        }
+
+        if (tags != null && !tags.isEmpty()) {
+            query = query.leftJoin(place.placeTags, placeTag);
+        }
+
+        return query
                 .leftJoin(place.reviews, review)
                 .where(likePlaceName(keyword),
                         placeCategoryEq(category),
