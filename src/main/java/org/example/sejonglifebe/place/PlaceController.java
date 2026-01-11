@@ -2,21 +2,22 @@ package org.example.sejonglifebe.place;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
+import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
-import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,10 +28,8 @@ public class PlaceController implements PlaceControllerSwagger {
 
     @GetMapping
     public ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
-            @RequestParam(value = "tags", required = false) List<String> tags,
-            @RequestParam(value = "category") String category) {
-        PlaceRequest request = new PlaceRequest(tags, category);
-        List<PlaceResponse> response = placeService.getPlacesFilteredByCategoryAndTags(request);
+            @Valid @ModelAttribute PlaceSearchConditions conditions) {
+        List<PlaceResponse> response = placeService.getPlaceByConditions(conditions);
         return CommonResponse.of(HttpStatus.OK, "장소 목록 조회 성공", response);
     }
 
