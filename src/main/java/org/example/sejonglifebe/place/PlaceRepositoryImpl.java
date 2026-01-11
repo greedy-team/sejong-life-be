@@ -41,7 +41,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 )
                 .groupBy(place.id)
                 .having(placeTagCountEq(tags))
-                .orderBy(review.count().desc())
+                .orderBy(review.countDistinct().desc())
                 .fetch();
 
     }
