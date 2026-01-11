@@ -1,6 +1,5 @@
 package org.example.sejonglifebe.place;
 
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -53,14 +52,14 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
         return placeCategory.category.eq(category);
     }
 
-    private Predicate placeTagIn(List<Tag> tags) {
+    private BooleanExpression placeTagIn(List<Tag> tags) {
         if (tags == null || tags.isEmpty()) {
             return null;
         }
         return placeTag.tag.in(tags);
     }
 
-    private Predicate placeTagCountEq(List<Tag> tags) {
+    private BooleanExpression placeTagCountEq(List<Tag> tags) {
         if (tags == null || tags.isEmpty()) {
             return null;
         }
