@@ -48,7 +48,7 @@ public class ReviewService {
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
-        List<Review> reviews = reviewRepository.findByPlace(place);
+        List<Review> reviews = reviewRepository.findByPlaceOrderByCreatedAtDesc(place);
         Set<Long> likedReviewIds = (authUser == null)
                 ? Collections.emptySet()
                 : reviewLikeRepository.findByUserStudentId(authUser.studentId())
