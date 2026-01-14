@@ -123,5 +123,4 @@ public class PlaceService {
         }
         return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
     }
-
 }

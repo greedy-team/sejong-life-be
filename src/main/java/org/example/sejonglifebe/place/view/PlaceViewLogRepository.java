@@ -1,6 +1,5 @@
 package org.example.sejonglifebe.place.view;
 
-
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
