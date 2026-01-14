@@ -1,7 +1,6 @@
 package org.example.sejonglifebe.place;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
