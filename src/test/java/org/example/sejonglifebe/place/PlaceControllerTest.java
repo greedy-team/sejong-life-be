@@ -210,6 +210,79 @@ public class PlaceControllerTest {
     }
 
     @Test
+    @DisplayName("키워드만 입력하면 장소명에 키워드가 포함된 장소가 조회된다")
+    void search_withKeywordOnly() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("keyword", "식당")
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(3))
+                .andExpect(jsonPath("$.data[0].placeName").value("식당1"))
+                .andExpect(jsonPath("$.data[1].placeName").value("식당2"))
+                .andExpect(jsonPath("$.data[2].placeName").value("식당3"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("카테고리 + 키워드로 검색하면 해당 카테고리에서 키워드가 포함된 장소가 조회된다")
+    void search_withCategoryAndKeyword() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "카페")
+                        .param("keyword", "카페1")
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].placeName").value("카페1"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("태그 + 키워드로 검색하면 해당 태그를 가지고 키워드가 포함된 장소가 조회된다")
+    void search_withTagAndKeyword() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("tags", "맛집")
+                        .param("keyword", "식당1")
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].placeName").value("식당1"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("카테고리 + 태그 + 키워드로 검색하면 모든 조건을 만족하는 장소가 조회된다")
+    void search_withAllConditions() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "카페")
+                        .param("tags", "분위기 좋은")
+                        .param("keyword", "카페3")
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].placeName").value("카페3"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 키워드로 검색하면 빈 배열을 반환한다")
+    void search_withNonExistentKeyword() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("keyword", "존재하지않는장소")
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(0))
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("장소 상세 조회 성공 테스트")
     void getPlaceDetail_success() throws Exception {
         mockMvc.perform(get("/api/places/" + detailPlace.getId())

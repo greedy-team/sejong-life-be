@@ -23,7 +23,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             """)
     long countByPlaceAndTag(@Param("place") Place place, @Param("tag") Tag tag);
 
-    List<Review> findByPlace(Place place);
+    List<Review> findByPlaceOrderByCreatedAtDesc(Place place);
 
     @Query("SELECT r FROM Review r JOIN FETCH r.user JOIN FETCH r.place WHERE r.id = :reviewId")
     Optional<Review> findByIdWithUserAndPlace(Long reviewId);
