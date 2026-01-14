@@ -54,8 +54,13 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
             "ORDER BY COUNT(r) DESC")
     List<Place> findAllOrderByReviewCountDesc();
 
-    @Modifying
-    @Query("UPDATE Place p set p.viewCount = p.viewCount + 1 where p.id = :id")
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            UPDATE Place p
+            SET p.viewCount = p.viewCount + 1,
+            p.weeklyViewCount = p.weeklyViewCount + 1
+            WHERE p.id = :id
+           """)
     void increaseViewCount(@Param("id") Long id);
 
     @Modifying

@@ -9,8 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import jakarta.servlet.http.Cookie;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.LocalDateTime;
 import org.example.sejonglifebe.place.entity.MapLinks;
+import org.example.sejonglifebe.place.view.PlaceViewLog;
+import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
+import org.springframework.http.HttpHeaders;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -35,6 +40,9 @@ import org.springframework.test.web.servlet.MockMvc;
 public class PlaceControllerTest {
 
     private static final Long NON_EXISTENT_ID = 999L;
+    private static final String TEST_IP = "203.0.113.10";
+    private static final String TEST_UA = "Mozilla/5.0 (JUnit Test UA)";
+    private static final String VIEWER_TYPE_IPUA = "IPUA";
 
     @Autowired
     private MockMvc mockMvc;
@@ -48,6 +56,9 @@ public class PlaceControllerTest {
     @Autowired
     private TagRepository tagRepository;
 
+    @Autowired
+    private PlaceViewLogRepository placeViewLogRepository;
+
     private Place detailPlace;
     private Place place1, place2, place3, place4, place5, place6; // 테스트에서 사용하기 위해 필드로 선언
 
@@ -56,6 +67,7 @@ public class PlaceControllerTest {
         placeRepository.deleteAll();
         tagRepository.deleteAll();
         categoryRepository.deleteAll();
+        placeViewLogRepository.deleteAll();
 
         Category category1 = new Category("식당");
         Category category2 = new Category("카페");
@@ -231,16 +243,16 @@ public class PlaceControllerTest {
     }
 
     @Test
-    @DisplayName("장소 상세 조회 시 쿠키가 없으면 전체/주간 조회수가 1 증가하고 쿠키를 발급한다")
-    void getPlaceDetail_noCookie_increaseViewCount() throws Exception {
+    @DisplayName("장소 상세 조회 시 view log가 없으면 전체/주간 조회수가 1 증가하고 view log를 저장한다")
+    void getPlaceDetail_noViewLog_increaseViewCount() throws Exception {
         Long placeId = detailPlace.getId();
 
         mockMvc.perform(get("/api/places/" + placeId)
+                        .header("X-Forwarded-For", TEST_IP)
+                        .header(HttpHeaders.USER_AGENT, TEST_UA)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.viewCount").value(1))
-                .andExpect(cookie().exists("placeView"))
-                .andExpect(cookie().value("placeView", "[" + placeId + "]"));
+                .andExpect(jsonPath("$.data.viewCount").value(1));
 
         Place updatedPlace = placeRepository.findById(placeId).get();
         assertThat(updatedPlace.getViewCount()).isEqualTo(1);
@@ -248,15 +260,22 @@ public class PlaceControllerTest {
     }
 
     @Test
-    @DisplayName("장소 상세 조회 시 동일한 장소 ID 쿠키가 있으면 조회수가 증가하지 않는다")
-    void getPlaceDetail_withSamePlaceCookie_doesNotIncreaseViewCount() throws Exception {
+    @DisplayName("장소 상세 조회 시 동일 viewer의 최근(6시간 이내) view log가 있으면 조회수가 증가하지 않는다")
+    void getPlaceDetail_withRecentViewLog_doesNotIncreaseViewCount() throws Exception {
         Long placeId = detailPlace.getId();
-        Cookie placeViewCookie = new Cookie("placeView", "[" + placeId + "]");
+
+        String viewerKey = ipUaHash(TEST_IP, TEST_UA);
+        placeViewLogRepository.save(new PlaceViewLog(
+                placeId, VIEWER_TYPE_IPUA, viewerKey, LocalDateTime.now()
+        ));
 
         mockMvc.perform(get("/api/places/" + placeId)
-                        .cookie(placeViewCookie))
+                        .header("X-Forwarded-For", TEST_IP)
+                        .header(HttpHeaders.USER_AGENT, TEST_UA)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.viewCount").value(0));
+                .andExpect(jsonPath("$.data.viewCount").value(0))
+                .andExpect(cookie().doesNotExist("placeView"));
 
         Place notUpdatedPlace = placeRepository.findById(placeId).get();
         assertThat(notUpdatedPlace.getViewCount()).isEqualTo(0);
@@ -264,18 +283,23 @@ public class PlaceControllerTest {
     }
 
     @Test
-    @DisplayName("장소 상세 조회 시 다른 장소 ID 쿠키가 있으면 조회수가 1 증가하고 쿠키를 갱신한다")
-    void getPlaceDetail_withAnotherPlaceCookie_increaseViewCount() throws Exception {
+    @DisplayName("장소 상세 조회 시 동일 viewer가 '다른 장소'만 최근에 봤더라도 현재 장소는 조회수가 1 증가하고 view log를 저장한다")
+    void getPlaceDetail_withAnotherPlaceViewLog_increaseViewCount() throws Exception {
         Long placeId = detailPlace.getId();
         Long anotherPlaceId = 99L;
-        Cookie placeViewCookie = new Cookie("placeView", "[" + anotherPlaceId + "]");
+
+        String viewerKey = ipUaHash(TEST_IP, TEST_UA);
+        placeViewLogRepository.save(new PlaceViewLog(
+                anotherPlaceId, VIEWER_TYPE_IPUA, viewerKey, LocalDateTime.now()
+        ));
 
         mockMvc.perform(get("/api/places/" + placeId)
-                        .cookie(placeViewCookie))
+                        .header("X-Forwarded-For", TEST_IP)
+                        .header(HttpHeaders.USER_AGENT, TEST_UA)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.viewCount").value(1))
-                .andExpect(cookie().exists("placeView"))
-                .andExpect(cookie().value("placeView", "[" + anotherPlaceId + "]_[" + placeId + "]"));
+                .andExpect(cookie().doesNotExist("placeView"));
 
         Place updatedPlace = placeRepository.findById(placeId).get();
         assertThat(updatedPlace.getViewCount()).isEqualTo(1);
@@ -286,7 +310,6 @@ public class PlaceControllerTest {
     @DisplayName("주간 핫플레이스 조회 시 weeklyViewCount가 높은 순으로 정렬되어 반환된다")
     void getHotPlaces_success() throws Exception {
         // given: 테스트를 위해 특정 장소들의 weeklyViewCount 값을 임의로 설정
-        // (엔티티에 protected setter나 테스트용 메서드가 있다고 가정)
         detailPlace.setWeeklyViewCount(100L); // 식당1
         place2.setWeeklyViewCount(50L);      // 식당2
         place6.setWeeklyViewCount(200L);     // 카페3
@@ -302,5 +325,22 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.data[1].placeName").value("식당1"))
                 .andExpect(jsonPath("$.data[2].placeName").value("식당2"))
                 .andDo(print());
+    }
+
+    private static String ipUaHash(String ip, String ua) {
+        if (ua == null) ua = "";
+        return sha256Hex(ip + "|" + ua);
+    }
+
+    private static String sha256Hex(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(digest.length * 2);
+            for (byte b : digest) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

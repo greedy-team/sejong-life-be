@@ -17,4 +17,5 @@ public interface PlaceViewLogRepository extends JpaRepository<PlaceViewLog, Long
     Optional<PlaceViewLog> findForUpdate(@Param("placeId") Long placeId,
                                          @Param("viewerType") String viewerType,
                                          @Param("viewerKey") String viewerKey);
+
 }

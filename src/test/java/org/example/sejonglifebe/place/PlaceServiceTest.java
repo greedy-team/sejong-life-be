@@ -1,11 +1,13 @@
 package org.example.sejonglifebe.place;
 
+import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +39,9 @@ class PlaceServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private PlaceViewLogRepository placeViewLogRepository;
 
     @InjectMocks
     private PlaceService placeService;
@@ -157,7 +162,7 @@ class PlaceServiceTest {
             MockHttpServletResponse response = new MockHttpServletResponse();
 
             // then
-            assertThatThrownBy(() -> placeService.getPlaceDetail(1L, request, response))
+            assertThatThrownBy(() -> placeService.getPlaceDetail(1L, new AuthUser("20000000"), request))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.PLACE_NOT_FOUND.getErrorMessage());
         }
@@ -172,7 +177,7 @@ class PlaceServiceTest {
             MockHttpServletResponse response = new MockHttpServletResponse();
 
             // when
-            placeService.getPlaceDetail(1L, request, response);
+            placeService.getPlaceDetail(1L, new AuthUser("20000000"), request);
 
             // then
             verify(placeRepository).findById(1L);
