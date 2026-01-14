@@ -1,15 +1,15 @@
 package org.example.sejonglifebe.place;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.exception.ErrorCode;
@@ -18,9 +18,12 @@ import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.place.view.PlaceViewLog;
+import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
+import org.example.sejonglifebe.place.view.Viewer;
+import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
-import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +34,8 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
+    private final PlaceViewLogRepository placeViewLogRepository;
+    private static final Duration VIEW_TIME_TO_LIVE = Duration.ofHours(6);
 
     public List<PlaceResponse> getPlacesFilteredByCategoryAndTags(PlaceRequest placeRequest) {
         List<String> tagNames = placeRequest.tags();
@@ -74,49 +79,49 @@ public class PlaceService {
     }
 
     @Transactional
-    public PlaceDetailResponse getPlaceDetail(Long placeId, HttpServletRequest request, HttpServletResponse response) {
-        increaseViewCount(placeId, request, response);
-        Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
-        return PlaceDetailResponse.from(place);
-    }
-
-    public void increaseViewCount(Long placeId, HttpServletRequest request, HttpServletResponse response) {
-        Optional<Cookie> placeViewCookie = extractCookie(request);
-
-        boolean shouldIncreaseViewCount = placeViewCookie
-                .map(cookie -> !cookie.getValue().contains("[" + placeId + "]"))
-                .orElse(true);
-
-        if (shouldIncreaseViewCount) {
-            placeRepository.increaseViewCount(placeId);
-
-            String existingValue = placeViewCookie.map(Cookie::getValue).orElse("");
-            String updatedValue = existingValue.isEmpty() ? "[" + placeId + "]" : existingValue + "_[" + placeId + "]";
-
-            ResponseCookie cookie = ResponseCookie.from("placeView", updatedValue)
-                    .path("/")
-                    .maxAge(60 * 60 * 6)
-                    .secure(true)
-                    .sameSite("None")
-                    .build();
-
-            response.addHeader("Set-Cookie", cookie.toString());
-        }
-    }
-
-    private static Optional<Cookie> extractCookie(HttpServletRequest request) {
-        Optional<Cookie> placeViewCookie = Optional.ofNullable(request.getCookies())
-                .flatMap(cookies -> Arrays.stream(cookies)
-                        .filter(cookie -> cookie.getName().equals("placeView"))
-                        .findFirst());
-        return placeViewCookie;
-    }
-
-    @Transactional
     public List<PlaceResponse> getWeeklyHotPlaces() {
         List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
         return hotPlaces.stream()
                 .map(PlaceResponse::from).toList();
     }
+
+    @Transactional
+    public PlaceDetailResponse getPlaceDetail(Long placeId, AuthUser authUser, HttpServletRequest request) {
+        increaseViewCount(placeId, authUser, request);
+
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
+
+        return PlaceDetailResponse.from(place);
+    }
+
+    private void increaseViewCount(Long placeId, AuthUser authUser, HttpServletRequest request) {
+        Viewer viewer = identifyViewer(authUser, request);
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expireBefore = now.minus(VIEW_TIME_TO_LIVE);
+
+        Optional<PlaceViewLog> existingViewLog =
+                placeViewLogRepository.findForUpdate(placeId, viewer.type(), viewer.key());
+
+        if (existingViewLog.isEmpty()) {
+            placeViewLogRepository.save(new PlaceViewLog(placeId, viewer.type(), viewer.key(), now));
+            placeRepository.increaseViewCount(placeId);
+            return;
+        }
+
+        PlaceViewLog viewLog = existingViewLog.get();
+        if (!viewLog.getLastViewedAt().isAfter(expireBefore)) {
+            viewLog.updateLastViewedAt(now);
+            placeRepository.increaseViewCount(placeId);
+        }
+    }
+
+    private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
+        if (authUser != null && authUser.studentId() != null && !authUser.studentId().isBlank()) {
+            return Viewer.user(authUser.studentId());
+        }
+        return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
+    }
+
 }

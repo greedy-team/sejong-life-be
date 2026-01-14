@@ -3,8 +3,8 @@ package org.example.sejonglifebe.place;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.springframework.http.HttpStatus;
@@ -49,9 +49,9 @@ public class PlaceController {
     @GetMapping("/{placeId}")
     public ResponseEntity<CommonResponse<PlaceDetailResponse>> getPlaceDetail(
             @PathVariable Long placeId,
-            HttpServletRequest request,
-            HttpServletResponse response) {
-        PlaceDetailResponse placeDetailResponse = placeService.getPlaceDetail(placeId, request, response);
+            AuthUser authUser,
+            HttpServletRequest request) {
+        PlaceDetailResponse placeDetailResponse = placeService.getPlaceDetail(placeId, authUser, request);
         return CommonResponse.of(HttpStatus.OK, "장소 상세 정보 조회 성공", placeDetailResponse);
     }
 }

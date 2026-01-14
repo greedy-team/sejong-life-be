@@ -17,7 +17,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("SELECT p FROM Place p " +
             "JOIN p.placeCategories pc " +
             "JOIN p.placeTags pt " +
-            "LEFT JOIN p.reviews r " +  // [변경] 리뷰 테이블을 조인 (리뷰 없어도 조회되도록 LEFT)
+            "LEFT JOIN p.reviews r " +
             "WHERE pc.category = :category AND pt.tag IN :tags " +
             "GROUP BY p.id " +
             "HAVING COUNT(DISTINCT pt.tag) = :tagCount " +
@@ -30,7 +30,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 
     @Query("SELECT p FROM Place p " +
             "JOIN p.placeTags pt " +
-            "LEFT JOIN p.reviews r " + // [변경] 리뷰 조인 추가
+            "LEFT JOIN p.reviews r " +
             "WHERE pt.tag IN :tags " +
             "GROUP BY p.id " +
             "HAVING COUNT(DISTINCT pt.tag) = :tagCount " +
@@ -42,9 +42,9 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 
     @Query("SELECT p FROM Place p " +
             "JOIN p.placeCategories pc " +
-            "LEFT JOIN p.reviews r " + // [변경] 리뷰 조인 추가
+            "LEFT JOIN p.reviews r " +
             "WHERE pc.category = :category " +
-            "GROUP BY p.id " +         // [변경] 집계 함수 사용을 위해 그룹화 필수
+            "GROUP BY p.id " +
             "ORDER BY COUNT(DISTINCT r) DESC")
     List<Place> findByCategory(@Param("category") Category category);
 
@@ -54,8 +54,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
             "ORDER BY COUNT(r) DESC")
     List<Place> findAllOrderByReviewCountDesc();
 
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE Place p SET p.viewCount = p.viewCount + 1, p.weeklyViewCount = p.weeklyViewCount + 1 WHERE p.id = :id")
+    @Modifying
+    @Query("UPDATE Place p set p.viewCount = p.viewCount + 1 where p.id = :id")
     void increaseViewCount(@Param("id") Long id);
 
     @Modifying
