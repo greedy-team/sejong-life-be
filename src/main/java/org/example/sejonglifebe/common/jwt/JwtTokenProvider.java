@@ -11,6 +11,7 @@ import jakarta.annotation.PostConstruct;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.user.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -44,7 +45,8 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(user.getStudentId())
-                .claim("nickname", user.getNickname()) // 닉네임 포함 여부 논의 필요
+                .claim("nickname", user.getNickname())
+                .claim("role", user.getRole().name())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
@@ -100,7 +102,9 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            return new AuthUser(claims.getSubject());
+            Role role = Role.fromString(claims.get("role", String.class));
+
+            return new AuthUser(claims.getSubject(), role);
 
         } catch (ExpiredJwtException e) {
             throw new SejongLifeException(ErrorCode.EXPIRED_TOKEN);
