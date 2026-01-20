@@ -21,12 +21,6 @@ public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceReposi
             "ORDER BY COUNT(DISTINCT r) DESC")
     List<Place> findByCategory(@Param("category") Category category);
 
-    @Query("SELECT p FROM Place p " +
-            "LEFT JOIN p.reviews r " +
-            "GROUP BY p.id " +
-            "ORDER BY COUNT(r) DESC")
-    List<Place> findAllOrderByReviewCountDesc();
-
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
             UPDATE Place p
