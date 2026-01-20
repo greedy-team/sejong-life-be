@@ -13,6 +13,7 @@ import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.user.User;
 import org.example.sejonglifebe.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,7 +82,7 @@ class ReviewControllerTest {
     @BeforeEach
     void setUp() {
         given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
-                .willReturn(new AuthUser("21011111"));
+                .willReturn(new AuthUser("21011111", Role.USER));
     }
 
     @Test
