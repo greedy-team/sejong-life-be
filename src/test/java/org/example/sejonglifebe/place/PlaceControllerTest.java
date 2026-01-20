@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.place;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.example.sejonglifebe.place.view.ViewerKeyGenerator.ipUaHash;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -398,11 +399,6 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.data[1].placeName").value("식당1"))
                 .andExpect(jsonPath("$.data[2].placeName").value("식당2"))
                 .andDo(print());
-    }
-
-    private static String ipUaHash(String ip, String ua) {
-        if (ua == null) ua = "";
-        return sha256Hex(ip + "|" + ua);
     }
 
     private static String sha256Hex(String input) {

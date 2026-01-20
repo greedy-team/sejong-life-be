@@ -23,6 +23,11 @@ public class ViewerKeyGenerator {
         return request.getRemoteAddr();
     }
 
+    public static String ipUaHash(String ip, String ua) {
+        if (ua == null) ua = "";
+        return sha256Hex(ip + "|" + ua);
+    }
+
     public static String ipUaHash(HttpServletRequest request) {
         String ip = extractClientIp(request);
         String ua = request.getHeader("User-Agent");
