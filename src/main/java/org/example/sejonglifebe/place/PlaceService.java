@@ -3,10 +3,7 @@ package org.example.sejonglifebe.place;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import jakarta.servlet.http.HttpServletResponse;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,6 +27,7 @@ import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -108,7 +106,7 @@ public class PlaceService {
     }
 
     private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
-        if (authUser != null && authUser.studentId() != null && !authUser.studentId().isBlank()) {
+        if (authUser != null && StringUtils.hasText(authUser.studentId())) {
             return Viewer.user(authUser.studentId());
         }
         return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
