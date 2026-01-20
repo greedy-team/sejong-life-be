@@ -5,6 +5,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.common.jwt.JwtTokenExtractor;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.user.Role;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
@@ -34,7 +37,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         String token = jwtTokenExtractor.extractToken(authHeader);
         AuthUser authUser = jwtTokenProvider.validateAndGetAuthUser(token);
 
-        // Request Attribute에 저장하여 ArgumentResolver에서 재사용
+        Role requiredRole = loginRequired.role();
+        if (!authUser.role().includes(requiredRole)) {
+            throw new SejongLifeException(ErrorCode.ACCESS_DENIED);
+        }
+
         request.setAttribute(AUTH_USER_ATTRIBUTE, authUser);
 
         return true;
