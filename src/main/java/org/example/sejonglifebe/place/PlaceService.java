@@ -159,13 +159,10 @@ public class PlaceService {
     }
 
     private void attachCategoriesToPlace(Place place, PlaceRequest request) {
-        List<Long> categoryIds = request.categories().stream()
-                .map(CategoryInfo::categoryId)
-                .distinct()
-                .toList();
 
-        List<Category> categories = categoryRepository.findAllById(categoryIds);
-        if (categories.size() != categoryIds.size()) {
+
+        List<Category> categories = categoryRepository.findAllById(request.categoryIds());
+        if (categories.size() != request.categoryIds().size()) {
             throw new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND);
         }
 
@@ -173,13 +170,9 @@ public class PlaceService {
     }
 
     private void attachTagsToPlace(Place place, PlaceRequest request) {
-        List<Long> tagIds = request.tags().stream()
-                .map(TagInfo::tagId)
-                .distinct()
-                .toList();
 
-        List<Tag> tags = tagRepository.findAllById(tagIds);
-        if (tags.size() != tagIds.size()) {
+        List<Tag> tags = tagRepository.findAllById(request.tagIds());
+        if (tags.size() != request.tagIds().size()) {
             throw new SejongLifeException(ErrorCode.TAG_NOT_FOUND);
         }
 
