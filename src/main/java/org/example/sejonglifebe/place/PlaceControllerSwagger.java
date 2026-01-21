@@ -35,14 +35,14 @@ public interface PlaceControllerSwagger {
             HttpServletRequest request,
             HttpServletResponse response);
 
-    @Operation(summary = "주간 핫플레이스 조회")
+    @Operation(summary = "장소 추가")
     ResponseEntity<CommonResponse<Void>> createPlace(
             @Valid @RequestPart("place") PlaceRequest placeRequest,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
             AuthUser authUser
     );
 
-    @Operation(summary = "주간 핫플레이스 조회")
+    @Operation(summary = "장소 삭제")
     ResponseEntity<CommonResponse<Void>> deletePlace(
             @PathVariable Long placeId,
             AuthUser authUser
