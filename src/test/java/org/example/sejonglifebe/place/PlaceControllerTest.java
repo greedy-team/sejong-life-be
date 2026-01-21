@@ -24,11 +24,9 @@ import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.s3.S3Service;
-import org.example.sejonglifebe.user.User;
 import org.example.sejonglifebe.user.UserRepository;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;

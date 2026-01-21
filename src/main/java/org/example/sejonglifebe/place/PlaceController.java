@@ -10,7 +10,6 @@ import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
-import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
