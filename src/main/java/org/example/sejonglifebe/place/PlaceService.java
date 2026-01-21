@@ -4,6 +4,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +24,8 @@ import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.place.entity.PlaceImage;
+import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
@@ -88,6 +91,25 @@ public class PlaceService {
 
         attachCategoriesToPlace(place, request);
         attachTagsToPlace(place, request);
+    }
+
+    @Transactional
+    public void deletePlace(Long placeId, AuthUser authUser) {
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
+
+        List<PlaceImage> images = new ArrayList<>(place.getPlaceImages());
+        s3Service.deleteImages(images);
+
+        place.getPlaceImages().clear();
+
+        List<Review> reviews = new ArrayList<>(place.getReviews());
+        for (Review review : reviews) {
+            review.getUser().removeReview(review);
+        }
+        place.getReviews().clear();
+
+        placeRepository.delete(place);
     }
 
     @Transactional

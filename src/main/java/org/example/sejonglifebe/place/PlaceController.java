@@ -18,6 +18,7 @@ import java.util.List;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -65,5 +66,15 @@ public class PlaceController implements PlaceControllerSwagger {
     ) {
         placeService.createPlace(placeRequest, thumbnail, authUser);
         return CommonResponse.of(HttpStatus.CREATED, "장소 추가 성공", null);
+    }
+
+    @LoginRequired
+    @DeleteMapping("/{placeId}")
+    public ResponseEntity<CommonResponse<Void>> deletePlace(
+            @PathVariable Long placeId,
+            AuthUser authUser
+    ) {
+        placeService.deletePlace(placeId, authUser);
+        return CommonResponse.of(HttpStatus.OK, "장소 삭제 성공", null);
     }
 }
