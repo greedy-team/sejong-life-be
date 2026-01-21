@@ -1,18 +1,26 @@
 package org.example.sejonglifebe.place;
 
+import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
+import org.example.sejonglifebe.common.dto.CategoryInfo;
+import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.example.sejonglifebe.user.User;
+import org.example.sejonglifebe.user.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,11 +29,14 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +50,9 @@ class PlaceServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private S3Service s3Service;
 
     @InjectMocks
     private PlaceService placeService;
@@ -282,6 +296,77 @@ class PlaceServiceTest {
 
             // then
             verify(placeRepository).findById(1L);
+        }
+    }
+
+    @Nested
+    @DisplayName("장소 생성")
+    class CreatePlaceTest {
+
+        @Test
+        @DisplayName("성공: 로그인된 사용자가 장소를 생성한다")
+        void createPlace_success() {
+            // given
+            AuthUser authUser = new AuthUser("21011111");
+
+            Category category = new Category("식당");
+            ReflectionTestUtils.setField(category, "id", 1L);
+
+            Tag tag = new Tag("맛집");
+            ReflectionTestUtils.setField(tag, "id", 10L);
+
+            PlaceRequest request = new PlaceRequest(
+                    "장소명",
+                    "주소",
+                    List.of(new CategoryInfo(1L, "식당")),
+                    List.of(new TagInfo(10L, "맛집")),
+                    null,
+                    false,
+                    ""
+            );
+
+            given(categoryRepository.findAllById(List.of(1L)))
+                    .willReturn(List.of(category));
+            given(tagRepository.findAllById(List.of(10L)))
+                    .willReturn(List.of(tag));
+
+            // when
+            placeService.createPlace(request, null, authUser);
+
+            // then
+            ArgumentCaptor<Place> captor = ArgumentCaptor.forClass(Place.class);
+            verify(placeRepository).save(captor.capture());
+
+            Place saved = captor.getValue();
+            assertThat(saved.getName()).isEqualTo("장소명");
+            assertThat(saved.getPlaceCategories()).hasSize(1);
+            assertThat(saved.getPlaceTags()).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("장소 삭제")
+    class DeletePlaceTest {
+
+        @Test
+        @DisplayName("성공: 로그인된 사용자가 장소를 삭제한다")
+        void deletePlace_success() {
+            // given
+            AuthUser authUser = new AuthUser("21011111");
+
+            Place place = Place.builder()
+                    .name("장소")
+                    .build();
+            ReflectionTestUtils.setField(place, "id", 1L);
+
+            given(placeRepository.findById(1L))
+                    .willReturn(Optional.of(place));
+
+            // when
+            placeService.deletePlace(1L, authUser);
+
+            // then
+            verify(placeRepository).delete(place);
         }
     }
 }
