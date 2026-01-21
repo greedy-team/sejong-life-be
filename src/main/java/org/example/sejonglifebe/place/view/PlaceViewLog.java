@@ -38,7 +38,4 @@ public class PlaceViewLog {
         this.lastViewedAt = lastViewedAt;
     }
 
-    public void updateLastViewedAt(LocalDateTime now) {
-        this.lastViewedAt = now;
-    }
 }
