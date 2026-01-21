@@ -314,8 +314,8 @@ class PlaceServiceTest {
             PlaceRequest request = new PlaceRequest(
                     "장소명",
                     "주소",
-                    List.of(new CategoryInfo(1L, "식당")),
-                    List.of(new TagInfo(10L, "맛집")),
+                    List.of(1L),
+                    List.of(10L),
                     null,
                     false,
                     ""

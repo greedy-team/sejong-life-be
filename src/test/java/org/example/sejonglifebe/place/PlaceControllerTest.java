@@ -423,8 +423,8 @@ public class PlaceControllerTest {
         PlaceRequest request = new PlaceRequest(
                 "새로운 장소",
                 "새로운 주소",
-                List.of(new CategoryInfo(category.getId(), category.getName())), // CategoryInfo 리스트 괄호 닫기
-                List.of(new TagInfo(tag1.getId(), tag1.getName()), new TagInfo(tag2.getId(), tag2.getName())),
+                List.of(category.getId()), // CategoryInfo 리스트 괄호 닫기
+                List.of(tag1.getId(), tag2.getId()),
                 new MapLinks("https://naver.com/place", "", ""),
                 false,
                 ""
@@ -473,8 +473,8 @@ public class PlaceControllerTest {
         PlaceRequest request = new PlaceRequest(
                 "썸네일 장소",
                 "썸네일 주소",
-                List.of(new CategoryInfo(category.getId(), category.getName())),
-                List.of(new TagInfo(tag.getId(), tag.getName())),
+                List.of(category.getId()),
+                List.of(tag.getId()),
                 new MapLinks("", "https://kakao.com/place", ""),
                 false,
                 ""
