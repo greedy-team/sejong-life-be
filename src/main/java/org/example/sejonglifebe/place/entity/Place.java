@@ -81,6 +81,28 @@ public class Place {
         this.weeklyViewCount = 0L;
     }
 
+    public static Place createPlace(
+            String name,
+            String address,
+            MapLinks mapLinks,
+            boolean isPartnership,
+            String partnershipContent
+    ) {
+        Place place = Place.builder()
+                .name(name)
+                .address(address)
+                .mapLinks(mapLinks)
+                .mainImageUrl(null)
+                .build();
+
+        place.isPartnership = isPartnership;
+        place.partnershipContent = partnershipContent;
+        place.viewCount = 0L;
+        place.weeklyViewCount = 0L;
+
+        return place;
+    }
+
     public void addImage(String imageUrl, Boolean isThumbnail) {
         if (isThumbnail) {
             this.placeImages.removeIf(PlaceImage::getIsThumbnail);
