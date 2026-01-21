@@ -7,8 +7,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
-import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
