@@ -58,7 +58,7 @@ public class Place {
 
     private String partnershipContent;
 
-    @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
     @BatchSize(size = 100)
