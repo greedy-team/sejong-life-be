@@ -25,6 +25,7 @@ import org.example.sejonglifebe.place.view.Viewer;
 import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -89,19 +90,21 @@ public class PlaceService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expireBefore = now.minus(VIEW_TIME_TO_LIVE);
 
-        Optional<PlaceViewLog> existingViewLog =
-                placeViewLogRepository.findForUpdate(placeId, viewer.type(), viewer.key());
-
-        if (existingViewLog.isEmpty()) {
-            placeViewLogRepository.save(new PlaceViewLog(placeId, viewer.type(), viewer.key(), now));
+        if (placeViewLogRepository.updateIfExpired(
+                placeId, viewer.type(), viewer.key(), now, expireBefore) == 1) {
             placeRepository.increaseViewCount(placeId);
             return;
         }
 
-        PlaceViewLog viewLog = existingViewLog.get();
-        if (!viewLog.getLastViewedAt().isAfter(expireBefore)) {
-            viewLog.updateLastViewedAt(now);
+        if (placeViewLogRepository.existsByPlaceIdAndViewerTypeAndViewerKey(placeId, viewer.type(), viewer.key())) {
+            return;
+        }
+
+        try {
+            placeViewLogRepository.save(new PlaceViewLog(placeId, viewer.type(), viewer.key(), now));
             placeRepository.increaseViewCount(placeId);
+        } catch (DataIntegrityViolationException e) {
+            // 동시에 다른 요청이 먼저 INSERT 에 성공하였으므로 아무 것도 하지 않는다.
         }
     }
 
