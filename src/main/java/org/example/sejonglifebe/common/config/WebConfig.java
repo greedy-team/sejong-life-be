@@ -18,6 +18,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final AuthUserArgumentResolver authUserArgumentResolver;
     private final AuthInterceptor authInterceptor;
+    private final ObjectMapper objectMapper;
     private final LogInterceptor logInterceptor;
 
     @Override

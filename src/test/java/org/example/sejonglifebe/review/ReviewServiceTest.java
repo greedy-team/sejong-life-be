@@ -2,6 +2,7 @@ package org.example.sejonglifebe.review;
 
 import java.util.Collections;
 import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.PlaceRepository;
@@ -82,7 +83,7 @@ class ReviewServiceTest {
         @DisplayName("로그인한 사용자가 좋아요한 리뷰는 liked를 true로 반환된다")
         void getReviews_withAuthUser() {
             // given
-            AuthUser authUser = new AuthUser("21011111");
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
             Place place = Place.builder()
                     .name("맛집")
                     .address("주소")
@@ -143,7 +144,7 @@ class ReviewServiceTest {
         @DisplayName("로그인한 사용자가 작성자이고 좋아요한 리뷰는 true, true로 반환된다")
         void getReviews_withAuthUser_isAuthor() {
             // given
-            AuthUser authUser = new AuthUser("21011111");
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
             Place place = Place.builder()
                     .name("맛집")
                     .address("주소")
@@ -176,7 +177,7 @@ class ReviewServiceTest {
         @DisplayName("로그인한 사용자가 작성자가 아니면 isAuthor가 false로 반환된다")
         void getReviews_isAuthorFalse_whenNotAuthor() {
             // given
-            AuthUser authUser = new AuthUser("11111111");
+            AuthUser authUser = new AuthUser("11111111", Role.USER);
 
             User author = User.builder()
                     .studentId("22222222")
@@ -291,7 +292,7 @@ class ReviewServiceTest {
         void createReview_success() {
             // given
             Long placeId = 1L;
-            AuthUser authUser = new AuthUser("21011111");
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
             User user = User.builder()
                     .studentId("21011111")
                     .nickname("닉네임")
@@ -326,7 +327,7 @@ class ReviewServiceTest {
         @DisplayName("존재하지 않는 장소이면 예외를 던진다")
         void createReview_placeNotFound() {
             Long placeId = 1L;
-            AuthUser authUser = new AuthUser("21011111");
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
             ReviewRequest request = new ReviewRequest(5, "맛있어요", List.of());
 
             given(userRepository.findByStudentId("21011111"))
@@ -353,7 +354,7 @@ class ReviewServiceTest {
 
         @BeforeEach
         void setUp() {
-            authUser = new AuthUser("11111111");
+            authUser = new AuthUser("11111111", Role.USER);
             user = User.builder()
                     .studentId("11111111")
                     .nickname("작성자")
@@ -429,7 +430,7 @@ class ReviewServiceTest {
             // given
             Long placeId = 1L;
             Long reviewId = 101L;
-            AuthUser otherUser = new AuthUser("22222222");
+            AuthUser otherUser = new AuthUser("22222222", Role.USER);
 
             given(reviewRepository.findByIdWithUserAndPlace(reviewId))
                     .willReturn(Optional.of(review));
@@ -457,7 +458,7 @@ class ReviewServiceTest {
 
         @BeforeEach
         void setUp() {
-            authUser = new AuthUser("11111111");
+            authUser = new AuthUser("11111111", Role.USER);
             user = User.builder()
                     .studentId("11111111")
                     .nickname("작성자")
@@ -526,7 +527,7 @@ class ReviewServiceTest {
             // given
             Long placeId = 1L;
             Long reviewId = 101L;
-            AuthUser otherUser = new AuthUser("22222222");
+            AuthUser otherUser = new AuthUser("22222222", Role.USER);
             ReviewRequest request = new ReviewRequest(5, "내용", List.of());
 
             given(reviewRepository.findByIdWithUserAndTags(reviewId))
@@ -565,7 +566,7 @@ class ReviewServiceTest {
         void createLike_duplicate() {
             // given
             Long reviewId = 1L;
-            AuthUser authUser = new AuthUser("21011111");
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
             User user = User.builder().studentId("21011111").nickname("닉네임").build();
             Review review = Review.builder().build();
             ReflectionTestUtils.setField(review, "id", reviewId);
@@ -590,7 +591,7 @@ class ReviewServiceTest {
         void deleteLike_notFound() {
             // given
             Long reviewId = 1L;
-            AuthUser authUser = new AuthUser("21011111");
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
 
             given(reviewRepository.findById(reviewId))
                     .willReturn(Optional.of(Review.builder().build()));
