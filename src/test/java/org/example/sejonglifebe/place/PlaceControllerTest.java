@@ -18,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.common.dto.CategoryInfo;
 import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
@@ -83,7 +84,7 @@ public class PlaceControllerTest {
     @BeforeEach
     void setUp() {
         given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
-                .willReturn(new AuthUser("21011111"));
+                .willReturn(new AuthUser("21011111", Role.USER));
 
         placeRepository.deleteAll();
         tagRepository.deleteAll();

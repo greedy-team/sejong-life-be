@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.place;
 
 import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.common.dto.CategoryInfo;
@@ -303,7 +304,7 @@ class PlaceServiceTest {
         @DisplayName("성공: 로그인된 사용자가 장소를 생성한다")
         void createPlace_success() {
             // given
-            AuthUser authUser = new AuthUser("21011111");
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
 
             Category category = new Category("식당");
             ReflectionTestUtils.setField(category, "id", 1L);
@@ -348,7 +349,7 @@ class PlaceServiceTest {
         @DisplayName("성공: 로그인된 사용자가 장소를 삭제한다")
         void deletePlace_success() {
             // given
-            AuthUser authUser = new AuthUser("21011111");
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
 
             Place place = Place.builder()
                     .name("장소")
