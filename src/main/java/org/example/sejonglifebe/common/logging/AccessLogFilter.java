@@ -23,31 +23,13 @@ public class AccessLogFilter extends OncePerRequestFilter {
 
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        try {
-            chain.doFilter(request, response);
-        } finally {
-            String userIdAttribute = (String) request.getAttribute("userId");
-            if (userIdAttribute != null && MDC.get("userId") == null)
-                MDC.put("userId", userIdAttribute);
-
-            String urlAttribute = (String) request.getAttribute("requestUrl");
-            if (urlAttribute != null && MDC.get("requestUrl") == null)
-                MDC.put("requestUrl", urlAttribute);
-
-            Object errorCode = request.getAttribute("errorCode");
-            if (errorCode != null)
-                MDC.put("errorCode", String.valueOf(errorCode));
-
+        try { chain.doFilter(request, response); }
+        finally {
             int status = response.getStatus();
-            MDC.put("responseCode", String.valueOf(status));
-
-            String message = (HttpStatus.resolve(status) != null)
-                    ? HttpStatus.resolve(status).getReasonPhrase() : "Processed";
-
-            log.info(message);
-
-            MDC.remove("responseCode");
-            MDC.remove("errorCode");
+            String msg = HttpStatus.resolve(status) != null ? HttpStatus.resolve(status).getReasonPhrase() : "Processed";
+            MDC.put("statuscode", String.valueOf(status));
+            log.info(msg);
+            MDC.remove("statuscode");
         }
     }
 }
