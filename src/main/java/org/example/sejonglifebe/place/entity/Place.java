@@ -58,7 +58,7 @@ public class Place {
 
     private String partnershipContent;
 
-    @OneToMany(mappedBy = "place", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
     @BatchSize(size = 100)
@@ -79,6 +79,28 @@ public class Place {
         this.mapLinks = mapLinks;
         this.viewCount = 0L;
         this.weeklyViewCount = 0L;
+    }
+
+    public static Place createPlace(
+            String name,
+            String address,
+            MapLinks mapLinks,
+            boolean isPartnership,
+            String partnershipContent
+    ) {
+        Place place = Place.builder()
+                .name(name)
+                .address(address)
+                .mapLinks(mapLinks)
+                .mainImageUrl(null)
+                .build();
+
+        place.isPartnership = isPartnership;
+        place.partnershipContent = partnershipContent;
+        place.viewCount = 0L;
+        place.weeklyViewCount = 0L;
+
+        return place;
     }
 
     public void addImage(String imageUrl, Boolean isThumbnail) {
