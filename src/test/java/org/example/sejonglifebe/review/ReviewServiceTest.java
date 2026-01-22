@@ -60,6 +60,9 @@ class ReviewServiceTest {
     @Mock
     private S3Service s3Service;
 
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private ReviewService reviewService;
 
@@ -308,6 +311,12 @@ class ReviewServiceTest {
             given(userRepository.findByStudentId("21011111")).willReturn(Optional.of(user));
             given(placeRepository.findById(placeId)).willReturn(Optional.of(place));
             given(tagRepository.findByIdIn(request.tagIds())).willReturn(List.of(tag));
+            given(reviewRepository.save(any(Review.class))).willAnswer(invocation -> {
+                Review review = invocation.getArgument(0);
+                ReflectionTestUtils.setField(review, "id", 1L);
+                ReflectionTestUtils.setField(review, "createdAt", java.time.LocalDateTime.now());
+                return review;
+            });
 
             // when
             reviewService.createReview(placeId, request, authUser, null);
