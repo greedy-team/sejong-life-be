@@ -8,10 +8,12 @@ import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.review.ReviewService;
 import org.example.sejonglifebe.review.admin.dto.AdminReviewResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
@@ -21,6 +23,7 @@ import java.util.List;
 public class AdminReviewController {
 
     private final ReviewService reviewService;
+    private final SseService sseService;
 
     @LoginRequired(role = Role.ADMIN)
     @GetMapping("/reviews")
@@ -28,7 +31,7 @@ public class AdminReviewController {
         return CommonResponse.of(HttpStatus.OK, "리뷰 로그 목록 조회 성공", reviewService.findAllReviews());
     }
 
-    @LoginRequired
+    @LoginRequired(role = Role.ADMIN)
     @GetMapping(value = "/reviews/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamReviewLogs(AuthUser authUser) {
         String emitterId = "admin-" + authUser.studentId() + "-" + System.currentTimeMillis();
