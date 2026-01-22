@@ -1,22 +1,18 @@
 package org.example.sejonglifebe.place;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import java.util.Optional;
-
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
-import org.example.sejonglifebe.common.dto.CategoryInfo;
-import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
@@ -24,15 +20,20 @@ import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.place.view.PlaceViewLog;
+import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
+import org.example.sejonglifebe.place.view.Viewer;
+import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
-import org.springframework.http.ResponseCookie;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +43,8 @@ public class PlaceService {
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
     private final S3Service s3Service;
+    private final PlaceViewLogRepository placeViewLogRepository;
+    private static final Duration VIEW_TIME_TO_LIVE = Duration.ofHours(6);
 
     public List<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions) {
         List<String> tagNames = conditions.tags();
@@ -112,62 +115,55 @@ public class PlaceService {
     }
 
     @Transactional
-    public PlaceDetailResponse getPlaceDetail(Long placeId, HttpServletRequest request, HttpServletResponse response) {
-        increaseViewCount(placeId, request, response);
-        Place place = placeRepository.findById(placeId)
-                .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
-        return PlaceDetailResponse.from(place);
-    }
-
-    @Transactional
     public List<PlaceResponse> getWeeklyHotPlaces() {
         List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
         return hotPlaces.stream()
                 .map(PlaceResponse::from).toList();
     }
 
-    public void increaseViewCount(Long placeId, HttpServletRequest request, HttpServletResponse response) {
-        Optional<Cookie> placeViewCookie = extractCookie(request);
+    @Transactional
+    public PlaceDetailResponse getPlaceDetail(Long placeId, AuthUser authUser, HttpServletRequest request) {
+        increaseViewCount(placeId, authUser, request);
 
-        boolean shouldIncreaseViewCount = placeViewCookie
-                .map(cookie -> !cookie.getValue().contains("[" + placeId + "]"))
-                .orElse(true);
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
-        if (shouldIncreaseViewCount) {
+        return PlaceDetailResponse.from(place);
+    }
+
+    private void increaseViewCount(Long placeId, AuthUser authUser, HttpServletRequest request) {
+        Viewer viewer = identifyViewer(authUser, request);
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expireBefore = now.minus(VIEW_TIME_TO_LIVE);
+
+        if (placeViewLogRepository.updateIfExpired(
+                placeId, viewer.type(), viewer.key(), now, expireBefore) == 1) {
             placeRepository.increaseViewCount(placeId);
+            return;
+        }
 
-            String existingValue = placeViewCookie.map(Cookie::getValue).orElse("");
-            String updatedValue = existingValue.isEmpty() ? "[" + placeId + "]" : existingValue + "_[" + placeId + "]";
+        if (placeViewLogRepository.existsByPlaceIdAndViewerTypeAndViewerKey(placeId, viewer.type(), viewer.key())) {
+            return;
+        }
 
-            ResponseCookie cookie = ResponseCookie.from("placeView", updatedValue)
-                    .path("/")
-                    .maxAge(60 * 60 * 6)
-                    .secure(true)
-                    .sameSite("None")
-                    .build();
-
-            response.addHeader("Set-Cookie", cookie.toString());
+        try {
+            placeViewLogRepository.save(new PlaceViewLog(placeId, viewer.type(), viewer.key(), now));
+            placeRepository.increaseViewCount(placeId);
+        } catch (DataIntegrityViolationException e) {
+            // 동시에 다른 요청이 먼저 INSERT 에 성공하였으므로 아무 것도 하지 않는다.
         }
     }
 
-    private static Optional<Cookie> extractCookie(HttpServletRequest request) {
-        Optional<Cookie> placeViewCookie = Optional.ofNullable(request.getCookies())
-                .flatMap(cookies -> Arrays.stream(cookies)
-                        .filter(cookie -> cookie.getName().equals("placeView"))
-                        .findFirst());
-        return placeViewCookie;
-    }
+    private void attachCategoriesToPlace(Place place, PlaceRequest request){
 
-    private void attachCategoriesToPlace(Place place, PlaceRequest request) {
+            List<Category> categories = categoryRepository.findAllById(request.categoryIds());
+            if (categories.size() != request.categoryIds().size()) {
+                throw new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND);
+            }
 
-
-        List<Category> categories = categoryRepository.findAllById(request.categoryIds());
-        if (categories.size() != request.categoryIds().size()) {
-            throw new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND);
+            categories.forEach(place::addCategory);
         }
-
-        categories.forEach(place::addCategory);
-    }
 
     private void attachTagsToPlace(Place place, PlaceRequest request) {
 
@@ -179,5 +175,11 @@ public class PlaceService {
         tags.forEach(place::addTag);
     }
 
+    private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
+        if (authUser != null && StringUtils.hasText(authUser.studentId())) {
+            return Viewer.user(authUser.studentId());
+        }
+        return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
+    }
 
 }
