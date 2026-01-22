@@ -3,8 +3,6 @@ package org.example.sejonglifebe.review;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,6 +14,7 @@ import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.entity.PlaceImage;
+import org.example.sejonglifebe.review.admin.dto.AdminReviewResponse;
 import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
@@ -196,5 +195,12 @@ public class ReviewService {
                 place.addTag(tag);
             }
         }
+    }
+
+    public List<AdminReviewResponse> findAllReviews() {
+        return reviewRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(AdminReviewResponse::from)
+                .toList();
     }
 }

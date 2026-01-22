@@ -2,6 +2,7 @@ package org.example.sejonglifebe.place;
 
 import java.util.List;
 
+import java.util.Optional;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.entity.Place;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,21 +14,18 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceRepositoryCustom {
 
-    @Query("SELECT p FROM Place p " +
-            "JOIN p.placeCategories pc " +
-            "LEFT JOIN p.reviews r " +
-            "WHERE pc.category = :category " +
-            "GROUP BY p.id " +
-            "ORDER BY COUNT(DISTINCT r) DESC")
+    @Query("""
+            SELECT p FROM Place p
+            JOIN p.placeCategories pc
+            LEFT JOIN p.reviews r
+            WHERE pc.category = :category
+            GROUP BY p.id
+            ORDER BY COUNT(DISTINCT r) DESC
+           """)
     List<Place> findByCategory(@Param("category") Category category);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-            UPDATE Place p
-            SET p.viewCount = p.viewCount + 1,
-            p.weeklyViewCount = p.weeklyViewCount + 1
-            WHERE p.id = :id
-           """)
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Place p SET p.viewCount = p.viewCount + 1, p.weeklyViewCount = p.weeklyViewCount + 1 WHERE p.id = :id")
     void increaseViewCount(@Param("id") Long id);
 
     @Modifying

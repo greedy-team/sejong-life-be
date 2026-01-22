@@ -4,7 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.example.sejonglifebe.place.view.ViewerKeyGenerator.ipUaHash;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -13,10 +19,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
+import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.user.Role;
+import org.example.sejonglifebe.common.dto.CategoryInfo;
+import org.example.sejonglifebe.common.dto.TagInfo;
+import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.view.PlaceViewLog;
 import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
 import org.springframework.http.HttpHeaders;
+import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.user.UserRepository;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -34,6 +52,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MultipartFile;
 
 @Transactional
 @SpringBootTest
@@ -58,6 +77,18 @@ public class PlaceControllerTest {
     private TagRepository tagRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private S3Service s3Service;
+
+    @Autowired
     private PlaceViewLogRepository placeViewLogRepository;
 
     private Place detailPlace;
@@ -65,6 +96,9 @@ public class PlaceControllerTest {
 
     @BeforeEach
     void setUp() {
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.USER));
+
         placeRepository.deleteAll();
         tagRepository.deleteAll();
         categoryRepository.deleteAll();
@@ -399,6 +433,137 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.data[1].placeName").value("식당1"))
                 .andExpect(jsonPath("$.data[2].placeName").value("식당2"))
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("장소가 정상적으로 생성된다 - 썸네일 없음")
+    void createPlace_success_withoutThumbnail() throws Exception {
+        // given: setUp()에서 category/tag 이미 저장됨 -> 중복 save 금지
+        Category category = categoryRepository.findByName("식당")
+                .orElseThrow(() -> new IllegalStateException("식당 카테고리가 없습니다."));
+        Tag tag1 = tagRepository.findByName("맛집")
+                .orElseThrow(() -> new IllegalStateException("맛집 태그가 없습니다."));
+        Tag tag2 = tagRepository.findByName("가성비")
+                .orElseThrow(() -> new IllegalStateException("가성비 태그가 없습니다."));
+
+        PlaceRequest request = new PlaceRequest(
+                "새로운 장소",
+                "새로운 주소",
+                List.of(category.getId()), // CategoryInfo 리스트 괄호 닫기
+                List.of(tag1.getId(), tag2.getId()),
+                new MapLinks("https://naver.com/place", "", ""),
+                false,
+                ""
+        );
+
+        MockMultipartFile placePart = new MockMultipartFile(
+                "place",
+                "",
+                "application/json",
+                objectMapper.writeValueAsBytes(request)
+        );
+
+        long beforeCount = placeRepository.count();
+
+        // when & then
+        mockMvc.perform(multipart("/api/places")
+                        .file(placePart)
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("장소 추가 성공"))
+                .andDo(print());
+
+        // then: DB 저장 검증
+        assertThat(placeRepository.count()).isEqualTo(beforeCount + 1);
+
+        Place savedPlace = placeRepository.findAll().stream()
+                .filter(place -> place.getName().equals("새로운 장소"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(savedPlace.getAddress()).isEqualTo("새로운 주소");
+        assertThat(savedPlace.getPlaceImages()).isEmpty(); // 썸네일 없음
+        assertThat(savedPlace.getPlaceCategories()).hasSize(1);
+        assertThat(savedPlace.getPlaceTags()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("장소가 정상적으로 생성된다 - 썸네일 포함")
+    void createPlace_success_withThumbnail() throws Exception {
+        // given
+        Category category = categoryRepository.findByName("카페")
+                .orElseThrow(() -> new IllegalStateException("카페 카테고리가 없습니다."));
+        Tag tag = tagRepository.findByName("분위기 좋은")
+                .orElseThrow(() -> new IllegalStateException("분위기 좋은 태그가 없습니다."));
+
+        PlaceRequest request = new PlaceRequest(
+                "썸네일 장소",
+                "썸네일 주소",
+                List.of(category.getId()),
+                List.of(tag.getId()),
+                new MapLinks("", "https://kakao.com/place", ""),
+                false,
+                ""
+        );
+
+        MockMultipartFile placePart = new MockMultipartFile(
+                "place",
+                "",
+                "application/json",
+                objectMapper.writeValueAsBytes(request)
+        );
+
+        MockMultipartFile thumbnailPart = new MockMultipartFile(
+                "thumbnail",
+                "thumb.webp",
+                "image/webp",
+                "fake-image".getBytes()
+        );
+
+        given(s3Service.uploadImage(anyLong(), any(MultipartFile.class)))
+                .willReturn("https://mock-s3/thumb.webp");
+
+        long beforeCount = placeRepository.count();
+
+        // when & then
+        mockMvc.perform(multipart("/api/places")
+                        .file(placePart)
+                        .file(thumbnailPart)
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("장소 추가 성공"))
+                .andDo(print());
+
+        // then
+        assertThat(placeRepository.count()).isEqualTo(beforeCount + 1);
+
+        Place savedPlace = placeRepository.findAll().stream()
+                .filter(place -> place.getName().equals("썸네일 장소"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(savedPlace.getPlaceImages()).hasSize(1);
+        assertThat(savedPlace.getPlaceImages().get(0).getUrl()).isEqualTo("https://mock-s3/thumb.webp");
+        assertThat(savedPlace.getPlaceImages().get(0).getIsThumbnail()).isTrue();
+    }
+
+    @Test
+    @DisplayName("장소가 정상적으로 삭제된다")
+    void deletePlace_success() throws Exception {
+        // given
+        Long placeId = detailPlace.getId();
+        long beforeCount = placeRepository.count();
+
+        // when & then
+        mockMvc.perform(delete("/api/places/{placeId}", placeId)
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("장소 삭제 성공"))
+                .andDo(print());
+
+        // then: DB 반영 확인
+        assertThat(placeRepository.count()).isEqualTo(beforeCount - 1);
+        assertThat(placeRepository.findById(placeId)).isEmpty();
     }
 
     private static String sha256Hex(String input) {
