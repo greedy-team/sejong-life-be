@@ -29,4 +29,11 @@ public class AdminReviewController {
     public ResponseEntity<CommonResponse<List<AdminReviewResponse>>> getAdminReviews(AuthUser authUser) {
         return CommonResponse.of(HttpStatus.OK, "리뷰 로그 목록 조회 성공", reviewService.findAllReviews());
     }
+
+    @LoginRequired
+    @GetMapping(value = "/reviews/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamReviewLogs(AuthUser authUser) {
+        String emitterId = "admin-" + authUser.studentId() + "-" + System.currentTimeMillis();
+        return sseService.subscribe(emitterId);
+    }
 }

@@ -24,6 +24,7 @@ import org.example.sejonglifebe.user.UserRepository;
 import org.example.sejonglifebe.review.dto.RatingCount;
 import org.example.sejonglifebe.review.dto.ReviewResponse;
 import org.example.sejonglifebe.review.dto.ReviewSummaryResponse;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,6 +43,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
     private final S3Service s3Service;
+    private final ApplicationEventPublisher eventPublisher;
 
     public List<ReviewResponse> getReviewsByPlaceId(Long placeId, AuthUser authUser) {
         Place place = placeRepository.findById(placeId)
@@ -111,8 +113,11 @@ public class ReviewService {
             }
         }
 
-        reviewRepository.save(review);
+        Review savedReview = reviewRepository.save(review);
         checkAndAddTagToPlace(tags, place);
+
+        AdminReviewResponse reviewResponse = AdminReviewResponse.from(savedReview);
+        eventPublisher.publishEvent(reviewResponse);
     }
 
     @Transactional
