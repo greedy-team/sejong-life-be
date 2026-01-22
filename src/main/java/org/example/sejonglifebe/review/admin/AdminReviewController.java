@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
-public class AdminReviewController {
+public class AdminReviewController implements AdminReviewControllerSwagger {
 
     private final ReviewService reviewService;
     private final SseService sseService;
