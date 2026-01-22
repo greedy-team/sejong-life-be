@@ -5,7 +5,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.auth.LoginRequired;
-import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
@@ -50,9 +49,9 @@ public class PlaceController implements PlaceControllerSwagger {
     @GetMapping("/{placeId}")
     public ResponseEntity<CommonResponse<PlaceDetailResponse>> getPlaceDetail(
             @PathVariable Long placeId,
-            HttpServletRequest request,
-            HttpServletResponse response) {
-        PlaceDetailResponse placeDetailResponse = placeService.getPlaceDetail(placeId, request, response);
+            AuthUser authUser,
+            HttpServletRequest request) {
+        PlaceDetailResponse placeDetailResponse = placeService.getPlaceDetail(placeId, authUser, request);
         return CommonResponse.of(HttpStatus.OK, "장소 상세 정보 조회 성공", placeDetailResponse);
     }
 

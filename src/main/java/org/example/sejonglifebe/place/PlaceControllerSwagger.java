@@ -3,7 +3,6 @@ package org.example.sejonglifebe.place;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.common.dto.CommonResponse;
@@ -34,8 +33,6 @@ public interface PlaceControllerSwagger {
             @PathVariable Long placeId,
             AuthUser authUser,
             HttpServletRequest request);
-            HttpServletRequest request,
-            HttpServletResponse response);
 
     @Operation(summary = "장소 추가")
     ResponseEntity<CommonResponse<Void>> createPlace(

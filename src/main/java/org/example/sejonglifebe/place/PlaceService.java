@@ -13,8 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
-import org.example.sejonglifebe.common.dto.CategoryInfo;
-import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
@@ -133,15 +131,6 @@ public class PlaceService {
         return PlaceDetailResponse.from(place);
     }
 
-    @Transactional
-    public List<PlaceResponse> getWeeklyHotPlaces() {
-        List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
-        return hotPlaces.stream()
-                .map(PlaceResponse::from).toList();
-    }
-
-    public void increaseViewCount(Long placeId, HttpServletRequest request, HttpServletResponse response) {
-        Optional<Cookie> placeViewCookie = extractCookie(request);
     private void increaseViewCount(Long placeId, AuthUser authUser, HttpServletRequest request) {
         Viewer viewer = identifyViewer(authUser, request);
 
@@ -166,31 +155,15 @@ public class PlaceService {
         }
     }
 
-    private static Optional<Cookie> extractCookie(HttpServletRequest request) {
-        Optional<Cookie> placeViewCookie = Optional.ofNullable(request.getCookies())
-                .flatMap(cookies -> Arrays.stream(cookies)
-                        .filter(cookie -> cookie.getName().equals("placeView"))
-                        .findFirst());
-        return placeViewCookie;
-    }
+    private void attachCategoriesToPlace(Place place, PlaceRequest request){
 
-    private void attachCategoriesToPlace(Place place, PlaceRequest request) {
+            List<Category> categories = categoryRepository.findAllById(request.categoryIds());
+            if (categories.size() != request.categoryIds().size()) {
+                throw new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND);
+            }
 
-
-        List<Category> categories = categoryRepository.findAllById(request.categoryIds());
-        if (categories.size() != request.categoryIds().size()) {
-            throw new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND);
+            categories.forEach(place::addCategory);
         }
-
-        categories.forEach(place::addCategory);
-    }
-
-    private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
-        if (authUser != null && StringUtils.hasText(authUser.studentId())) {
-            return Viewer.user(authUser.studentId());
-        }
-        return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
-    }
 
     private void attachTagsToPlace(Place place, PlaceRequest request) {
 
@@ -200,6 +173,13 @@ public class PlaceService {
         }
 
         tags.forEach(place::addTag);
+    }
+
+    private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
+        if (authUser != null && StringUtils.hasText(authUser.studentId())) {
+            return Viewer.user(authUser.studentId());
+        }
+        return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
     }
 
 }
