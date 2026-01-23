@@ -197,7 +197,7 @@ public class ReviewService {
         }
     }
 
-    public List<AdminReviewResponse> findAllReviews() {
+    public List<AdminReviewResponse> getAllReviews() {
         return reviewRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(AdminReviewResponse::from)
