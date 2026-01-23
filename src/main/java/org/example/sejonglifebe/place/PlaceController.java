@@ -9,6 +9,7 @@ import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.favorite.FavoritePlaceService;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
@@ -32,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class PlaceController implements PlaceControllerSwagger {
 
     private final PlaceService placeService;
+    private final FavoritePlaceService favoritePlaceService;
 
     @GetMapping
     public ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
@@ -74,5 +76,39 @@ public class PlaceController implements PlaceControllerSwagger {
     ) {
         placeService.deletePlace(placeId, authUser);
         return CommonResponse.of(HttpStatus.OK, "장소 삭제 성공", null);
+    }
+
+    @LoginRequired
+    @GetMapping("/favorites/me")
+    public ResponseEntity<CommonResponse<List<PlaceResponse>>> getMyFavoritePlaces(AuthUser authUser) {
+        List<PlaceResponse> response = favoritePlaceService.getMyFavorites(authUser.studentId());
+        return CommonResponse.of(HttpStatus.OK, "즐겨찾기 목록 조회 성공", response);
+    }
+
+    @LoginRequired
+    @PostMapping("/{placeId}/favorite")
+    public ResponseEntity<CommonResponse<Void>> addFavoritePlace(
+            @PathVariable Long placeId,
+            AuthUser authUser
+    ) {
+        favoritePlaceService.addFavorite(authUser.studentId(), placeId);
+        return CommonResponse.of(HttpStatus.OK, "즐겨찾기 추가 성공", null);
+    }
+
+    @LoginRequired
+    @DeleteMapping("/{placeId}/favorite")
+    public ResponseEntity<CommonResponse<Void>> removeFavoritePlace(
+            @PathVariable Long placeId,
+            AuthUser authUser
+    ) {
+        favoritePlaceService.removeFavorite(authUser.studentId(), placeId);
+        return CommonResponse.of(HttpStatus.OK, "즐겨찾기 삭제 성공", null);
+    }
+
+    @LoginRequired
+    @GetMapping("/favorite/count")
+    public ResponseEntity<CommonResponse<Long>> getMyFavoriteCount(AuthUser authUser) {
+        long count = favoritePlaceService.getMyFavoriteCount(authUser.studentId());
+        return CommonResponse.of(HttpStatus.OK, "즐겨찾기 개수 조회 성공", count);
     }
 }
