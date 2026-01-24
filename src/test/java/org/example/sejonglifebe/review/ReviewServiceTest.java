@@ -633,7 +633,7 @@ class ReviewServiceTest {
             ReflectionTestUtils.setField(review2, "createdAt", LocalDateTime.now());
 
             given(userRepository.findByStudentId("21011111")).willReturn(Optional.of(user));
-            given(reviewRepository.findAllByUser(user)).willReturn(List.of(review1, review2));
+            given(reviewRepository.findAllByUserOrderByCreatedAtDesc(user)).willReturn(List.of(review1, review2));
 
             // when
             var result = reviewService.getMyPageReviews(authUser);
@@ -672,7 +672,7 @@ class ReviewServiceTest {
                     .build();
 
             given(userRepository.findByStudentId("21011111")).willReturn(Optional.of(user));
-            given(reviewRepository.findAllByUser(user)).willReturn(List.of());
+            given(reviewRepository.findAllByUserOrderByCreatedAtDesc(user)).willReturn(List.of());
 
             // when
             var result = reviewService.getMyPageReviews(authUser);

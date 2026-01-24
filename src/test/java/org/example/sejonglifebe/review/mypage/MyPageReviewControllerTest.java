@@ -106,14 +106,14 @@ class MyPageReviewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("마이페이지 리뷰 목록 조회 성공"))
                 .andExpect(jsonPath("$.data", hasSize(2)))
-                .andExpect(jsonPath("$.data[0].content").value("맛있어요"))
+                .andExpect(jsonPath("$.data[0].content").value("커피가 좋아요"))
                 .andExpect(jsonPath("$.data[0].isAuthor").value(true))
-                .andExpect(jsonPath("$.data[0].place.placeId").value(place1.getId()))
-                .andExpect(jsonPath("$.data[0].place.placeName").value("또래끼리"))
-                .andExpect(jsonPath("$.data[1].content").value("커피가 좋아요"))
+                .andExpect(jsonPath("$.data[0].place.placeId").value(place2.getId()))
+                .andExpect(jsonPath("$.data[0].place.placeName").value("스타벅스"))
+                .andExpect(jsonPath("$.data[1].content").value("맛있어요"))
                 .andExpect(jsonPath("$.data[1].isAuthor").value(true))
-                .andExpect(jsonPath("$.data[1].place.placeId").value(place2.getId()))
-                .andExpect(jsonPath("$.data[1].place.placeName").value("스타벅스"))
+                .andExpect(jsonPath("$.data[1].place.placeId").value(place1.getId()))
+                .andExpect(jsonPath("$.data[1].place.placeName").value("또래끼리"))
                 .andDo(print());
     }
 

@@ -192,7 +192,7 @@ public class ReviewService {
     public List<MyPageReviewResponse> getMyPageReviews(AuthUser authUser) {
         User user = userRepository.findByStudentId(authUser.studentId())
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
-        return reviewRepository.findAllByUser(user)
+        return reviewRepository.findAllByUserOrderByCreatedAtDesc(user)
                 .stream()
                 .map(r -> MyPageReviewResponse.from(r, true))
                 .toList();

@@ -50,5 +50,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     int decrementLikeCount(@Param("reviewId") Long reviewId);
 
     List<Review> findAllByOrderByCreatedAtDesc();
-    List<Review> findAllByUser(User user);
+    List<Review> findAllByUserOrderByCreatedAtDesc(User user);
 }
