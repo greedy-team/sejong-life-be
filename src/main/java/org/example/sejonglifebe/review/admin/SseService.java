@@ -34,6 +34,7 @@ public class SseService {
         });
         emitter.onError((e) -> {
             log.error("SSE 연결 에러 : emitterId={}", emitterId, e);
+            emitter.complete();
             emitters.remove(emitterId);
         });
         try {
@@ -42,8 +43,8 @@ public class SseService {
                     .data("SSE 연결 성공")
                     .reconnectTime(RECONNECTION_TIMEOUT));
         } catch (IOException e) {
-            log.error("초기 메시지 전송 실패: emitterId={}", emitterId,
-                    e);
+            log.error("초기 메시지 전송 실패: emitterId={}", emitterId, e);
+            emitter.complete();
             emitters.remove(emitterId);
             throw new RuntimeException("SSE 연결 실패");
         }
@@ -59,6 +60,7 @@ public class SseService {
                         .reconnectTime(RECONNECTION_TIMEOUT));
             } catch (IOException e) {
                 log.error("SSE 메시지 전송 실패 : emitterId={}, event={}", id, eventName, e);
+                emitter.complete();
                 emitters.remove(id);
             }
         });
