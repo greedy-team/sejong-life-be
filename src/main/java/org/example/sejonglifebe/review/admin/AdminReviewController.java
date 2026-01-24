@@ -25,6 +25,6 @@ public class AdminReviewController {
     @LoginRequired(role = Role.ADMIN)
     @GetMapping("/reviews")
     public ResponseEntity<CommonResponse<List<AdminReviewResponse>>> getAdminReviews(AuthUser authUser) {
-        return CommonResponse.of(HttpStatus.OK, "리뷰 로그 목록 조회 성공", reviewService.findAllReviews());
+        return CommonResponse.of(HttpStatus.OK, "리뷰 로그 목록 조회 성공", reviewService.getAllReviews());
     }
 }
