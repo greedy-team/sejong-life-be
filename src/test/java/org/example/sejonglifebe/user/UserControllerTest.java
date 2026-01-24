@@ -1,10 +1,20 @@
 package org.example.sejonglifebe.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
+import org.example.sejonglifebe.category.Category;
+import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.place.PlaceRepository;
+import org.example.sejonglifebe.place.entity.MapLinks;
+import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.review.Review;
+import org.example.sejonglifebe.review.ReviewRepository;
+import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +22,18 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,8 +49,29 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PlaceRepository placeRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    private S3Service s3Service;
+
+    @BeforeEach
+    void setUp() {
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.USER));
+    }
 
     @Test
     @DisplayName("회원가입이 정상적으로 된다")
@@ -170,5 +207,75 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_AUTH_HEADER.getErrorMessage()));
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴가 정상적으로 처리된다")
+    void deleteUser_success() throws Exception {
+        // given
+        User user = userRepository.save(User.builder()
+                .studentId("21011111")
+                .nickname("탈퇴할사용자")
+                .build());
+
+        Category category = categoryRepository.save(new Category("식당"));
+        Place place = createPlaceFixture("테스트장소", "주소", "url", category);
+        placeRepository.save(place);
+
+        Review review = createReview(place, user, "테스트 리뷰", 5);
+        reviewRepository.save(review);
+
+        // when & then
+        mockMvc.perform(delete("/api/users")
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("회원 탈퇴 성공"))
+                .andDo(print());
+
+        // then
+        assertThat(userRepository.findById(user.getId())).isEmpty();
+        assertThat(reviewRepository.findById(review.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("리뷰가 없는 사용자도 탈퇴가 가능하다")
+    void deleteUser_noReviews() throws Exception {
+        // given
+        User user = userRepository.save(User.builder()
+                .studentId("21011111")
+                .nickname("리뷰없는사용자")
+                .build());
+
+        // when & then
+        mockMvc.perform(delete("/api/users")
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("회원 탈퇴 성공"))
+                .andDo(print());
+
+        // then
+        assertThat(userRepository.findById(user.getId())).isEmpty();
+    }
+
+    private Place createPlaceFixture(String name, String address, String url, Category category) {
+        Place place = Place.builder()
+                .name(name)
+                .address(address)
+                .mainImageUrl(url)
+                .mapLinks(new MapLinks("a", "b", "c"))
+                .build();
+        place.addCategory(category);
+        return place;
+    }
+
+    private Review createReview(Place place, User user, String content, int rating) {
+        Review review = Review.builder()
+                .place(place)
+                .user(user)
+                .content(content)
+                .rating(rating)
+                .build();
+        ReflectionTestUtils.setField(review, "createdAt", LocalDateTime.now());
+        return review;
     }
 }
