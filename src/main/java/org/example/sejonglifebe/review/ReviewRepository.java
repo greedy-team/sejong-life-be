@@ -3,6 +3,7 @@ package org.example.sejonglifebe.review;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.dto.RatingCount;
 import org.example.sejonglifebe.tag.Tag;
+import org.example.sejonglifebe.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -49,4 +50,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     int decrementLikeCount(@Param("reviewId") Long reviewId);
 
     List<Review> findAllByOrderByCreatedAtDesc();
+    List<Review> findAllByUserOrderByCreatedAtDesc(User user);
 }

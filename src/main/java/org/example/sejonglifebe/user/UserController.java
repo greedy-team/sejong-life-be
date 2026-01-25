@@ -2,6 +2,8 @@ package org.example.sejonglifebe.user;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.auth.LoginRequired;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.common.jwt.JwtTokenExtractor;
@@ -11,6 +13,7 @@ import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -41,5 +44,12 @@ public class UserController implements UserControllerSwagger{
 
         String accessToken = userService.createUser(request);
         return CommonResponse.of(HttpStatus.CREATED, "회원가입 및 로그인 성공", accessToken);
+    }
+
+    @LoginRequired
+    @DeleteMapping
+    public ResponseEntity<CommonResponse<Void>> deleteUser(AuthUser authUser) {
+        userService.deleteUser(authUser);
+        return CommonResponse.of(HttpStatus.OK, "회원 탈퇴 성공", null);
     }
 }
