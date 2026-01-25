@@ -147,7 +147,7 @@ public class ReviewService {
         Review review = reviewRepository.findByIdWithUserAndTags(reviewId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
 
-        if (review.getPlace().getId().equals(placeId)) {
+        if (!review.getPlace().getId().equals(placeId)) {
             throw new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND);
         }
 
