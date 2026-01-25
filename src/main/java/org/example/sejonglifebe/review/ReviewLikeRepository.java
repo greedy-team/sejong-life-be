@@ -13,4 +13,6 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
     Optional<ReviewLike> findByReviewIdAndUserStudentId(Long reviewId, String studentId);
 
     List<ReviewLike> findByUserStudentId(String studentId);
+
+    void deleteAllByUser(User user);
 }
