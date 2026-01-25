@@ -147,7 +147,7 @@ public class ReviewService {
         Review review = reviewRepository.findByIdWithUserAndTags(reviewId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
 
-        if (review.getPlace().getId() != placeId) {
+        if (review.getPlace().getId().equals(placeId)) {
             throw new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND);
         }
 
@@ -204,7 +204,7 @@ public class ReviewService {
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.REVIEW_NOT_FOUND));
         User user = userRepository.findByStudentId(authUser.studentId())
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
-        if (!review.getUser().equals(user)) {
+        if (!review.getUser().getStudentId().equals(user.getStudentId())) {
             throw new SejongLifeException(ErrorCode.PERMISSION_DENIED);
         }
 
