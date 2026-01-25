@@ -27,8 +27,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Transactional
 @SpringBootTest
@@ -129,6 +128,34 @@ class AdminReviewControllerTest {
             mockMvc.perform(get("/api/admin/reviews")
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isUnauthorized())
+                    .andDo(print());
+        }
+    }
+
+    @Nested
+    @DisplayName("관리자 리뷰 SSE 스트림 API")
+    class StreamReviewLogsTest {
+
+        @Test
+        @DisplayName("ADMIN 사용자가 SSE 연결을 시도하면 성공한다")
+        void admin_sse_connection_success() throws Exception {
+            // given
+            User adminUser = User.builder()
+                    .studentId("21011111")
+                    .nickname("관리자")
+                    .role(Role.ADMIN)
+                    .build();
+            userRepository.save(adminUser);
+
+            given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                    .willReturn(new AuthUser("21011111", Role.ADMIN));
+
+            // when & then
+            mockMvc.perform(get("/api/admin/reviews/stream")
+                            .header("Authorization", "Bearer admin-token")
+                            .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                    .andExpect(request().asyncStarted())
+                    .andExpect(status().isOk())
                     .andDo(print());
         }
     }
