@@ -21,6 +21,7 @@ import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
@@ -93,8 +94,6 @@ public class PlaceControllerTest {
 
     @BeforeEach
     void setUp() {
-        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
-                .willReturn(new AuthUser("21011111", Role.USER));
 
         placeRepository.deleteAll();
         tagRepository.deleteAll();
@@ -442,6 +441,8 @@ public class PlaceControllerTest {
                 .orElseThrow(() -> new IllegalStateException("맛집 태그가 없습니다."));
         Tag tag2 = tagRepository.findByName("가성비")
                 .orElseThrow(() -> new IllegalStateException("가성비 태그가 없습니다."));
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.ADMIN));
 
         PlaceRequest request = new PlaceRequest(
                 "새로운 장소",
@@ -492,6 +493,8 @@ public class PlaceControllerTest {
                 .orElseThrow(() -> new IllegalStateException("카페 카테고리가 없습니다."));
         Tag tag = tagRepository.findByName("분위기 좋은")
                 .orElseThrow(() -> new IllegalStateException("분위기 좋은 태그가 없습니다."));
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.ADMIN));
 
         PlaceRequest request = new PlaceRequest(
                 "썸네일 장소",
@@ -545,11 +548,57 @@ public class PlaceControllerTest {
     }
 
     @Test
+    @DisplayName("장소 생성 권한 없음 - USER면 ACCESS_DENIED 반환")
+    void createPlace_fail_accessDenied_whenUserRole() throws Exception {
+        // given
+        Category category = categoryRepository.findByName("식당")
+                .orElseThrow(() -> new IllegalStateException("식당 카테고리가 없습니다."));
+        Tag tag1 = tagRepository.findByName("맛집")
+                .orElseThrow(() -> new IllegalStateException("맛집 태그가 없습니다."));
+        Tag tag2 = tagRepository.findByName("가성비")
+                .orElseThrow(() -> new IllegalStateException("가성비 태그가 없습니다."));
+
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.USER)); // ✅ USER
+
+        PlaceRequest request = new PlaceRequest(
+                "권한없는 장소",
+                "권한없는 주소",
+                List.of(category.getId()),
+                List.of(tag1.getId(), tag2.getId()),
+                new MapLinks("https://naver.com/place", "", ""),
+                false,
+                ""
+        );
+
+        MockMultipartFile placePart = new MockMultipartFile(
+                "place",
+                "",
+                "application/json",
+                objectMapper.writeValueAsBytes(request)
+        );
+
+        long beforeCount = placeRepository.count();
+
+        // when & then
+        mockMvc.perform(multipart("/api/places")
+                        .file(placePart)
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isForbidden())
+                .andDo(print());
+
+        // then: DB 저장 안 됨
+        assertThat(placeRepository.count()).isEqualTo(beforeCount);
+    }
+
+    @Test
     @DisplayName("장소가 정상적으로 삭제된다")
     void deletePlace_success() throws Exception {
         // given
         Long placeId = detailPlace.getId();
         long beforeCount = placeRepository.count();
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.ADMIN));
 
         // when & then
         mockMvc.perform(delete("/api/places/{placeId}", placeId)
@@ -561,6 +610,27 @@ public class PlaceControllerTest {
         // then: DB 반영 확인
         assertThat(placeRepository.count()).isEqualTo(beforeCount - 1);
         assertThat(placeRepository.findById(placeId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("장소 삭제 권한 없음 - USER면 ACCESS_DENIED 반환")
+    void deletePlace_fail_accessDenied_whenUserRole() throws Exception {
+        // given
+        Long placeId = detailPlace.getId();
+        long beforeCount = placeRepository.count();
+
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.USER));
+
+        // when & then
+        mockMvc.perform(delete("/api/places/{placeId}", placeId)
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isForbidden())
+                .andDo(print());
+
+        // then: DB 삭제 안 됨
+        assertThat(placeRepository.count()).isEqualTo(beforeCount);
+        assertThat(placeRepository.findById(placeId)).isPresent();
     }
 
     private static String sha256Hex(String input) {

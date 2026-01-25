@@ -60,6 +60,9 @@ class ReviewServiceTest {
     @Mock
     private S3Service s3Service;
 
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private ReviewService reviewService;
 
@@ -308,6 +311,12 @@ class ReviewServiceTest {
             given(userRepository.findByStudentId("21011111")).willReturn(Optional.of(user));
             given(placeRepository.findById(placeId)).willReturn(Optional.of(place));
             given(tagRepository.findByIdIn(request.tagIds())).willReturn(List.of(tag));
+            given(reviewRepository.save(any(Review.class))).willAnswer(invocation -> {
+                Review review = invocation.getArgument(0);
+                ReflectionTestUtils.setField(review, "id", 1L);
+                ReflectionTestUtils.setField(review, "createdAt", java.time.LocalDateTime.now());
+                return review;
+            });
 
             // when
             reviewService.createReview(placeId, request, authUser, null);
@@ -602,6 +611,190 @@ class ReviewServiceTest {
             assertThatThrownBy(() -> reviewService.deleteLike(reviewId, authUser))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.REVIEW_LIKE_NOT_FOUND.getErrorMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("마이페이지 리뷰 조회 테스트")
+    class GetMyPageReviewsTest {
+
+        @Test
+        @DisplayName("사용자가 작성한 리뷰 목록을 정상적으로 조회한다")
+        void getMyPageReviews_success() {
+            // given
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
+            User user = User.builder()
+                    .studentId("21011111")
+                    .nickname("닉네임")
+                    .build();
+            ReflectionTestUtils.setField(user, "id", 1L);
+
+            Place place1 = Place.builder().name("맛집1").address("주소1").build();
+            Place place2 = Place.builder().name("맛집2").address("주소2").build();
+            ReflectionTestUtils.setField(place1, "id", 1L);
+            ReflectionTestUtils.setField(place2, "id", 2L);
+
+            Review review1 = Review.createReview(place1, user, 5, "맛있어요");
+            Review review2 = Review.createReview(place2, user, 4, "괜찮아요");
+            ReflectionTestUtils.setField(review1, "id", 101L);
+            ReflectionTestUtils.setField(review2, "id", 102L);
+            ReflectionTestUtils.setField(review1, "createdAt", LocalDateTime.now());
+            ReflectionTestUtils.setField(review2, "createdAt", LocalDateTime.now());
+
+            given(userRepository.findByStudentId("21011111")).willReturn(Optional.of(user));
+            given(reviewRepository.findAllByUserOrderByCreatedAtDesc(user)).willReturn(List.of(review1, review2));
+
+            // when
+            var result = reviewService.getMyPageReviews(authUser);
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).content()).isEqualTo("맛있어요");
+            assertThat(result.get(0).isAuthor()).isTrue();
+            assertThat(result.get(0).place().placeName()).isEqualTo("맛집1");
+            assertThat(result.get(1).content()).isEqualTo("괜찮아요");
+            assertThat(result.get(1).isAuthor()).isTrue();
+            assertThat(result.get(1).place().placeName()).isEqualTo("맛집2");
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 사용자이면 예외를 던진다")
+        void getMyPageReviews_userNotFound() {
+            // given
+            AuthUser authUser = new AuthUser("99999999", Role.USER);
+            given(userRepository.findByStudentId("99999999")).willReturn(Optional.empty());
+
+            // then
+            assertThatThrownBy(() -> reviewService.getMyPageReviews(authUser))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.USER_NOT_FOUND.getErrorMessage());
+        }
+
+        @Test
+        @DisplayName("작성한 리뷰가 없으면 빈 리스트를 반환한다")
+        void getMyPageReviews_emptyList() {
+            // given
+            AuthUser authUser = new AuthUser("21011111", Role.USER);
+            User user = User.builder()
+                    .studentId("21011111")
+                    .nickname("닉네임")
+                    .build();
+
+            given(userRepository.findByStudentId("21011111")).willReturn(Optional.of(user));
+            given(reviewRepository.findAllByUserOrderByCreatedAtDesc(user)).willReturn(List.of());
+
+            // when
+            var result = reviewService.getMyPageReviews(authUser);
+
+            // then
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("마이페이지 리뷰 삭제 테스트")
+    class DeleteMyPageReviewTest {
+
+        private AuthUser authUser;
+        private User user;
+        private Place place;
+        private Review review;
+
+        @BeforeEach
+        void setUp() {
+            authUser = new AuthUser("21011111", Role.USER);
+            user = User.builder()
+                    .studentId("21011111")
+                    .nickname("작성자")
+                    .build();
+            ReflectionTestUtils.setField(user, "id", 1L);
+
+            place = Place.builder()
+                    .name("맛집")
+                    .address("주소")
+                    .build();
+            ReflectionTestUtils.setField(place, "id", 1L);
+
+            review = Review.createReview(place, user, 5, "테스트 리뷰");
+            ReflectionTestUtils.setField(review, "id", 101L);
+            review.addImage("s3_image_url_1");
+        }
+
+        @Test
+        @DisplayName("마이페이지에서 리뷰가 정상적으로 삭제된다")
+        void deleteMyPageReview_success() {
+            // given
+            Long reviewId = 101L;
+
+            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+            given(userRepository.findByStudentId("21011111")).willReturn(Optional.of(user));
+
+            // when
+            reviewService.deleteMyPageReview(reviewId, authUser);
+
+            // then
+            verify(s3Service, times(1)).deleteImages(anyList());
+            verify(reviewRepository, times(1)).delete(review);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 리뷰이면 예외를 던진다")
+        void deleteMyPageReview_reviewNotFound() {
+            // given
+            Long reviewId = 999L;
+
+            given(reviewRepository.findById(reviewId)).willReturn(Optional.empty());
+
+            // then
+            assertThatThrownBy(() -> reviewService.deleteMyPageReview(reviewId, authUser))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.REVIEW_NOT_FOUND.getErrorMessage());
+
+            verify(s3Service, never()).deleteImages(any());
+            verify(reviewRepository, never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 사용자이면 예외를 던진다")
+        void deleteMyPageReview_userNotFound() {
+            // given
+            Long reviewId = 101L;
+            AuthUser nonExistentUser = new AuthUser("99999999", Role.USER);
+
+            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+            given(userRepository.findByStudentId("99999999")).willReturn(Optional.empty());
+
+            // then
+            assertThatThrownBy(() -> reviewService.deleteMyPageReview(reviewId, nonExistentUser))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.USER_NOT_FOUND.getErrorMessage());
+
+            verify(s3Service, never()).deleteImages(any());
+            verify(reviewRepository, never()).delete(any());
+        }
+
+        @Test
+        @DisplayName("권한이 없는 사용자이면 예외를 던진다")
+        void deleteMyPageReview_permissionDenied() {
+            // given
+            Long reviewId = 101L;
+            AuthUser otherUser = new AuthUser("22222222", Role.USER);
+            User otherUserEntity = User.builder()
+                    .studentId("22222222")
+                    .nickname("다른사람")
+                    .build();
+            ReflectionTestUtils.setField(otherUserEntity, "id", 2L);
+
+            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+            given(userRepository.findByStudentId("22222222")).willReturn(Optional.of(otherUserEntity));
+
+            // then
+            assertThatThrownBy(() -> reviewService.deleteMyPageReview(reviewId, otherUser))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.PERMISSION_DENIED.getErrorMessage());
+
+            verify(s3Service, never()).deleteImages(any());
+            verify(reviewRepository, never()).delete(any());
         }
     }
 }

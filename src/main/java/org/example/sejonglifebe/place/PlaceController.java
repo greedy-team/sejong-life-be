@@ -10,6 +10,7 @@ import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.favorite.FavoritePlaceService;
+import org.example.sejonglifebe.user.Role;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
@@ -57,7 +58,7 @@ public class PlaceController implements PlaceControllerSwagger {
         return CommonResponse.of(HttpStatus.OK, "장소 상세 정보 조회 성공", placeDetailResponse);
     }
 
-    @LoginRequired
+    @LoginRequired(role = Role.ADMIN)
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<Void>> createPlace(
             @Valid @RequestPart("place") PlaceRequest placeRequest,
@@ -68,7 +69,7 @@ public class PlaceController implements PlaceControllerSwagger {
         return CommonResponse.of(HttpStatus.CREATED, "장소 추가 성공", null);
     }
 
-    @LoginRequired
+    @LoginRequired(role = Role.ADMIN)
     @DeleteMapping("/{placeId}")
     public ResponseEntity<CommonResponse<Void>> deletePlace(
             @PathVariable Long placeId,
