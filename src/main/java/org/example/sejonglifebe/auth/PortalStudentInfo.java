@@ -11,4 +11,5 @@ public class PortalStudentInfo {
 
     private String studentId;
     private String name;
+    private String department;
 }

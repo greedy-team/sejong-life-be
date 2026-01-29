@@ -32,6 +32,10 @@ public class LoginService {
         if (userOptional.isPresent()) {
             // 기존 회원: JWT 발급 후 로그인 성공 응답
             User user = userOptional.get();
+
+            userService.updateStudentProfileIfChanged(user.getId(),
+                    studentInfo.getName(), studentInfo.getDepartment());
+
             String accessToken = jwtTokenProvider.createToken(user);
             return LoginResponse.loginSuccess(accessToken);
         } else {
