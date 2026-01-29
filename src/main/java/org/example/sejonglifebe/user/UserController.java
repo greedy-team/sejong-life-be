@@ -10,10 +10,12 @@ import org.example.sejonglifebe.common.jwt.JwtTokenExtractor;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.user.dto.MyPageResponse;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -42,7 +44,7 @@ public class UserController implements UserControllerSwagger{
             throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
         }
 
-        String accessToken = userService.createUser(request);
+        String accessToken = userService.createUser(request, portalInfoFromToken);
         return CommonResponse.of(HttpStatus.CREATED, "회원가입 및 로그인 성공", accessToken);
     }
 
@@ -51,5 +53,12 @@ public class UserController implements UserControllerSwagger{
     public ResponseEntity<CommonResponse<Void>> deleteUser(AuthUser authUser) {
         userService.deleteUser(authUser);
         return CommonResponse.of(HttpStatus.OK, "회원 탈퇴 성공", null);
+    }
+
+    @LoginRequired
+    @GetMapping
+    public ResponseEntity<CommonResponse<MyPageResponse>> getMyPageInfo(AuthUser authUser) {
+        MyPageResponse userInfo = userService.getMyPageInfo(authUser);
+        return CommonResponse.of(HttpStatus.OK, "마이페이지 정보 조회 성공", userInfo);
     }
 }
