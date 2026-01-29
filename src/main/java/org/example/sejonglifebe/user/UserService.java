@@ -6,9 +6,7 @@ import org.example.sejonglifebe.auth.PortalStudentInfo;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
-import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.favorite.FavoritePlaceRepository;
-import org.example.sejonglifebe.place.favorite.FavoritePlaceService;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.review.ReviewLikeRepository;
 import org.example.sejonglifebe.review.ReviewRepository;
@@ -99,8 +97,8 @@ public class UserService {
         String name = user.getName();
         String nickname = user.getNickname();
         String department = user.getDepartment();
-        long favoriteCount = favoritePlaceRepository.countByUserStudentId(studentId);
-        long reviewCount = reviewRepository.countByUserStudentId(studentId);
+        long favoriteCount = favoritePlaceRepository.countByUserStudentId(user.getStudentId());
+        long reviewCount = reviewRepository.countByUserStudentId(user.getStudentId());
         return new MyPageResponse(
                 name,
                 nickname,
