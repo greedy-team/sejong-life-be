@@ -16,6 +16,7 @@ public record MyPageReviewResponse(
         @Schema(description = "작성자 학번", example = "20") String studentId,
         @Schema(description = "리뷰 내용", example = "커피가 진하고 맛있어요!") String content,
         @Schema(description = "좋아요 수", example = "7") Long likeCount,
+        @Schema(description = "좋아요 여부") boolean isLiked,
         @Schema(description = "작성일시(ISO 문자열)", example = "2025-08-24T13:45:00") String createdAt,
         @Schema(description = "이미지 URL 목록") List<PlaceImageInfo> images,
         @Schema(description = "태그 목록") List<TagInfo> tags,
@@ -23,7 +24,7 @@ public record MyPageReviewResponse(
         @Schema(description = "장소 정보") PlaceSimpleInfo place
 ) {
 
-    public static MyPageReviewResponse from(Review review, boolean isAuthor) {
+    public static MyPageReviewResponse from(Review review, boolean isAuthor, boolean isLiked) {
         return new MyPageReviewResponse(
                 review.getId(),
                 review.getRating(),
@@ -32,6 +33,7 @@ public record MyPageReviewResponse(
                 review.getUser().getStudentId().substring(0, 2),
                 review.getContent(),
                 review.getLikeCount(),
+                isLiked,
                 review.getCreatedAt().toString(),
                 review.getPlaceImages().stream()
                         .map(PlaceImageInfo::from)

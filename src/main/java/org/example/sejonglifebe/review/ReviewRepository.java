@@ -56,6 +56,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             FROM Review r
             JOIN FETCH r.place
             JOIN FETCH r.user
+            LEFT JOIN r.reviewLikes
             WHERE r.user = :user
             ORDER BY r.createdAt DESC
             """)

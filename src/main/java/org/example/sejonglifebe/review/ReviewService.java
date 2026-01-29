@@ -199,8 +199,12 @@ public class ReviewService {
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
         return reviewRepository.findAllByUserOrderByCreatedAtDesc(user)
                 .stream()
-                .map(r -> MyPageReviewResponse.from(r, true))
-                .toList();
+                .map(r -> {
+                    boolean isLiked = r.getReviewLikes()
+                            .stream()
+                            .anyMatch(like -> like.getUser().getId().equals(user.getId()));
+                    return MyPageReviewResponse.from(r, true, isLiked);
+                }).toList();
     }
 
     @Transactional
