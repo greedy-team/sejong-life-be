@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.user;
 
 import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.auth.PortalStudentInfo;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -52,7 +54,7 @@ class UserServiceTest {
 
     @Nested
     @DisplayName("유저 생성 테스트")
-    class createUserTest {
+    class CreateUserTest {
 
         @Test
         @DisplayName("중복된 닉네임이면 예외를 던진다")
@@ -60,14 +62,25 @@ class UserServiceTest {
             // given
             SignUpRequest request = SignUpRequest.builder()
                     .studentId("21111111")
+                    .name("홍길동")
                     .nickname("존재하는 닉네임")
                     .build();
+
+            PortalStudentInfo portalInfo = PortalStudentInfo.builder()
+                    .studentId("21111111")
+                    .name("홍길동")
+                    .department("컴퓨터공학과")
+                    .build();
+
             given(userRepository.existsByNickname("존재하는 닉네임")).willReturn(true);
 
-            //then
-            assertThatThrownBy(() -> userService.createUser(request))
+            // then
+            assertThatThrownBy(() -> userService.createUser(request, portalInfo))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.DUPLICATE_NICKNAME.getErrorMessage());
+
+            verify(userRepository, never()).save(any());
+            verify(jwtTokenProvider, never()).createToken(any());
         }
 
         @Test
@@ -76,11 +89,21 @@ class UserServiceTest {
             // given
             SignUpRequest request = SignUpRequest.builder()
                     .studentId("21111111")
+                    .name("홍길동")
                     .nickname("새로 생성된 닉네임")
                     .build();
+
+            PortalStudentInfo portalInfo = PortalStudentInfo.builder()
+                    .studentId("21111111")
+                    .name("홍길동")
+                    .department("컴퓨터공학과")
+                    .build();
+
             User savedUser = User.builder()
                     .id(1L)
                     .studentId("21111111")
+                    .name("홍길동")
+                    .department("컴퓨터공학과")
                     .nickname("새로 생성된 닉네임")
                     .build();
 
@@ -88,12 +111,22 @@ class UserServiceTest {
             given(userRepository.save(any(User.class))).willReturn(savedUser);
             given(jwtTokenProvider.createToken(savedUser)).willReturn("jwt-token");
 
-            //when
-            String token = userService.createUser(request);
+            // when
+            String token = userService.createUser(request, portalInfo);
 
-            //then
+            // then
             assertThat(token).isEqualTo("jwt-token");
-            verify(userRepository).save(any(User.class));
+
+            ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+            verify(userRepository).save(userCaptor.capture());
+            User toSave = userCaptor.getValue();
+
+            // 저장은 portalInfo 기준이 가장 안전함(서비스도 그렇게 구현하길 추천)
+            assertThat(toSave.getStudentId()).isEqualTo("21111111");
+            assertThat(toSave.getName()).isEqualTo("홍길동");
+            assertThat(toSave.getDepartment()).isEqualTo("컴퓨터공학과");
+            assertThat(toSave.getNickname()).isEqualTo("새로 생성된 닉네임");
+
             verify(jwtTokenProvider).createToken(savedUser);
         }
     }
