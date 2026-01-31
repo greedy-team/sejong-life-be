@@ -25,10 +25,10 @@ public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceReposi
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-            update Place p
-            set p.viewCount = p.viewCount + 1,
+            UPDATE Place p
+            SET p.viewCount = p.viewCount + 1,
             p.weeklyViewCount = p.weeklyViewCount + 1
-            where p.id = :id
+            WHERE p.id = :id
            """)
     int increaseViewCount(@Param("id") Long id);
 
