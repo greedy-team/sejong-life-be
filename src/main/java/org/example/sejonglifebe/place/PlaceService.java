@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.place;
 
+
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
@@ -22,6 +24,7 @@ import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.view.PlaceViewLog;
 import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
+import org.example.sejonglifebe.place.view.PlaceViewService;
 import org.example.sejonglifebe.place.view.Viewer;
 import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.place.entity.PlaceImage;
@@ -31,10 +34,12 @@ import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.StringUtils;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlaceService {
@@ -43,8 +48,8 @@ public class PlaceService {
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
     private final S3Service s3Service;
-    private final PlaceViewLogRepository placeViewLogRepository;
-    private static final Duration VIEW_TIME_TO_LIVE = Duration.ofHours(6);
+    private final PlaceViewService placeViewService;
+
 
     public List<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions) {
         List<String> tagNames = conditions.tags();
@@ -121,40 +126,18 @@ public class PlaceService {
                 .map(PlaceResponse::from).toList();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public PlaceDetailResponse getPlaceDetail(Long placeId, AuthUser authUser, HttpServletRequest request) {
-        increaseViewCount(placeId, authUser, request);
 
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
-        return PlaceDetailResponse.from(place);
+        PlaceDetailResponse response = PlaceDetailResponse.from(place);
+
+        placeViewService.increaseViewCount(placeId, authUser, request);
+
+        return response;
     }
-
-    private void increaseViewCount(Long placeId, AuthUser authUser, HttpServletRequest request) {
-        Viewer viewer = identifyViewer(authUser, request);
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expireBefore = now.minus(VIEW_TIME_TO_LIVE);
-
-        if (placeViewLogRepository.updateIfExpired(
-                placeId, viewer.type(), viewer.key(), now, expireBefore) == 1) {
-            placeRepository.increaseViewCount(placeId);
-            return;
-        }
-
-        if (placeViewLogRepository.existsByPlaceIdAndViewerTypeAndViewerKey(placeId, viewer.type(), viewer.key())) {
-            return;
-        }
-
-        try {
-            placeViewLogRepository.save(new PlaceViewLog(placeId, viewer.type(), viewer.key(), now));
-            placeRepository.increaseViewCount(placeId);
-        } catch (DataIntegrityViolationException e) {
-            // 동시에 다른 요청이 먼저 INSERT 에 성공하였으므로 아무 것도 하지 않는다.
-        }
-    }
-
     private void attachCategoriesToPlace(Place place, PlaceRequest request){
 
             List<Category> categories = categoryRepository.findAllById(request.categoryIds());
@@ -173,13 +156,6 @@ public class PlaceService {
         }
 
         tags.forEach(place::addTag);
-    }
-
-    private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
-        if (authUser != null && StringUtils.hasText(authUser.studentId())) {
-            return Viewer.user(authUser.studentId());
-        }
-        return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
     }
 
 }
