@@ -46,26 +46,4 @@ public interface PlaceControllerSwagger {
             @PathVariable Long placeId,
             AuthUser authUser
     );
-
-    @Operation(summary = "내 즐겨찾기 목록 조회")
-    ResponseEntity<CommonResponse<List<PlaceResponse>>> getMyFavoritePlaces(
-            AuthUser authUser
-    );
-
-    @Operation(summary = "장소 즐겨찾기 추가")
-    ResponseEntity<CommonResponse<Void>> addFavoritePlace(
-            @PathVariable Long placeId,
-            AuthUser authUser
-    );
-
-    @Operation(summary = "장소 즐겨찾기 삭제")
-    ResponseEntity<CommonResponse<Void>> removeFavoritePlace(
-            @PathVariable Long placeId,
-            AuthUser authUser
-    );
-
-    @Operation(summary = "내 즐겨찾기 개수 조회")
-    ResponseEntity<CommonResponse<Long>> getMyFavoriteCount(
-            AuthUser authUser
-    );
 }

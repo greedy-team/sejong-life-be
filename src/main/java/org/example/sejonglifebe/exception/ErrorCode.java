@@ -35,8 +35,7 @@ public enum ErrorCode {
     IMAGE_CONVERT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 변환에 실패했습니다."),
     S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 파일 삭제 중 오류가 발생했습니다."),
     PERMISSION_DENIED(HttpStatus.FORBIDDEN, "리뷰 수정, 삭제 권한이 없습니다"),
-    ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
-    ALREADY_FAVORITE_PLACE(HttpStatus.BAD_REQUEST, "이미 즐겨찾기로 등록된 장소입니다.");
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.");
     private final HttpStatus httpStatus;
     private final String errorMessage;
 }
