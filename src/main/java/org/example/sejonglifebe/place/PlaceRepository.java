@@ -23,14 +23,9 @@ public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceReposi
            """)
     List<Place> findByCategory(@Param("category") Category category);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-            UPDATE Place p
-            SET p.viewCount = p.viewCount + 1,
-            p.weeklyViewCount = p.weeklyViewCount + 1
-            WHERE p.id = :id
-           """)
-    int increaseViewCount(@Param("id") Long id);
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Place p SET p.viewCount = p.viewCount + 1, p.weeklyViewCount = p.weeklyViewCount + 1 WHERE p.id = :id")
+    void increaseViewCount(@Param("id") Long id);
 
     @Modifying
     @Query("UPDATE Place p SET p.weeklyViewCount = 0")

@@ -314,19 +314,6 @@ public class PlaceControllerTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 장소 ID 조회 실패 테스트")
-    void getPlaceDetail_fail() throws Exception {
-        mockMvc.perform(get("/api/places/" + NON_EXISTENT_ID)
-                        .contentType(MediaType.APPLICATION_JSON))
-
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"))
-                .andExpect(jsonPath("$.message").exists())
-                .andDo(print());
-    }
-
-    /*
-    @Test
     @DisplayName("장소 상세 조회 성공 테스트")
     void getPlaceDetail_success() throws Exception {
         mockMvc.perform(get("/api/places/" + detailPlace.getId())
@@ -343,6 +330,19 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.data.images.length()").value(2))
                 .andExpect(jsonPath("$.data.images[0].url").value("image1.jpg"))
                 .andExpect(jsonPath("$.data.images[1].url").value("image2.jpg"))
+                .andDo(print());
+    }
+
+
+    @Test
+    @DisplayName("존재하지 않는 장소 ID 조회 실패 테스트")
+    void getPlaceDetail_fail() throws Exception {
+        mockMvc.perform(get("/api/places/" + NON_EXISTENT_ID)
+                        .contentType(MediaType.APPLICATION_JSON))
+
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").exists())
                 .andDo(print());
     }
 
@@ -409,7 +409,6 @@ public class PlaceControllerTest {
         assertThat(updatedPlace.getViewCount()).isEqualTo(1);
         assertThat(updatedPlace.getWeeklyViewCount()).isEqualTo(1);
     }
-     */
 
     @Test
     @DisplayName("주간 핫플레이스 조회 시 weeklyViewCount가 높은 순으로 정렬되어 반환된다")
