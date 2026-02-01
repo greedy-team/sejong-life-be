@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.place;
 
 import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.place.view.PlaceViewService;
 import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
@@ -49,6 +50,9 @@ class PlaceServiceTest {
 
     @Mock
     private PlaceViewLogRepository placeViewLogRepository;
+
+    @Mock
+    private PlaceViewService placeViewService;
 
     @Mock
     private S3Service s3Service;
