@@ -19,6 +19,10 @@ import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.User;
 import org.example.sejonglifebe.user.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -91,6 +95,11 @@ public class ReviewService {
         return new ReviewSummaryResponse(reviewCount, averageRate, ratingDistribution);
     }
 
+    @Retryable(
+            retryFor = {ObjectOptimisticLockingFailureException.class, DataIntegrityViolationException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 100)
+    )
     @Transactional
     public void createReview(Long placeId, ReviewRequest reviewRequest, AuthUser authUser, List<MultipartFile> images) {
         User user = userRepository.findByStudentId(authUser.studentId())

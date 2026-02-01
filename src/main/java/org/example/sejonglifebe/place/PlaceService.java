@@ -30,6 +30,9 @@ import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +49,7 @@ public class PlaceService {
     private final PlaceViewLogRepository placeViewLogRepository;
     private static final Duration VIEW_TIME_TO_LIVE = Duration.ofHours(6);
 
+    @Transactional(readOnly = true)
     public List<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions) {
         List<String> tagNames = conditions.tags();
         String categoryName = conditions.category();
@@ -114,7 +118,12 @@ public class PlaceService {
         placeRepository.delete(place);
     }
 
-    @Transactional
+    @Retryable(
+            retryFor = ObjectOptimisticLockingFailureException.class,
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 100)
+    )
+    @Transactional(readOnly = true)
     public List<PlaceResponse> getWeeklyHotPlaces() {
         List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
         return hotPlaces.stream()
