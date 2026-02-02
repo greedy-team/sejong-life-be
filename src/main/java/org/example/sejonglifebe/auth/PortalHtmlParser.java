@@ -1,5 +1,7 @@
 package org.example.sejonglifebe.auth;
 
+import static org.apache.logging.log4j.util.Strings.isBlank;
+
 import lombok.extern.slf4j.Slf4j;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
@@ -26,6 +28,7 @@ public class PortalHtmlParser {
             rowValues.add(value);
         });
 
+        String department = getValueFromList(rowValues, 0);
         String studentId = getValueFromList(rowValues, 1);
         String name = getValueFromList(rowValues, 2);
 
@@ -35,9 +38,15 @@ public class PortalHtmlParser {
             throw new SejongLifeException(ErrorCode.PORTAL_PARSING_FAILED);
         }
 
+        // 학과는 필수는 아니므로 로그만 남김 (선택)
+        if (isBlank(department)) {
+            log.warn("포털 HTML 파싱 - 학과 정보 없음 (studentId={})", studentId);
+        }
+
         return PortalStudentInfo.builder()
                 .studentId(studentId)
                 .name(name)
+                .department(department)
                 .build();
     }
 

@@ -40,6 +40,12 @@ public class User {
     @Column(name = "student_id", unique = true, nullable = false)
     private String studentId;
 
+    @Column(name = "name", length = 30)
+    private String name;
+
+    @Column(name = "department", length = 50)
+    private String department;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -61,5 +67,10 @@ public class User {
     }
     public void removeReview(Review review) {
         reviews.remove(review);
+    }
+
+    public void updateStudentProfile(String name, String department) {
+        if (name != null && !name.isBlank()) this.name = name;
+        if (department != null && !department.isBlank()) this.department = department;
     }
 }

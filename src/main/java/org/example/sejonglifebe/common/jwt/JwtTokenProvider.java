@@ -61,6 +61,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .subject(portalInfo.getStudentId())
                 .claim("name", portalInfo.getName())
+                .claim("department", portalInfo.getDepartment())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
@@ -78,6 +79,7 @@ public class JwtTokenProvider {
             return PortalStudentInfo.builder()
                     .studentId(claims.getSubject())
                     .name(claims.get("name", String.class))
+                    .department(claims.get("department", String.class))
                     .build();
 
         } catch (ExpiredJwtException e) {
