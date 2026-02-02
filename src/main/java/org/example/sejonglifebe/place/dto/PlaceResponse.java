@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.example.sejonglifebe.common.dto.CategoryInfo;
 import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.user.User;
 
 @Schema(description = "장소 목록 아이템")
 public record PlaceResponse(
@@ -17,10 +18,11 @@ public record PlaceResponse(
         @Schema(description = "카테고리 목록") List<CategoryInfo> categories,
         @Schema(description = "태그 목록") List<TagInfo> tags,
         @Schema(description = "제휴 여부") boolean isPartnership,
-        @Schema(description = "제휴 내용") String partnershipContent
+        @Schema(description = "제휴 내용") String partnershipContent,
+        @Schema(description = "즐겨찾기 여부") boolean isFavorite
 ) {
 
-    public static PlaceResponse from(Place place) {
+    public static PlaceResponse from(Place place, User user) {
         return new PlaceResponse(
                 place.getId(),
                 place.getName(),
@@ -34,7 +36,8 @@ public record PlaceResponse(
                         .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
                         .toList(),
                 place.isPartnership(),
-                place.getPartnershipContent()
+                place.getPartnershipContent(),
+                user != null ? user.getFavoritePlaces().stream().anyMatch(fp -> fp.getPlace().equals(place)) : false
         );
     }
 }
