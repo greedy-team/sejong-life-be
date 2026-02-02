@@ -38,15 +38,22 @@ public class SseService {
             emitters.remove(emitterId);
         });
         try {
+            log.info("초기 메시지 전송 시작: emitterId={}", emitterId);
             emitter.send(SseEmitter.event()
                     .name("connect")
-                    .data("SSE 연결 성공")
+                    .data("connected")
                     .reconnectTime(RECONNECTION_TIMEOUT));
+
+            // 스트림 유지를 위한 추가 코멘트 전송
+            emitter.send(SseEmitter.event()
+                    .comment("SSE stream established"));
+
+            log.info("초기 메시지 전송 완료: emitterId={}", emitterId);
         } catch (IOException e) {
             log.error("초기 메시지 전송 실패: emitterId={}", emitterId, e);
             emitter.complete();
             emitters.remove(emitterId);
-            throw new RuntimeException("SSE 연결 실패");
+            throw new RuntimeException("SSE 연결 실패", e);
         }
         return emitter;
     }
@@ -58,9 +65,9 @@ public class SseService {
                         .name(eventName)
                         .data(data)
                         .reconnectTime(RECONNECTION_TIMEOUT));
+                log.info("SSE 메시지 전송 성공 : emitterId={}, event={}", id, eventName);
             } catch (IOException e) {
                 log.error("SSE 메시지 전송 실패 : emitterId={}, event={}", id, eventName, e);
-                emitter.complete();
                 emitters.remove(id);
             }
         });
