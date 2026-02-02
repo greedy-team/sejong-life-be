@@ -32,7 +32,6 @@ public class PortalHtmlParser {
         String studentId = getValueFromList(rowValues, 1);
         String name = getValueFromList(rowValues, 2);
 
-
         // 파싱 결과 검증
         if (studentId == null || studentId.isEmpty() || name == null || name.isEmpty()) {
             log.error("포털 HTML 파싱 실패 - 학번: {}, 이름: {}", studentId, name);

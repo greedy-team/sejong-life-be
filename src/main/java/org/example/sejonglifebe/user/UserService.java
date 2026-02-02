@@ -89,7 +89,7 @@ public class UserService {
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public MyPageResponse getMyPageInfo(AuthUser authUser) {
         User user = userRepository.findByStudentId(authUser.studentId())
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
@@ -108,5 +108,4 @@ public class UserService {
                 reviewCount
         );
     }
-
 }
