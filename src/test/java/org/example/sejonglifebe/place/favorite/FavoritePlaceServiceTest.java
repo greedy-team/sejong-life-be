@@ -49,9 +49,14 @@ class FavoritePlaceServiceTest {
         void getMyFavorites_success() {
             // given
             String studentId = "21011111";
+            User user = User.builder().studentId(studentId).nickname("닉네임").build();
             Place place1 = Place.builder().name("장소1").address("주소1").mainImageUrl("url1").build();
             Place place2 = Place.builder().name("장소2").address("주소2").mainImageUrl("url2").build();
 
+            FavoritePlace fav1 = FavoritePlace.of(user, place1);
+            FavoritePlace fav2 = FavoritePlace.of(user, place2);
+
+            given(userRepository.findByStudentId(studentId)).willReturn(Optional.of(user));
             given(favoritePlaceRepository.findFavoritePlacesByStudentId(studentId))
                     .willReturn(List.of(place1, place2));
 
@@ -62,6 +67,7 @@ class FavoritePlaceServiceTest {
             assertThat(result).hasSize(2);
             assertThat(result.get(0).placeName()).isEqualTo("장소1");
             assertThat(result.get(1).placeName()).isEqualTo("장소2");
+            verify(userRepository).findByStudentId(studentId);
             verify(favoritePlaceRepository).findFavoritePlacesByStudentId(studentId);
         }
     }

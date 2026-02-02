@@ -99,6 +99,7 @@ public class PlaceControllerTest {
         tagRepository.deleteAll();
         categoryRepository.deleteAll();
         placeViewLogRepository.deleteAll();
+        userRepository.deleteAll();
 
         Category category1 = new Category("식당");
         Category category2 = new Category("카페");
@@ -631,6 +632,27 @@ public class PlaceControllerTest {
         // then: DB 삭제 안 됨
         assertThat(placeRepository.count()).isEqualTo(beforeCount);
         assertThat(placeRepository.findById(placeId)).isPresent();
+    }
+
+    @Test
+    @DisplayName("비로그인 사용자 장소 조회 시 isFavorite는 false")
+    void getPlaceList_asGuest_isFavoriteIsFalse() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].isFavorite").value(false))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("비로그인 사용자 장소 상세 조회 시 isFavorite는 false")
+    void getPlaceDetail_asGuest_isFavoriteIsFalse() throws Exception {
+        mockMvc.perform(get("/api/places/" + detailPlace.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.isFavorite").value(false))
+                .andDo(print());
     }
 
     private static String sha256Hex(String input) {
