@@ -2,6 +2,7 @@ package org.example.sejonglifebe.review.admin.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.example.sejonglifebe.common.dto.TagInfo;
+import org.example.sejonglifebe.place.dto.PlaceImageInfo;
 import org.example.sejonglifebe.review.Review;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public record AdminReviewResponse(
         @Schema(description = "작성일시(ISO 문자열)", example = "2025-08-24T13:45:00") String createdAt,
         @Schema(description = "장소 ID", example = "1")Long placeId,
         @Schema(description = "장소 이름", example = "또래끼리")String placeName,
-        @Schema(description = "이미지 개수") Long imagesCount,
+        @Schema(description = "이미지 URL 목록") List<PlaceImageInfo> images,
         @Schema(description = "태그 목록") List<TagInfo> tags
 ) {
 
@@ -33,7 +34,7 @@ public record AdminReviewResponse(
                 review.getCreatedAt().toString(),
                 review.getPlace().getId(),
                 review.getPlace().getName(),
-                (long) review.getPlaceImages().size(),
+                review.getPlaceImages().stream().map(PlaceImageInfo::from).toList(),
                 review.getReviewTags().stream()
                         .map(rt -> new TagInfo(rt.getTag().getId(), rt.getTag().getName()))
                         .toList()
