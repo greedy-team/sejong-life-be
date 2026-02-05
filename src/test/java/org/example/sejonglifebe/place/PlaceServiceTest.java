@@ -14,6 +14,7 @@ import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.example.sejonglifebe.user.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -53,6 +55,9 @@ class PlaceServiceTest {
     @Mock
     private S3Service s3Service;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private PlaceService placeService;
 
@@ -70,7 +75,7 @@ class PlaceServiceTest {
                     .willReturn(List.of());
 
             // when/then
-            assertThatThrownBy(() -> placeService.getPlaceByConditions(conditions))
+            assertThatThrownBy(() -> placeService.getPlaceByConditions(conditions, null))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.TAG_NOT_FOUND.getErrorMessage());
 
@@ -90,7 +95,7 @@ class PlaceServiceTest {
                     .willReturn(List.of(place1, place2));
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions, null);
 
             // then
             assertThat(result).hasSize(2);
@@ -111,7 +116,7 @@ class PlaceServiceTest {
                     .willReturn(List.of(place1));
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions, null);
 
             // then
             assertThat(result).hasSize(1);
@@ -128,7 +133,7 @@ class PlaceServiceTest {
             given(categoryRepository.findByName("맛집")).willReturn(Optional.empty());
 
             // then
-            assertThatThrownBy(() -> placeService.getPlaceByConditions(conditions))
+            assertThatThrownBy(() -> placeService.getPlaceByConditions(conditions, null))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.CATEGORY_NOT_FOUND.getErrorMessage());
         }
@@ -148,7 +153,7 @@ class PlaceServiceTest {
                     .willReturn(List.of(place1, place2));
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions, null);
 
             // then
             assertThat(result).hasSize(2);
@@ -171,7 +176,7 @@ class PlaceServiceTest {
                     .willReturn(List.of(place1));
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions, null);
 
             // then
             assertThat(result).hasSize(1);
@@ -191,7 +196,7 @@ class PlaceServiceTest {
                     .willReturn(List.of(place1, place2));
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions, null);
 
             // then
             assertThat(result).hasSize(2);
@@ -213,7 +218,7 @@ class PlaceServiceTest {
                     .willReturn(List.of(place1));
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions, null);
 
             // then
             assertThat(result).hasSize(1);
@@ -233,7 +238,7 @@ class PlaceServiceTest {
                     .willReturn(List.of(place1));
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions, null);
 
             // then
             assertThat(result).hasSize(1);
@@ -255,7 +260,7 @@ class PlaceServiceTest {
                     .willReturn(List.of(place1));
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions, null);
 
             // then
             assertThat(result).hasSize(1);
@@ -287,6 +292,7 @@ class PlaceServiceTest {
             // given
             Place place = Place.builder().name("맛집").address("주소").mainImageUrl("url").build();
             given(placeRepository.findById(1L)).willReturn(Optional.of(place));
+            given(userRepository.findByStudentId(anyString())).willReturn(Optional.empty());
             MockHttpServletRequest request = new MockHttpServletRequest();
             MockHttpServletResponse response = new MockHttpServletResponse();
 

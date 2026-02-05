@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -221,5 +222,70 @@ class FavoritePlaceControllerTest {
 
         em.clear();
         assertThat(favoritePlaceRepository.countByUserStudentId(STUDENT_ID)).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("즐겨찾기 추가 후 장소 목록 조회 시 isFavorite=true")
+    void addFavorite_thenGetPlaceList_isFavoriteIsTrue() throws Exception {
+        // given
+        mockMvc.perform(post("/api/places/{placeId}/favorite", place1.getId())
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk());
+
+        em.clear();
+
+        // when & then
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[?(@.placeId==" + place1.getId() + ")].isFavorite").value(true))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("즐겨찾기 추가 후 장소 상세 조회 시 isFavorite=true")
+    void addFavorite_thenGetPlaceDetail_isFavoriteIsTrue() throws Exception {
+        // given
+        mockMvc.perform(post("/api/places/{placeId}/favorite", place1.getId())
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk());
+
+        em.clear();
+
+        // when & then
+        mockMvc.perform(get("/api/places/{placeId}", place1.getId())
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.isFavorite").value(true))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("즐겨찾기 삭제 후 장소 상세 조회 시 isFavorite=false")
+    void removeFavorite_thenGetPlaceDetail_isFavoriteIsFalse() throws Exception {
+        // given
+        mockMvc.perform(post("/api/places/{placeId}/favorite", place1.getId())
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk());
+
+        em.flush();
+
+        mockMvc.perform(delete("/api/places/{placeId}/favorite", place1.getId())
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk());
+
+        em.flush();
+        em.clear();
+
+        // when & then
+        mockMvc.perform(get("/api/places/{placeId}", place1.getId())
+                        .header("Authorization", "Bearer test-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.isFavorite").value(false))
+                .andDo(print());
     }
 }

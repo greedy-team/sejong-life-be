@@ -5,7 +5,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,6 +32,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.example.sejonglifebe.user.User;
+import org.example.sejonglifebe.user.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -42,15 +43,17 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class PlaceService {
 
+    private static final Duration VIEW_TIME_TO_LIVE = Duration.ofHours(6);
+
     private final PlaceRepository placeRepository;
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
     private final S3Service s3Service;
     private final PlaceViewLogRepository placeViewLogRepository;
-    private static final Duration VIEW_TIME_TO_LIVE = Duration.ofHours(6);
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public List<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions) {
+    public List<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions, AuthUser authUser) {
         List<String> tagNames = conditions.tags();
         String categoryName = conditions.category();
 
@@ -59,6 +62,8 @@ public class PlaceService {
         if (tagNames == null) {
             tagNames = Collections.emptyList();
         }
+
+        User user =  authUser != null ? userRepository.findByStudentId(authUser.studentId()).orElse(null) : null;
 
         List<Tag> tags = tagRepository.findByNameIn(tagNames);
         if (tags.size() != tagNames.size()) {
@@ -73,7 +78,7 @@ public class PlaceService {
 
         return placeRepository.getPlacesByConditions(category, tags, conditions.keyword())
                 .stream()
-                .map(PlaceResponse::from)
+                .map(place -> PlaceResponse.from(place, user))
                 .toList();
     }
 
@@ -124,20 +129,23 @@ public class PlaceService {
             backoff = @Backoff(delay = 100)
     )
     @Transactional(readOnly = true)
-    public List<PlaceResponse> getWeeklyHotPlaces() {
-        List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
-        return hotPlaces.stream()
-                .map(PlaceResponse::from).toList();
+    public List<PlaceResponse> getWeeklyHotPlaces(AuthUser authUser) {
+        User user =  authUser != null ? userRepository.findByStudentId(authUser.studentId()).orElse(null) : null;
+        return placeRepository.findTop10ByOrderByWeeklyViewCountDesc()
+                .stream()
+                .map(place -> PlaceResponse.from(place, user))
+                .toList();
     }
 
     @Transactional
     public PlaceDetailResponse getPlaceDetail(Long placeId, AuthUser authUser, HttpServletRequest request) {
         increaseViewCount(placeId, authUser, request);
+        User user =  authUser != null ? userRepository.findByStudentId(authUser.studentId()).orElse(null) : null;
 
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
-        return PlaceDetailResponse.from(place);
+        return PlaceDetailResponse.from(place, user);
     }
 
     private void increaseViewCount(Long placeId, AuthUser authUser, HttpServletRequest request) {
