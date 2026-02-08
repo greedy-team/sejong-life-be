@@ -63,9 +63,11 @@ public class PortalClient {
 
         try (Response ssoResponse = client.newCall(ssoRequest).execute()) {
             if (!ssoResponse.isSuccessful()) { // SSO 요청 실패
+                log.error("SSO 요청 실패 - code: {}, message: {}", ssoResponse.code(), ssoResponse.message());
                 throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
             }
         } catch (IOException e) {
+            log.error("SSO IOException", e);
             throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR, e);
         }
     }
@@ -76,10 +78,13 @@ public class PortalClient {
 
         try (Response response = client.newCall(request).execute()) {
             if (response.body() == null || response.code() != 200) { //고전독서 인증현황 페이지 조회 실패
+                log.error("고전독서 페이지 조회 실패 - code: {}, message: {}, body: {}",
+                        response.code(), response.message(), response.body());
                 throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
             }
             return response.body().string();
         } catch (IOException e) {
+            log.error("fetchHtml IOException", e);
             throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR, e);
         }
     }
@@ -114,11 +119,13 @@ public class PortalClient {
                     Thread.sleep(waitTime);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    log.error("재시도 대기 중 인터럽트 발생", e);
                     throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
                 }
             }
         }
 
+        log.error("모든 재시도 실패 - 최종 응답: {}", lastResponse);
         throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
     }
 }
