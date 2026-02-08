@@ -104,12 +104,12 @@ public class PortalClient {
                 lastResponse = response;
                 response.close();
 
-                log.warn("[PortalLogin] HTTP 오류 발생 -> 재시도 {}/{}, 상태 코드: {}",
+                log.error("[PortalLogin] HTTP 오류 발생 -> 재시도 {}/{}, 상태 코드: {}",
                         tryCount, RETRY_COUNT, response.code());
 
             } catch (IOException e) {
-                log.warn("[PortalLogin] 네트워크 오류 발생 -> 재시도 {}/{}, 오류: {}",
-                        tryCount, RETRY_COUNT, e.getMessage());
+                log.error("[PortalLogin] 네트워크 오류 발생 -> 재시도 {}/{}",
+                        tryCount, RETRY_COUNT, e);
             }
 
             // 마지막 시도가 아니면 대기 (Exponential backoff)
