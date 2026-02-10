@@ -23,10 +23,11 @@ public interface PlaceControllerSwagger {
 
     @Operation(summary = "장소 목록 조회")
     ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
-            @Valid @ModelAttribute PlaceSearchConditions conditions);
+            @Valid @ModelAttribute PlaceSearchConditions conditions,
+            AuthUser authUser);
 
     @Operation(summary = "주간 핫플레이스 조회")
-    ResponseEntity<CommonResponse<List<PlaceResponse>>> getHotPlaces();
+    ResponseEntity<CommonResponse<List<PlaceResponse>>> getHotPlaces(AuthUser authUser);
 
     @Operation(summary = "장소 상세 정보 조회")
     ResponseEntity<CommonResponse<PlaceDetailResponse>> getPlaceDetail(

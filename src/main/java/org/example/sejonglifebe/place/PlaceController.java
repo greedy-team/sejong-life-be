@@ -38,14 +38,15 @@ public class PlaceController implements PlaceControllerSwagger {
 
     @GetMapping
     public ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
-            @Valid @ModelAttribute PlaceSearchConditions conditions) {
-        List<PlaceResponse> response = placeService.getPlaceByConditions(conditions);
+            @Valid @ModelAttribute PlaceSearchConditions conditions,
+            AuthUser authUser) {
+        List<PlaceResponse> response = placeService.getPlaceByConditions(conditions, authUser);
         return CommonResponse.of(HttpStatus.OK, "장소 목록 조회 성공", response);
     }
 
     @GetMapping("/hot")
-    public ResponseEntity<CommonResponse<List<PlaceResponse>>> getHotPlaces() {
-        List<PlaceResponse> hotPlaceResponses = placeService.getWeeklyHotPlaces();
+    public ResponseEntity<CommonResponse<List<PlaceResponse>>> getHotPlaces(AuthUser authUser) {
+        List<PlaceResponse> hotPlaceResponses = placeService.getWeeklyHotPlaces(authUser);
         return CommonResponse.of(HttpStatus.OK, "핫플레이스 조회 성공", hotPlaceResponses);
     }
 

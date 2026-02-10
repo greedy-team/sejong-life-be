@@ -15,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.sejonglifebe.place.favorite.FavoritePlace;
 import org.example.sejonglifebe.review.Review;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -61,6 +62,10 @@ public class User {
     @Builder.Default
     @OneToMany(mappedBy = "user")
     private List<Review> reviews = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user")
+    private List<FavoritePlace> favoritePlaces = new ArrayList<>();
 
     public void addReview(Review review) {
         reviews.add(review);

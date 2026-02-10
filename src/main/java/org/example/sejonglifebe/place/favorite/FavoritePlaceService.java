@@ -1,6 +1,5 @@
 package org.example.sejonglifebe.place.favorite;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
@@ -13,6 +12,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -24,8 +25,12 @@ public class FavoritePlaceService {
 
     @Transactional(readOnly = true)
     public List<PlaceResponse> getMyFavorites(String studentId) {
-        return favoritePlaceRepository.findFavoritePlacesByStudentId(studentId).stream()
-                .map(PlaceResponse::from)
+        User user = userRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
+
+        return favoritePlaceRepository.findFavoritePlacesByStudentId(studentId)
+                .stream()
+                .map(place -> PlaceResponse.from(place , user))
                 .toList();
     }
 

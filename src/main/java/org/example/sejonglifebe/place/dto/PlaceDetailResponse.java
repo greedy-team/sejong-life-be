@@ -7,6 +7,7 @@ import org.example.sejonglifebe.common.dto.CategoryInfo;
 import org.example.sejonglifebe.common.dto.TagInfo;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.user.User;
 
 @Schema(description = "장소 상세 정보")
 public record PlaceDetailResponse(
@@ -18,10 +19,11 @@ public record PlaceDetailResponse(
         @Schema(description = "조회수", example = "12345") Long viewCount,
         @Schema(description = "지도 링크(카카오/네이버/구글 등)") MapLinks mapLinks,
         @Schema(description = "제휴 여부") boolean isPartnership,
-        @Schema(description = "제휴 내용") String partnershipContent
+        @Schema(description = "제휴 내용") String partnershipContent,
+        @Schema(description = "즐겨찾기 여부") boolean isFavorite
 ) {
 
-    public static PlaceDetailResponse from(Place place) {
+    public static PlaceDetailResponse from(Place place, User user) {
         return new PlaceDetailResponse(
                 place.getId(),
                 place.getName(),
@@ -37,7 +39,8 @@ public record PlaceDetailResponse(
                 place.getViewCount(),
                 place.getMapLinks(),
                 place.isPartnership(),
-                place.getPartnershipContent()
+                place.getPartnershipContent(),
+                user != null ? user.getFavoritePlaces().stream().anyMatch(fp -> fp.getPlace().equals(place)) : false
         );
     }
 }
