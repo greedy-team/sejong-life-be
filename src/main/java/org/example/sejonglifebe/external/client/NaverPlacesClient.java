@@ -37,7 +37,6 @@ public class NaverPlacesClient {
 
         String title = response.items().get(0).title();
 
-        // HTML 태그 제거
         String clean = title.replaceAll("<[^>]*>", "");
 
         return Optional.of(clean);

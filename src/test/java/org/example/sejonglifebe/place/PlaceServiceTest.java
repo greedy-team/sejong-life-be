@@ -317,6 +317,8 @@ class PlaceServiceTest {
             PlaceRequest request = new PlaceRequest(
                     "장소명",
                     "주소",
+                    127.0,
+                    70.0,
                     List.of(1L),
                     List.of(10L),
                     null,

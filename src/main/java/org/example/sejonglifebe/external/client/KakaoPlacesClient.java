@@ -31,12 +31,14 @@ public class KakaoPlacesClient {
                 .bodyToMono(KakaoSearchResponse.class)
                 .block();
 
-        if (response == null || response.documents() == null) return List.of();
+        if (response == null || response.documents() == null)
+            return List.of();
 
         return response.documents().stream()
                 .map(d -> new PlaceSearchResponse(
                         d.id(),
                         d.place_name(),
+                        d.address_name(),
                         parseDouble(d.y()),
                         parseDouble(d.x())
                 ))
@@ -45,7 +47,11 @@ public class KakaoPlacesClient {
 
     private Double parseDouble(String v) {
         if (v == null || v.isBlank()) return null;
-        try { return Double.parseDouble(v); }
-        catch (NumberFormatException e) { return null; }
+        try {
+            return Double.parseDouble(v);
+        }
+        catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

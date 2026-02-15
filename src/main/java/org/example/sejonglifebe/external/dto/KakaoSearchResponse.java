@@ -9,11 +9,11 @@ public record KakaoSearchResponse(
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Document(
-            String id,               // placeId
-            String place_name,       // canonical name
+            String id,
+            String place_name,
             String road_address_name,
             String address_name,
-            String x,                // lng
-            String y                 // lat
+            String x,
+            String y
     ) {}
 }

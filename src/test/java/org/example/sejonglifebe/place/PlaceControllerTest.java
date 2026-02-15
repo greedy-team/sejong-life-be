@@ -447,6 +447,8 @@ public class PlaceControllerTest {
         PlaceRequest request = new PlaceRequest(
                 "새로운 장소",
                 "새로운 주소",
+                127.0,
+                70.0,
                 List.of(category.getId()), // CategoryInfo 리스트 괄호 닫기
                 List.of(tag1.getId(), tag2.getId()),
                 new MapLinks("https://naver.com/place", "", ""),
@@ -499,6 +501,8 @@ public class PlaceControllerTest {
         PlaceRequest request = new PlaceRequest(
                 "썸네일 장소",
                 "썸네일 주소",
+                127.0,
+                70.0,
                 List.of(category.getId()),
                 List.of(tag.getId()),
                 new MapLinks("", "https://kakao.com/place", ""),
@@ -559,11 +563,13 @@ public class PlaceControllerTest {
                 .orElseThrow(() -> new IllegalStateException("가성비 태그가 없습니다."));
 
         given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
-                .willReturn(new AuthUser("21011111", Role.USER)); // ✅ USER
+                .willReturn(new AuthUser("21011111", Role.USER));
 
         PlaceRequest request = new PlaceRequest(
                 "권한없는 장소",
                 "권한없는 주소",
+                127.0,
+                70.0,
                 List.of(category.getId()),
                 List.of(tag1.getId(), tag2.getId()),
                 new MapLinks("https://naver.com/place", "", ""),

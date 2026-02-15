@@ -9,8 +9,8 @@ public record GoogleSearchResponse(
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Place(
-            String id,                 // placeId
-            DisplayName displayName    // canonical name
+            String id,
+            DisplayName displayName
     ) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)

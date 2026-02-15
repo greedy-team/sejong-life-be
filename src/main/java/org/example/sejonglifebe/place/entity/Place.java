@@ -39,6 +39,12 @@ public class Place {
     @Column(nullable = false)
     private String address;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @Convert(converter = MapLinkConverter.class)
     @Column(columnDefinition = "text")
     private MapLinks mapLinks;
