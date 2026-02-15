@@ -5,7 +5,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -83,6 +82,8 @@ public class PlaceService {
         Place place = Place.createPlace(
                 request.placeName(),
                 request.address(),
+                request.latitude(),
+                request.longitude(),
                 request.mapLinks(),
                 request.isPartnership(),
                 request.partnershipContent()

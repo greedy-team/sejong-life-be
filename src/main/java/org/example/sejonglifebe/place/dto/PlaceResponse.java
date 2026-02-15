@@ -11,6 +11,9 @@ import org.example.sejonglifebe.place.entity.Place;
 public record PlaceResponse(
         @Schema(description = "장소 ID", example = "101") Long placeId,
         @Schema(description = "장소명", example = "세종 카페 101") String placeName,
+        @Schema(description = "주소", example = "서울특별시 광진구 능동로 209") String address,
+        @Schema(description = "위도", example = "127.0742595815513") Double latitude,
+        @Schema(description = "경도", example = "37.550638892935346") Double longitude,
         @Schema(description = "썸네일 이미지 URL", example = "https://.../thumb.jpg") String mainImageUrl,
         @Schema(description = "조회수", example = "12345") Long viewCount,
         @Schema(description = "리뷰 수", example = "12") Long reviewCount,
@@ -24,6 +27,9 @@ public record PlaceResponse(
         return new PlaceResponse(
                 place.getId(),
                 place.getName(),
+                place.getAddress(),
+                place.getLatitude(),
+                place.getLongitude(),
                 place.getThumbnailImage(),
                 place.getViewCount(),
                 (long) place.getReviews().size(),
