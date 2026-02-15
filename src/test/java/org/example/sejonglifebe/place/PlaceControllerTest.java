@@ -21,7 +21,6 @@ import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.sejonglifebe.auth.AuthUser;
-import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
