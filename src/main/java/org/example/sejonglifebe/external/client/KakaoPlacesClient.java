@@ -38,7 +38,7 @@ public class KakaoPlacesClient {
                 .map(d -> new PlaceSearchResponse(
                         d.id(),
                         d.place_name(),
-                        d.address_name(),
+                        d.road_address_name(),
                         parseDouble(d.y()),
                         parseDouble(d.x())
                 ))
