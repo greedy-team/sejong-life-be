@@ -19,11 +19,11 @@ public record PlaceRequest(
         @NotBlank(message = "주소는 필수 항목입니다.")
         String address,
 
-        @Schema(description = "위도", example = "127.0742595815513")
+        @Schema(description = "위도", example = "37.550638892935346")
         @NotNull(message = "위도는 필수 항목입니다.")
         Double latitude,
 
-        @Schema(description = "경도", example = "37.550638892935346")
+        @Schema(description = "경도", example = "127.0742595815513")
         @NotNull(message = "경도는 필수 항목입니다.")
         Double longitude,
 

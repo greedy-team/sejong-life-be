@@ -19,6 +19,7 @@ import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.view.PlaceViewLog;
 import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
@@ -83,6 +84,8 @@ public class PlaceService {
         Place place = Place.createPlace(
                 request.placeName(),
                 request.address(),
+                request.latitude(),
+                request.longitude(),
                 request.mapLinks(),
                 request.isPartnership(),
                 request.partnershipContent()

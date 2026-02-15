@@ -90,6 +90,8 @@ public class Place {
     public static Place createPlace(
             String name,
             String address,
+            Double latitude,
+            Double longitude,
             MapLinks mapLinks,
             boolean isPartnership,
             String partnershipContent
@@ -101,6 +103,8 @@ public class Place {
                 .mainImageUrl(null)
                 .build();
 
+        place.latitude = latitude;
+        place.longitude = longitude;
         place.isPartnership = isPartnership;
         place.partnershipContent = partnershipContent;
         place.viewCount = 0L;
