@@ -8,8 +8,6 @@ import org.example.sejonglifebe.external.dto.PlaceSearchResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.Optional;
-
 @Component
 @RequiredArgsConstructor
 public class KakaoPlacesClient {

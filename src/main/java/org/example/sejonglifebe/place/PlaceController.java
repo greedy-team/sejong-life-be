@@ -7,7 +7,6 @@ import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.auth.LoginRequired;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.external.MapLinksService;
-import org.example.sejonglifebe.external.client.KakaoPlacesClient;
 import org.example.sejonglifebe.external.dto.MapLinksRequest;
 import org.example.sejonglifebe.external.dto.MapLinksResponse;
 import org.example.sejonglifebe.external.dto.PlaceSearchResponse;
@@ -16,7 +15,6 @@ import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.favorite.FavoritePlaceService;
 import org.example.sejonglifebe.user.Role;
-import org.springframework.boot.autoconfigure.graphql.GraphQlProperties.Http;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;

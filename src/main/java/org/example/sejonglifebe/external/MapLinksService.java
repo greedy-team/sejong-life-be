@@ -21,10 +21,6 @@ public class MapLinksService {
     private final GooglePlacesClient googleClient;
     private final KakaoPlacesClient kakaoClient;
 
-    // 학교 중심 좌표
-    private static final double SCHOOL_LAT = 37.550638892935346;
-    private static final double SCHOOL_LNG = 127.0742595815513;
-
     public MapLinksResponse buildUrl(MapLinksRequest request) {
 
         String kakaoUrl = "https://map.kakao.com/link/map/" + request.kakaoId();
