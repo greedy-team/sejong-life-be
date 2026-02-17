@@ -15,7 +15,9 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
+import org.example.sejonglifebe.place.dto.PlacePageResponse;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,9 +39,10 @@ public class PlaceController implements PlaceControllerSwagger {
     private final FavoritePlaceService favoritePlaceService;
 
     @GetMapping
-    public ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
-            @Valid @ModelAttribute PlaceSearchConditions conditions) {
-        List<PlaceResponse> response = placeService.getPlaceByConditions(conditions);
+    public ResponseEntity<CommonResponse<PlacePageResponse>> getPlaces(
+            @Valid @ModelAttribute PlaceSearchConditions conditions,
+            Pageable pageable) {
+        PlacePageResponse response = PlacePageResponse.of(placeService.getPlaceByConditions(conditions, pageable));
         return CommonResponse.of(HttpStatus.OK, "장소 목록 조회 성공", response);
     }
 
