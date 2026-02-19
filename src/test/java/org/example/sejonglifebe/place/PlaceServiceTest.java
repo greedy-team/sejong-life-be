@@ -6,6 +6,7 @@ import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.place.dto.PlaceQueryResult;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
@@ -22,6 +23,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -65,12 +70,13 @@ class PlaceServiceTest {
         void getPlaces_tagNotFound() {
             // given
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("존재X"), "전체", null);
+            Pageable pageable = PageRequest.of(0, 10);
 
             given(tagRepository.findByNameIn(anyList()))
                     .willReturn(List.of());
 
             // when/then
-            assertThatThrownBy(() -> placeService.getPlaceByConditions(conditions))
+            assertThatThrownBy(() -> placeService.getPlaceByConditions(conditions, pageable))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.TAG_NOT_FOUND.getErrorMessage());
 
@@ -82,20 +88,25 @@ class PlaceServiceTest {
         void getPlaces_allCategory_noTags() {
             // given
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", null);
+            Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("장소1").build();
             Place place2 = Place.builder().name("장소2").build();
+            Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(
+                    new PlaceQueryResult(place1, 0L),
+                    new PlaceQueryResult(place2, 0L)
+            ));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
-            given(placeRepository.getPlacesByConditions(null, List.of(), null))
-                    .willReturn(List.of(place1, place2));
+            given(placeRepository.getPlacesByConditions(null, List.of(), null, pageable))
+                    .willReturn(pageResult);
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            Page<PlaceResponse> result = placeService.getPlaceByConditions(conditions, pageable);
 
             // then
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).placeName()).isEqualTo("장소1");
-            assertThat(result.get(1).placeName()).isEqualTo("장소2");
+            assertThat(result.getContent()).hasSize(2);
+            assertThat(result.getContent().get(0).placeName()).isEqualTo("장소1");
+            assertThat(result.getContent().get(1).placeName()).isEqualTo("장소2");
         }
 
         @Test
@@ -104,18 +115,20 @@ class PlaceServiceTest {
             // given
             Tag tag = new Tag("가성비");
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", null);
+            Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 장소").build();
+            Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
-            given(placeRepository.getPlacesByConditions(null, List.of(tag), null))
-                    .willReturn(List.of(place1));
+            given(placeRepository.getPlacesByConditions(null, List.of(tag), null, pageable))
+                    .willReturn(pageResult);
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            Page<PlaceResponse> result = placeService.getPlaceByConditions(conditions, pageable);
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).placeName()).isEqualTo("가성비 장소");
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).placeName()).isEqualTo("가성비 장소");
         }
 
         @Test
@@ -123,12 +136,13 @@ class PlaceServiceTest {
         void getPlaces_categoryNotFound() {
             // given
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null);
+            Pageable pageable = PageRequest.of(0, 10);
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.empty());
 
             // then
-            assertThatThrownBy(() -> placeService.getPlaceByConditions(conditions))
+            assertThatThrownBy(() -> placeService.getPlaceByConditions(conditions, pageable))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.CATEGORY_NOT_FOUND.getErrorMessage());
         }
@@ -139,21 +153,26 @@ class PlaceServiceTest {
             // given
             Category category = new Category("맛집");
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null);
+            Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("맛집1").build();
             Place place2 = Place.builder().name("맛집2").build();
+            Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(
+                    new PlaceQueryResult(place1, 0L),
+                    new PlaceQueryResult(place2, 0L)
+            ));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(), null))
-                    .willReturn(List.of(place1, place2));
+            given(placeRepository.getPlacesByConditions(category, List.of(), null, pageable))
+                    .willReturn(pageResult);
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            Page<PlaceResponse> result = placeService.getPlaceByConditions(conditions, pageable);
 
             // then
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).placeName()).isEqualTo("맛집1");
-            assertThat(result.get(1).placeName()).isEqualTo("맛집2");
+            assertThat(result.getContent()).hasSize(2);
+            assertThat(result.getContent().get(0).placeName()).isEqualTo("맛집1");
+            assertThat(result.getContent().get(1).placeName()).isEqualTo("맛집2");
         }
 
         @Test
@@ -163,19 +182,21 @@ class PlaceServiceTest {
             Category category = new Category("맛집");
             Tag tag = new Tag("가성비");
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", null);
+            Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 맛집").build();
+            Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(tag), null))
-                    .willReturn(List.of(place1));
+            given(placeRepository.getPlacesByConditions(category, List.of(tag), null, pageable))
+                    .willReturn(pageResult);
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            Page<PlaceResponse> result = placeService.getPlaceByConditions(conditions, pageable);
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).placeName()).isEqualTo("가성비 맛집");
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).placeName()).isEqualTo("가성비 맛집");
         }
 
         @Test
@@ -183,20 +204,25 @@ class PlaceServiceTest {
         void getPlaces_withKeywordOnly() {
             // given
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", "카페");
+            Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("스타벅스 카페").build();
             Place place2 = Place.builder().name("투썸 카페").build();
+            Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(
+                    new PlaceQueryResult(place1, 0L),
+                    new PlaceQueryResult(place2, 0L)
+            ));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
-            given(placeRepository.getPlacesByConditions(null, List.of(), "카페"))
-                    .willReturn(List.of(place1, place2));
+            given(placeRepository.getPlacesByConditions(null, List.of(), "카페", pageable))
+                    .willReturn(pageResult);
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            Page<PlaceResponse> result = placeService.getPlaceByConditions(conditions, pageable);
 
             // then
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).placeName()).contains("카페");
-            assertThat(result.get(1).placeName()).contains("카페");
+            assertThat(result.getContent()).hasSize(2);
+            assertThat(result.getContent().get(0).placeName()).contains("카페");
+            assertThat(result.getContent().get(1).placeName()).contains("카페");
         }
 
         @Test
@@ -205,19 +231,21 @@ class PlaceServiceTest {
             // given
             Category category = new Category("맛집");
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", "치킨");
+            Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("BHC 치킨").build();
+            Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(), "치킨"))
-                    .willReturn(List.of(place1));
+            given(placeRepository.getPlacesByConditions(category, List.of(), "치킨", pageable))
+                    .willReturn(pageResult);
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            Page<PlaceResponse> result = placeService.getPlaceByConditions(conditions, pageable);
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).placeName()).isEqualTo("BHC 치킨");
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).placeName()).isEqualTo("BHC 치킨");
         }
 
         @Test
@@ -226,18 +254,20 @@ class PlaceServiceTest {
             // given
             Tag tag = new Tag("가성비");
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", "피자");
+            Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 피자").build();
+            Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
-            given(placeRepository.getPlacesByConditions(null, List.of(tag), "피자"))
-                    .willReturn(List.of(place1));
+            given(placeRepository.getPlacesByConditions(null, List.of(tag), "피자", pageable))
+                    .willReturn(pageResult);
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            Page<PlaceResponse> result = placeService.getPlaceByConditions(conditions, pageable);
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).placeName()).contains("피자");
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).placeName()).contains("피자");
         }
 
         @Test
@@ -247,19 +277,21 @@ class PlaceServiceTest {
             Category category = new Category("맛집");
             Tag tag = new Tag("가성비");
             PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", "치킨");
+            Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 치킨집").build();
+            Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(tag), "치킨"))
-                    .willReturn(List.of(place1));
+            given(placeRepository.getPlacesByConditions(category, List.of(tag), "치킨", pageable))
+                    .willReturn(pageResult);
 
             // when
-            List<PlaceResponse> result = placeService.getPlaceByConditions(conditions);
+            Page<PlaceResponse> result = placeService.getPlaceByConditions(conditions, pageable);
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).placeName()).isEqualTo("가성비 치킨집");
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).placeName()).isEqualTo("가성비 치킨집");
         }
     }
 
