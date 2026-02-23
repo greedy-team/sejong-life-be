@@ -76,15 +76,14 @@ jobs:
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-          with:
-            host: ${{ secrets.EC2_HOST }}
-            username: ${{ secrets.EC2_USERNAME }}
-            key: ${{ secrets.EC2_PRIVATE_KEY }}
-            script: |
-              sudo -E env \
-                NAVER_CLIENT_ID="$NAVER_CLIENT_ID" \
-                NAVER_CLIENT_SECRET="$NAVER_CLIENT_SECRET" \
-                KAKAO_REST_API_KEY="$KAKAO_REST_API_KEY" \
-                GOOGLE_MAPS_API_KEY="$GOOGLE_MAPS_API_KEY" \
-                bash /home/ubuntu/sejong-life-prod/deploy.sh
-            
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            sudo -E env \
+              NAVER_CLIENT_ID="$NAVER_CLIENT_ID" \
+              NAVER_CLIENT_SECRET="$NAVER_CLIENT_SECRET" \
+              KAKAO_REST_API_KEY="$KAKAO_REST_API_KEY" \
+              GOOGLE_MAPS_API_KEY="$GOOGLE_MAPS_API_KEY" \
+              bash /home/ubuntu/sejong-life-prod/deploy.sh
