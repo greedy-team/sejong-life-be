@@ -66,7 +66,13 @@ class ReviewServiceConcurrencyTest {
         tagRepository.deleteAll();
 
         testPlace = placeRepository.save(
-                Place.createPlace("테스트 맛집", "서울시 테스트구", null, false, null)
+                Place.createPlace("테스트 맛집",
+                        "서울시 테스트구",
+                        null,
+                        null,
+                        null,
+                        false,
+                        "")
         );
 
         testTag = tagRepository.save(new Tag("가성비"));
