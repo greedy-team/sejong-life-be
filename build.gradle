@@ -62,6 +62,7 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.11.0'
     implementation 'com.squareup.okhttp3:okhttp-urlconnection:4.9.3'
     implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // ======== Monitoring & Logging ========
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

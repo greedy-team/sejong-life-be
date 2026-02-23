@@ -39,6 +39,12 @@ public class Place {
     @Column(nullable = false)
     private String address;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @Convert(converter = MapLinkConverter.class)
     @Column(columnDefinition = "text")
     private MapLinks mapLinks;
@@ -84,6 +90,8 @@ public class Place {
     public static Place createPlace(
             String name,
             String address,
+            Double latitude,
+            Double longitude,
             MapLinks mapLinks,
             boolean isPartnership,
             String partnershipContent
@@ -95,6 +103,8 @@ public class Place {
                 .mainImageUrl(null)
                 .build();
 
+        place.latitude = latitude;
+        place.longitude = longitude;
         place.isPartnership = isPartnership;
         place.partnershipContent = partnershipContent;
         place.viewCount = 0L;
