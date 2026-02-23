@@ -43,4 +43,23 @@ public record PlaceResponse(
                 place.getPartnershipContent()
         );
     }
+
+    public static PlaceResponse from(PlaceQueryResult result) {
+        Place place = result.place();
+        return new PlaceResponse(
+                place.getId(),
+                place.getName(),
+                place.getThumbnailImage(),
+                place.getViewCount(),
+                result.reviewCount(),
+                place.getPlaceCategories().stream()
+                        .map(pc -> new CategoryInfo(pc.getCategory().getId(), pc.getCategory().getName()))
+                        .toList(),
+                place.getPlaceTags().stream()
+                        .map(pt -> new TagInfo(pt.getTag().getId(), pt.getTag().getName()))
+                        .toList(),
+                place.isPartnership(),
+                place.getPartnershipContent()
+        );
+    }
 }

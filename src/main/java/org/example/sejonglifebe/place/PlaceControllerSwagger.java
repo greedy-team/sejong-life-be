@@ -13,6 +13,8 @@ import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.dto.PlacePageResponse;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,8 +29,9 @@ import org.springframework.web.multipart.MultipartFile;
 public interface PlaceControllerSwagger {
 
     @Operation(summary = "장소 목록 조회")
-    ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
-            @Valid @ModelAttribute PlaceSearchConditions conditions);
+    ResponseEntity<CommonResponse<PlacePageResponse>> getPlaces(
+            @Valid @ModelAttribute PlaceSearchConditions conditions,
+            Pageable pageable);
 
     @Operation(summary = "주간 핫플레이스 조회")
     ResponseEntity<CommonResponse<List<PlaceResponse>>> getHotPlaces();

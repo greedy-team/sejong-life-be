@@ -151,9 +151,9 @@ public class PlaceControllerTest {
                         .param("category", "전체")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(6))
-                .andExpect(jsonPath("$.data[0].viewCount").value(0))
-                .andExpect(jsonPath("$.data[0].reviewCount").value(0))
+                .andExpect(jsonPath("$.data.places.length()").value(6))
+                .andExpect(jsonPath("$.data.places[0].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[0].reviewCount").value(0))
                 .andDo(print());
     }
 
@@ -167,12 +167,12 @@ public class PlaceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data.places.length()").value(1))
 
                 // 정렬 순서 검증
-                .andExpect(jsonPath("$.data[0].placeName").value("식당3")) // 두 번째 결과는 '식당1'
-                .andExpect(jsonPath("$.data[0].viewCount").value(0))
-                .andExpect(jsonPath("$.data[0].reviewCount").value(0));
+                .andExpect(jsonPath("$.data.places[0].placeName").value("식당3"))
+                .andExpect(jsonPath("$.data.places[0].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[0].reviewCount").value(0));
     }
 
     @Test
@@ -183,16 +183,16 @@ public class PlaceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(3))
-                .andExpect(jsonPath("$.data[0].placeName").value("식당1"))
-                .andExpect(jsonPath("$.data[0].viewCount").value(0))
-                .andExpect(jsonPath("$.data[0].reviewCount").value(0))
-                .andExpect(jsonPath("$.data[1].placeName").value("식당2"))
-                .andExpect(jsonPath("$.data[1].viewCount").value(0))
-                .andExpect(jsonPath("$.data[1].reviewCount").value(0))
-                .andExpect(jsonPath("$.data[2].placeName").value("식당3"))
-                .andExpect(jsonPath("$.data[2].viewCount").value(0))
-                .andExpect(jsonPath("$.data[2].reviewCount").value(0));
+                .andExpect(jsonPath("$.data.places.length()").value(3))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("식당1"))
+                .andExpect(jsonPath("$.data.places[0].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[0].reviewCount").value(0))
+                .andExpect(jsonPath("$.data.places[1].placeName").value("식당2"))
+                .andExpect(jsonPath("$.data.places[1].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[1].reviewCount").value(0))
+                .andExpect(jsonPath("$.data.places[2].placeName").value("식당3"))
+                .andExpect(jsonPath("$.data.places[2].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[2].reviewCount").value(0));
     }
 
     @Test
@@ -204,13 +204,13 @@ public class PlaceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].placeName").value("카페1"))
-                .andExpect(jsonPath("$.data[0].viewCount").value(0))
-                .andExpect(jsonPath("$.data[0].reviewCount").value(0))
-                .andExpect(jsonPath("$.data[1].placeName").value("카페3"))
-                .andExpect(jsonPath("$.data[1].viewCount").value(0))
-                .andExpect(jsonPath("$.data[1].reviewCount").value(0));
+                .andExpect(jsonPath("$.data.places.length()").value(2))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("카페1"))
+                .andExpect(jsonPath("$.data.places[0].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[0].reviewCount").value(0))
+                .andExpect(jsonPath("$.data.places[1].placeName").value("카페3"))
+                .andExpect(jsonPath("$.data.places[1].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[1].reviewCount").value(0));
     }
 
     @Test
@@ -248,10 +248,10 @@ public class PlaceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(3))
-                .andExpect(jsonPath("$.data[0].placeName").value("식당1"))
-                .andExpect(jsonPath("$.data[1].placeName").value("식당2"))
-                .andExpect(jsonPath("$.data[2].placeName").value("식당3"))
+                .andExpect(jsonPath("$.data.places.length()").value(3))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("식당1"))
+                .andExpect(jsonPath("$.data.places[1].placeName").value("식당2"))
+                .andExpect(jsonPath("$.data.places[2].placeName").value("식당3"))
                 .andDo(print());
     }
 
@@ -264,8 +264,8 @@ public class PlaceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].placeName").value("카페1"))
+                .andExpect(jsonPath("$.data.places.length()").value(1))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("카페1"))
                 .andDo(print());
     }
 
@@ -279,8 +279,8 @@ public class PlaceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].placeName").value("식당1"))
+                .andExpect(jsonPath("$.data.places.length()").value(1))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("식당1"))
                 .andDo(print());
     }
 
@@ -294,8 +294,8 @@ public class PlaceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].placeName").value("카페3"))
+                .andExpect(jsonPath("$.data.places.length()").value(1))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("카페3"))
                 .andDo(print());
     }
 
@@ -308,7 +308,7 @@ public class PlaceControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(0))
+                .andExpect(jsonPath("$.data.places.length()").value(0))
                 .andDo(print());
     }
 

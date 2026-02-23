@@ -1,12 +1,16 @@
 package org.example.sejonglifebe.place;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.category.Category;
-import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.place.dto.PlaceQueryResult;
 import org.example.sejonglifebe.tag.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -22,8 +26,13 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Place> getPlacesByConditions(Category category, List<Tag> tags, String keyword) {
-        JPAQuery<Place> query = queryFactory.selectFrom(place);
+    public Page<PlaceQueryResult> getPlacesByConditions(Category category, List<Tag> tags, String keyword, Pageable pageable) {
+        JPAQuery<PlaceQueryResult> query = queryFactory
+                .select(Projections.constructor(PlaceQueryResult.class,
+                        place,
+                        review.countDistinct()
+                ))
+                .from(place);
 
         if (category != null) {
             query = query.leftJoin(place.placeCategories, placeCategory);
@@ -33,7 +42,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
             query = query.leftJoin(place.placeTags, placeTag);
         }
 
-        return query
+        List<PlaceQueryResult> content = query
                 .leftJoin(place.reviews, review)
                 .where(likePlaceName(keyword),
                         placeCategoryEq(category),
@@ -42,8 +51,22 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 .groupBy(place.id)
                 .having(placeTagCountEq(tags))
                 .orderBy(review.countDistinct().desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
 
+        Long total = queryFactory
+                .select(place.id.countDistinct())
+                .from(place)
+                .leftJoin(place.placeCategories, placeCategory)
+                .leftJoin(place.placeTags, placeTag)
+                .where(likePlaceName(keyword),
+                        placeCategoryEq(category),
+                        placeTagIn(tags)
+                )
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total == null ? 0L : total);
     }
 
     private BooleanExpression likePlaceName(String keyword) {
