@@ -49,7 +49,11 @@ public record PlaceResponse(
         return new PlaceResponse(
                 place.getId(),
                 place.getName(),
+                place.getAddress(),
+                place.getLatitude(),
+                place.getLongitude(),
                 place.getThumbnailImage(),
+
                 place.getViewCount(),
                 result.reviewCount(),
                 place.getPlaceCategories().stream()
