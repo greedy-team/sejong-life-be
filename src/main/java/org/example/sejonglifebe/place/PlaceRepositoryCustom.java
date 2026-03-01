@@ -14,6 +14,7 @@ public interface PlaceRepositoryCustom {
             Category category,
             List<Tag> tags,
             String keyword,
+            boolean partnershipOnly,
             Pageable pageable
     );
 }

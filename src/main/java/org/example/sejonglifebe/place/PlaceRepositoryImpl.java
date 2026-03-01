@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.place;
 
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -26,7 +27,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<PlaceQueryResult> getPlacesByConditions(Category category, List<Tag> tags, String keyword, Pageable pageable) {
+    public Page<PlaceQueryResult> getPlacesByConditions(Category category, List<Tag> tags, String keyword, boolean partnershipOnly, Pageable pageable) {
         JPAQuery<PlaceQueryResult> query = queryFactory
                 .select(Projections.constructor(PlaceQueryResult.class,
                         place,
@@ -46,7 +47,8 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 .leftJoin(place.reviews, review)
                 .where(likePlaceName(keyword),
                         placeCategoryEq(category),
-                        placeTagIn(tags)
+                        placeTagIn(tags),
+                        filterByPartnership(partnershipOnly)
                 )
                 .groupBy(place.id)
                 .having(placeTagCountEq(tags))
@@ -62,7 +64,8 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 .leftJoin(place.placeTags, placeTag)
                 .where(likePlaceName(keyword),
                         placeCategoryEq(category),
-                        placeTagIn(tags)
+                        placeTagIn(tags),
+                        filterByPartnership(partnershipOnly)
                 )
                 .fetchOne();
 
@@ -88,6 +91,13 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
             return null;
         }
         return placeTag.tag.in(tags);
+    }
+
+    private Predicate filterByPartnership(boolean partnershipOnly) {
+        if(!partnershipOnly){
+            return null;
+        }
+        return place.isPartnership.isTrue();
     }
 
     private BooleanExpression placeTagCountEq(List<Tag> tags) {
