@@ -2,7 +2,6 @@ package org.example.sejonglifebe.place;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
-import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,15 +19,13 @@ import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.entity.PlaceImage;
-import org.example.sejonglifebe.place.view.PlaceViewLog;
-import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
+import org.example.sejonglifebe.place.view.PlaceViewService;
 import org.example.sejonglifebe.place.view.Viewer;
 import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -47,8 +44,7 @@ public class PlaceService {
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
     private final S3Service s3Service;
-    private final PlaceViewLogRepository placeViewLogRepository;
-    private static final Duration VIEW_TIME_TO_LIVE = Duration.ofHours(6);
+    private final PlaceViewService placeViewService;
 
     @Transactional(readOnly = true)
     public Page<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions, Pageable pageable) {
@@ -133,8 +129,11 @@ public class PlaceService {
 
     @Transactional
     public PlaceDetailResponse getPlaceDetail(Long placeId, AuthUser authUser, HttpServletRequest request) {
-        increaseViewCount(placeId, authUser, request);
+        if (!placeRepository.existsById(placeId)) {
+            throw new SejongLifeException(ErrorCode.PLACE_NOT_FOUND);
+        }
 
+        increaseViewCount(placeId, authUser, request);
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
@@ -144,25 +143,18 @@ public class PlaceService {
     private void increaseViewCount(Long placeId, AuthUser authUser, HttpServletRequest request) {
         Viewer viewer = identifyViewer(authUser, request);
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expireBefore = now.minus(VIEW_TIME_TO_LIVE);
-
-        if (placeViewLogRepository.updateIfExpired(
-                placeId, viewer.type(), viewer.key(), now, expireBefore) == 1) {
-            placeRepository.increaseViewCount(placeId);
+        boolean first = placeViewService.recordFirstView(placeId, viewer);
+        if (!first) {
             return;
         }
+        placeRepository.increaseViewCount(placeId);
+    }
 
-        if (placeViewLogRepository.existsByPlaceIdAndViewerTypeAndViewerKey(placeId, viewer.type(), viewer.key())) {
-            return;
+    private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
+        if (authUser != null && StringUtils.hasText(authUser.studentId())) {
+            return Viewer.user(authUser.studentId());
         }
-
-        try {
-            placeViewLogRepository.save(new PlaceViewLog(placeId, viewer.type(), viewer.key(), now));
-            placeRepository.increaseViewCount(placeId);
-        } catch (DataIntegrityViolationException e) {
-            // 동시에 다른 요청이 먼저 INSERT 에 성공하였으므로 아무 것도 하지 않는다.
-        }
+        return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
     }
 
     private void attachCategoriesToPlace(Place place, PlaceRequest request) {
@@ -183,13 +175,6 @@ public class PlaceService {
         }
 
         tags.forEach(place::addTag);
-    }
-
-    private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
-        if (authUser != null && StringUtils.hasText(authUser.studentId())) {
-            return Viewer.user(authUser.studentId());
-        }
-        return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
     }
 
 }
