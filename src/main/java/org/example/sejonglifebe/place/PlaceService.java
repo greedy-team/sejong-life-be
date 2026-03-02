@@ -1,7 +1,6 @@
 package org.example.sejonglifebe.place;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.Duration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -115,11 +114,6 @@ public class PlaceService {
         placeRepository.delete(place);
     }
 
-    @Retryable(
-            retryFor = ObjectOptimisticLockingFailureException.class,
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 100)
-    )
     @Transactional(readOnly = true)
     public List<PlaceResponse> getWeeklyHotPlaces() {
         List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
