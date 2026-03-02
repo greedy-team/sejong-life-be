@@ -17,6 +17,9 @@ public record PlaceSearchConditions(
         String category,
 
         @Schema(description = "검색어", example = "깍뚝")
-        String keyword
+        String keyword,
+
+        @Schema(description = "제휴 장소 필터링 여부" , example = "false")
+        boolean partnershipOnly
 ) {
 }

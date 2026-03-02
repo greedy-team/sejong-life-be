@@ -1,13 +1,6 @@
 package org.example.sejonglifebe.place;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.Duration;
-import java.time.LocalDateTime;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
@@ -39,6 +32,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class PlaceService {
@@ -54,6 +53,7 @@ public class PlaceService {
     public Page<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions, Pageable pageable) {
         List<String> tagNames = conditions.tags();
         String categoryName = conditions.category();
+        boolean PartnershipOnly = conditions.partnershipOnly();
 
         Category category = null;
 
@@ -72,7 +72,7 @@ public class PlaceService {
                     .orElseThrow(() -> new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND));
         }
 
-        return placeRepository.getPlacesByConditions(category, tags, conditions.keyword(), pageable)
+        return placeRepository.getPlacesByConditions(category, tags, conditions.keyword(), PartnershipOnly, pageable)
                 .map(PlaceResponse::from);
     }
 
