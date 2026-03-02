@@ -11,5 +11,14 @@ services:
       TZ: "Asia/Seoul"
     volumes:
       - db-data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: sejong-life-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped
+
 volumes:
   db-data:
