@@ -22,7 +22,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Start MySQL container
+      - name: Start MySQL & Redis containers
         run: docker compose up -d --wait
         env:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -38,6 +38,9 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3308/sejong_life_db?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
 
           SPRING_JPA_HIBERNATE_DDL_AUTO: create
           SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
@@ -81,4 +84,6 @@ jobs:
               NAVER_CLIENT_SECRET='${{ secrets.NAVER_CLIENT_SECRET }}' \
               KAKAO_REST_API_KEY='${{ secrets.KAKAO_REST_API_KEY }}' \
               GOOGLE_MAPS_API_KEY='${{ secrets.GOOGLE_MAPS_API_KEY }}' \
+              REDIS_HOST='${{ secrets.REDIS_HOST }}' \
+              REDIS_PORT='6379' \
               bash /home/ubuntu/sejong-life-prod/deploy.sh
