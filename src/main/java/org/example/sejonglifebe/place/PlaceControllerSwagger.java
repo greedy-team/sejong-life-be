@@ -14,7 +14,9 @@ import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.dto.PlacePageResponse;
+import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,6 +48,13 @@ public interface PlaceControllerSwagger {
     ResponseEntity<CommonResponse<Void>> createPlace(
             @Valid @RequestPart("place") PlaceRequest placeRequest,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+            AuthUser authUser
+    );
+
+    @Operation(summary = "장소 수정")
+    public ResponseEntity<CommonResponse<Void>> updatePlace(
+            @PathVariable("placeId") Long placeId,
+            @Valid @RequestBody PlaceUpdateRequest placeRequest,
             AuthUser authUser
     );
 

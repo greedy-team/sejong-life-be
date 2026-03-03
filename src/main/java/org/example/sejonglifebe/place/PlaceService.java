@@ -1,12 +1,17 @@
 package org.example.sejonglifebe.place;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
@@ -16,15 +21,22 @@ import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.place.entity.Place;
+import org.example.sejonglifebe.place.entity.PlaceCategory;
 import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.example.sejonglifebe.place.view.PlaceViewService;
+import org.example.sejonglifebe.place.entity.PlaceTag;
+import org.example.sejonglifebe.place.view.PlaceViewLog;
+import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
 import org.example.sejonglifebe.place.view.Viewer;
 import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -34,6 +46,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +67,7 @@ public class PlaceService {
     public Page<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions, Pageable pageable) {
         List<String> tagNames = conditions.tags();
         String categoryName = conditions.category();
+        boolean PartnershipOnly = conditions.partnershipOnly();
 
         Category category = null;
 
@@ -67,7 +86,7 @@ public class PlaceService {
                     .orElseThrow(() -> new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND));
         }
 
-        return placeRepository.getPlacesByConditions(category, tags, conditions.keyword(), pageable)
+        return placeRepository.getPlacesByConditions(category, tags, conditions.keyword(), PartnershipOnly, pageable)
                 .map(PlaceResponse::from);
     }
 
@@ -93,6 +112,21 @@ public class PlaceService {
 
         attachCategoriesToPlace(place, request);
         attachTagsToPlace(place, request);
+    }
+
+    @Transactional
+    public void updatePlace(Long placeId, PlaceUpdateRequest request, AuthUser authUser) {
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
+
+        place.updateMapLinks(request.mapLinks());
+        place.updatePartnership(request.isPartnership(), request.partnershipContent());
+
+        List<Category> categories = categoryRepository.findAllById(request.categoryIds());
+        List<Tag> tags = tagRepository.findAllById(request.tagIds());
+
+        place.replaceCategories(categories);
+        place.replaceTags(tags);
     }
 
     @Transactional
@@ -147,6 +181,16 @@ public class PlaceService {
     private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
         if (authUser != null && StringUtils.hasText(authUser.studentId())) {
             return Viewer.user(authUser.studentId());
+
+        if (placeViewLogRepository.existsByPlaceIdAndViewerTypeAndViewerKey(placeId, viewer.type(), viewer.key())) {
+            return;
+        }
+
+        try {
+            placeViewLogRepository.save(new PlaceViewLog(placeId, viewer.type(), viewer.key(), now));
+            placeRepository.increaseViewCount(placeId);
+        } catch (DataIntegrityViolationException e) {
+
         }
         return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
     }
@@ -170,5 +214,13 @@ public class PlaceService {
 
         tags.forEach(place::addTag);
     }
+
+    private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
+        if (authUser != null && StringUtils.hasText(authUser.studentId())) {
+            return Viewer.user(authUser.studentId());
+        }
+        return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
+    }
+
 
 }
