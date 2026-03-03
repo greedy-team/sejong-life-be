@@ -287,6 +287,7 @@ public class PlaceControllerTest {
                         .param("category", "전체")
                         .param("tags", "맛집")
                         .param("keyword", "식당1")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
