@@ -1,17 +1,12 @@
 package org.example.sejonglifebe.place;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import java.time.Duration;
-import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
@@ -23,35 +18,20 @@ import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.place.entity.Place;
-import org.example.sejonglifebe.place.entity.PlaceCategory;
 import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.example.sejonglifebe.place.view.PlaceViewService;
-import org.example.sejonglifebe.place.entity.PlaceTag;
-import org.example.sejonglifebe.place.view.PlaceViewLog;
-import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
 import org.example.sejonglifebe.place.view.Viewer;
 import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -176,23 +156,6 @@ public class PlaceService {
             return;
         }
         placeRepository.increaseViewCount(placeId);
-    }
-
-    private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
-        if (authUser != null && StringUtils.hasText(authUser.studentId())) {
-            return Viewer.user(authUser.studentId());
-
-        if (placeViewLogRepository.existsByPlaceIdAndViewerTypeAndViewerKey(placeId, viewer.type(), viewer.key())) {
-            return;
-        }
-
-        try {
-            placeViewLogRepository.save(new PlaceViewLog(placeId, viewer.type(), viewer.key(), now));
-            placeRepository.increaseViewCount(placeId);
-        } catch (DataIntegrityViolationException e) {
-
-        }
-        return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
     }
 
     private void attachCategoriesToPlace(Place place, PlaceRequest request) {

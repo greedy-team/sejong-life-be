@@ -823,16 +823,6 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"));
     }
 
-    private static String sha256Hex(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(digest.length * 2);
-            for (byte b : digest) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     private String redisPvKey(Long placeId) {
         String viewerKey = ipUaHash(TEST_IP, TEST_UA);
         return "pv:" + placeId + ":" + VIEWER_TYPE_IPUA + ":" + viewerKey;
