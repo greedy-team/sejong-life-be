@@ -92,6 +92,7 @@ public class PlaceControllerTest {
 
     private Place detailPlace;
     private Place place1, place2, place3, place4, place5, place6; // 테스트에서 사용하기 위해 필드로 선언
+    private Place partnerPlace1, partnerPlace2; // 제휴 장소
 
     @BeforeEach
     void setUp() {
@@ -151,6 +152,7 @@ public class PlaceControllerTest {
     public void search_noCategory_noTags() throws Exception {
         mockMvc.perform(get("/api/places")
                         .param("category", "전체")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.places.length()").value(6))
@@ -166,6 +168,7 @@ public class PlaceControllerTest {
                         .param("category", "전체")
                         .param("tags", "맛집")
                         .param("tags", "가성비")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
@@ -182,6 +185,7 @@ public class PlaceControllerTest {
     public void search_categoryRestaurant_noTags() throws Exception {
         mockMvc.perform(get("/api/places")
                         .param("category", "식당")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
@@ -203,6 +207,7 @@ public class PlaceControllerTest {
         mockMvc.perform(get("/api/places")
                         .param("category", "카페")
                         .param("tags", "분위기 좋은")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
@@ -220,6 +225,7 @@ public class PlaceControllerTest {
     void search_wrongCategory_fail() throws Exception {
         mockMvc.perform(get("/api/places")
                         .param("category", "병원")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isNotFound())
@@ -234,6 +240,7 @@ public class PlaceControllerTest {
                         .param("category", "전체")
                         .param("tags", "맛집")
                         .param("tags", "진상부리기 좋은")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isNotFound())
@@ -247,6 +254,7 @@ public class PlaceControllerTest {
         mockMvc.perform(get("/api/places")
                         .param("category", "전체")
                         .param("keyword", "식당")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
@@ -263,6 +271,7 @@ public class PlaceControllerTest {
         mockMvc.perform(get("/api/places")
                         .param("category", "카페")
                         .param("keyword", "카페1")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
@@ -293,6 +302,7 @@ public class PlaceControllerTest {
                         .param("category", "카페")
                         .param("tags", "분위기 좋은")
                         .param("keyword", "카페3")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
@@ -307,6 +317,7 @@ public class PlaceControllerTest {
         mockMvc.perform(get("/api/places")
                         .param("category", "전체")
                         .param("keyword", "존재하지않는장소")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
@@ -638,6 +649,54 @@ public class PlaceControllerTest {
         // then: DB 삭제 안 됨
         assertThat(placeRepository.count()).isEqualTo(beforeCount);
         assertThat(placeRepository.findById(placeId)).isPresent();
+    }
+
+    @Test
+    @DisplayName("partnershipOnly=true 이면 제휴 장소만 조회된다")
+    void search_partnershipOnly_true() throws Exception {
+        // given
+        Category category = categoryRepository.findByName("식당")
+                .orElseThrow(() -> new IllegalStateException("식당 카테고리가 없습니다."));
+        Tag tag = tagRepository.findByName("맛집")
+                .orElseThrow(() -> new IllegalStateException("맛집 태그가 없습니다."));
+
+        Place partnerPlace = Place.createPlace("제휴식당", "제휴주소", 127.0, 37.0, null, true, "10% 할인");
+        partnerPlace.addCategory(category);
+        partnerPlace.addTag(tag);
+        placeRepository.save(partnerPlace);
+
+        // when & then
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("partnershipOnly", "true")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.places.length()").value(1))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("partnershipOnly=false 이면 제휴 여부 관계없이 모든 장소가 조회된다")
+    void search_partnershipOnly_false_withPartnerPlace() throws Exception {
+        // given
+        Category category = categoryRepository.findByName("식당")
+                .orElseThrow(() -> new IllegalStateException("식당 카테고리가 없습니다."));
+        Tag tag = tagRepository.findByName("맛집")
+                .orElseThrow(() -> new IllegalStateException("맛집 태그가 없습니다."));
+
+        Place partnerPlace = Place.createPlace("제휴식당", "제휴주소", 127.0, 37.0, null, true, "10% 할인");
+        partnerPlace.addCategory(category);
+        partnerPlace.addTag(tag);
+        placeRepository.save(partnerPlace);
+
+        // when & then
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("partnershipOnly", "false")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.places.length()").value(7)) // 기존 6개 + 제휴 1개
+                .andDo(print());
     }
 
     @Test
