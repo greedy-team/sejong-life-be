@@ -13,6 +13,7 @@ import org.example.sejonglifebe.external.dto.PlaceSearchResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.place.favorite.FavoritePlaceService;
 import org.example.sejonglifebe.user.Role;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -78,6 +80,34 @@ public class PlaceController implements PlaceControllerSwagger {
         placeService.createPlace(placeRequest, thumbnail, authUser);
         return CommonResponse.of(HttpStatus.CREATED, "장소 추가 성공", null);
     }
+
+    @LoginRequired(role = Role.ADMIN)
+    @PutMapping("/{placeId}")
+    public ResponseEntity<CommonResponse<Void>> updatePlace(
+            @PathVariable("placeId") Long placeId,
+            @Valid @RequestBody PlaceUpdateRequest placeRequest,
+            AuthUser authUser
+    ) {
+        placeService.updatePlace(placeId, placeRequest, authUser);
+        return CommonResponse.of(HttpStatus.OK, "장소 수정 성공", null);
+    }
+
+    /*
+    *
+    * @LoginRequired
+    @PutMapping("/{reviewId}")
+    public ResponseEntity<CommonResponse<Void>> updateReview(
+            @PathVariable Long placeId,
+            @PathVariable Long reviewId,
+            @Valid @RequestBody ReviewRequest reviewRequest,
+            AuthUser authUser) {
+
+        reviewService.updateReview(placeId, reviewId, reviewRequest, authUser);
+
+        return CommonResponse.of(HttpStatus.OK, "리뷰 수정 성공", null);
+    }
+    *
+    * */
 
     @LoginRequired(role = Role.ADMIN)
     @DeleteMapping("/{placeId}")
