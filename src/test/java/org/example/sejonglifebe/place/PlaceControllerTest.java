@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -21,6 +22,7 @@ import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
@@ -285,7 +287,6 @@ public class PlaceControllerTest {
                         .param("category", "전체")
                         .param("tags", "맛집")
                         .param("keyword", "식당1")
-                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
@@ -696,6 +697,133 @@ public class PlaceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.places.length()").value(7)) // 기존 6개 + 제휴 1개
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("장소 수정 성공 - JSON 요청으로 DTO 필드가 반영된다")
+    void updatePlace_success_json() throws Exception {
+        // given
+        Long placeId = detailPlace.getId();
+
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.ADMIN));
+
+        Category cafe = categoryRepository.findByName("카페")
+                .orElseThrow(() -> new IllegalStateException("카페 카테고리가 없습니다."));
+        Tag tag3 = tagRepository.findByName("분위기 좋은")
+                .orElseThrow(() -> new IllegalStateException("분위기 좋은 태그가 없습니다."));
+        Tag tag4 = tagRepository.findByName("콘센트 있는")
+                .orElseThrow(() -> new IllegalStateException("콘센트 있는 태그가 없습니다."));
+
+        PlaceUpdateRequest request = new PlaceUpdateRequest(
+                List.of(cafe.getId()),
+                List.of(tag3.getId(), tag4.getId()),
+                new MapLinks(
+                        "https://n-updated.com",
+                        "https://k-updated.com",
+                        "https://g-updated.com"
+                ),
+                true,
+                "재학생 10% 할인"
+        );
+
+        // when & then
+        mockMvc.perform(put("/api/places/{placeId}", placeId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer test-token")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("장소 수정 성공"));
+
+        // then: DB 반영 확인
+        Place updated = placeRepository.findById(placeId).orElseThrow();
+
+        assertThat(updated.getMapLinks().getNaverMap()).isEqualTo("https://n-updated.com");
+        assertThat(updated.getMapLinks().getKakaoMap()).isEqualTo("https://k-updated.com");
+        assertThat(updated.getMapLinks().getGoogleMap()).isEqualTo("https://g-updated.com");
+
+        assertThat(updated.isPartnership()).isTrue();
+        assertThat(updated.getPartnershipContent()).isEqualTo("재학생 10% 할인");
+
+        assertThat(updated.getPlaceCategories()).hasSize(1);
+        assertThat(updated.getPlaceCategories().get(0).getCategory().getName()).isEqualTo("카페");
+
+        assertThat(updated.getPlaceTags()).hasSize(2);
+        assertThat(updated.getPlaceTags())
+                .extracting(pt -> pt.getTag().getName())
+                .containsExactlyInAnyOrder("분위기 좋은", "콘센트 있는");
+    }
+
+    @Test
+    @DisplayName("장소 수정 권한 없음 - USER면 ACCESS_DENIED 반환")
+    void updatePlace_fail_accessDenied_whenUserRole() throws Exception {
+        // given
+        Long placeId = detailPlace.getId();
+
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.USER));
+
+        Category cafe = categoryRepository.findByName("카페")
+                .orElseThrow();
+        Tag tag3 = tagRepository.findByName("분위기 좋은")
+                .orElseThrow();
+
+        PlaceUpdateRequest request = new PlaceUpdateRequest(
+                List.of(cafe.getId()),
+                List.of(tag3.getId()),
+                new MapLinks(
+                        "https://naver.com/place",
+                        "https://kakao.com/place",
+                        "https://google.com/maps"
+                ),
+                false,
+                ""
+        );
+
+        // when & then
+        mockMvc.perform(put("/api/places/{placeId}", placeId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .header("Authorization", "Bearer test-token")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 장소 수정 실패 - PLACE_NOT_FOUND 반환")
+    void updatePlace_fail_placeNotFound() throws Exception {
+        // given
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.ADMIN));
+
+        Category cafe = categoryRepository.findByName("카페")
+                .orElseThrow();
+        Tag tag3 = tagRepository.findByName("분위기 좋은")
+                .orElseThrow();
+
+        PlaceUpdateRequest request = new PlaceUpdateRequest(
+                List.of(cafe.getId()),
+                List.of(tag3.getId()),
+                new MapLinks(
+                        "https://naver.com/place",
+                        "https://kakao.com/place",
+                        "https://google.com/maps"
+                ),
+                false,
+                ""
+        );
+
+        // when & then
+        mockMvc.perform(put("/api/places/{placeId}", NON_EXISTENT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .header("Authorization", "Bearer test-token")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"));
     }
 
     private static String sha256Hex(String input) {
