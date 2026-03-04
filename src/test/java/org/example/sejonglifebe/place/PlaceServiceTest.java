@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.place;
 
 import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.place.view.PlaceViewService;
 import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.PlaceCategory;
@@ -15,7 +16,6 @@ import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.entity.Place;
-import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
@@ -41,9 +41,12 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -60,7 +63,7 @@ class PlaceServiceTest {
     private CategoryRepository categoryRepository;
 
     @Mock
-    private PlaceViewLogRepository placeViewLogRepository;
+    private PlaceViewService placeViewService;
 
     @Mock
     private S3Service s3Service;
@@ -309,31 +312,33 @@ class PlaceServiceTest {
         @Test
         @DisplayName("존재하지 않는 placeId면 PLACE_NOT_FOUND 예외를 던진다")
         void getPlaceDetail_notFound() {
-            // given
-            given(placeRepository.findById(1L)).willReturn(Optional.empty());
-            MockHttpServletRequest request = new MockHttpServletRequest();
-            MockHttpServletResponse response = new MockHttpServletResponse();
+            given(placeRepository.existsById(1L)).willReturn(false);
 
-            // then
+            MockHttpServletRequest request = new MockHttpServletRequest();
+
             assertThatThrownBy(() -> placeService.getPlaceDetail(1L, new AuthUser("20000000", Role.USER), request))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.PLACE_NOT_FOUND.getErrorMessage());
+
+            verify(placeRepository).existsById(1L);
+            verify(placeRepository, never()).findById(anyLong());
         }
 
         @Test
         @DisplayName("존재하는 placeId면 PlaceDetailResponse 반환한다")
         void getPlaceDetail_success() {
-            // given
             Place place = Place.builder().name("맛집").address("주소").mainImageUrl("url").build();
-            given(placeRepository.findById(1L)).willReturn(Optional.of(place));
-            MockHttpServletRequest request = new MockHttpServletRequest();
-            MockHttpServletResponse response = new MockHttpServletResponse();
 
-            // when
+            given(placeRepository.existsById(1L)).willReturn(true);
+            given(placeRepository.findById(1L)).willReturn(Optional.of(place));
+            given(placeViewService.recordFirstView(anyLong(), any())).willReturn(false); // 조회수 증가 안 타게
+
+            MockHttpServletRequest request = new MockHttpServletRequest();
+
             placeService.getPlaceDetail(1L, new AuthUser("20000000", Role.USER), request);
 
-            // then
-            verify(placeRepository).findById(1L);
+            verify(placeRepository).existsById(1L);
+            verify(placeRepository, atLeastOnce()).findById(1L);
         }
     }
 

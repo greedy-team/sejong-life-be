@@ -13,13 +13,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.time.LocalDateTime;
+import jakarta.persistence.EntityManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
@@ -27,8 +24,7 @@ import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.entity.MapLinks;
-import org.example.sejonglifebe.place.view.PlaceViewLog;
-import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.user.UserRepository;
@@ -81,6 +77,9 @@ public class PlaceControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private EntityManager entityManager;
+
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
@@ -88,7 +87,7 @@ public class PlaceControllerTest {
     private S3Service s3Service;
 
     @Autowired
-    private PlaceViewLogRepository placeViewLogRepository;
+    StringRedisTemplate redisTemplate;
 
     private Place detailPlace;
     private Place place1, place2, place3, place4, place5, place6; // 테스트에서 사용하기 위해 필드로 선언
@@ -100,7 +99,6 @@ public class PlaceControllerTest {
         placeRepository.deleteAll();
         tagRepository.deleteAll();
         categoryRepository.deleteAll();
-        placeViewLogRepository.deleteAll();
 
         Category category1 = new Category("식당");
         Category category2 = new Category("카페");
@@ -121,6 +119,7 @@ public class PlaceControllerTest {
         placeRepository.saveAll(List.of(place1, place2, place3, place4, place5, place6));
 
         detailPlace = place1;
+        redisTemplate.getConnectionFactory().getConnection().flushAll();
     }
 
     private record Img(String url, boolean main) {}
@@ -371,6 +370,7 @@ public class PlaceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.viewCount").value(1));
 
+        entityManager.clear();
         Place updatedPlace = placeRepository.findById(placeId).get();
         assertThat(updatedPlace.getViewCount()).isEqualTo(1);
         assertThat(updatedPlace.getWeeklyViewCount()).isEqualTo(1);
@@ -381,43 +381,40 @@ public class PlaceControllerTest {
     void getPlaceDetail_withRecentViewLog_doesNotIncreaseViewCount() throws Exception {
         Long placeId = detailPlace.getId();
 
-        String viewerKey = ipUaHash(TEST_IP, TEST_UA);
-        placeViewLogRepository.save(new PlaceViewLog(
-                placeId, VIEWER_TYPE_IPUA, viewerKey, LocalDateTime.now()
-        ));
+        // given: Redis에 "최근 조회" 상태 심기
+        redisTemplate.opsForValue().set(redisPvKey(placeId), "1", java.time.Duration.ofHours(6));
 
+        // when & then
         mockMvc.perform(get("/api/places/" + placeId)
                         .header("X-Forwarded-For", TEST_IP)
                         .header(HttpHeaders.USER_AGENT, TEST_UA)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.viewCount").value(0))
-                .andExpect(cookie().doesNotExist("placeView"));
+                .andExpect(jsonPath("$.data.viewCount").value(0));
 
+        entityManager.clear();
         Place notUpdatedPlace = placeRepository.findById(placeId).get();
         assertThat(notUpdatedPlace.getViewCount()).isEqualTo(0);
         assertThat(notUpdatedPlace.getWeeklyViewCount()).isEqualTo(0);
     }
 
     @Test
-    @DisplayName("장소 상세 조회 시 동일 viewer가 '다른 장소'만 최근에 봤더라도 현재 장소는 조회수가 1 증가하고 view log를 저장한다")
+    @DisplayName("장소 상세 조회 시 동일 viewer가 '다른 장소'만 최근에 봤더라도 현재 장소는 조회수가 1 증가한다")
     void getPlaceDetail_withAnotherPlaceViewLog_increaseViewCount() throws Exception {
         Long placeId = detailPlace.getId();
         Long anotherPlaceId = 99L;
 
-        String viewerKey = ipUaHash(TEST_IP, TEST_UA);
-        placeViewLogRepository.save(new PlaceViewLog(
-                anotherPlaceId, VIEWER_TYPE_IPUA, viewerKey, LocalDateTime.now()
-        ));
+        String anotherKey = "pv:" + anotherPlaceId + ":" + VIEWER_TYPE_IPUA + ":" + ipUaHash(TEST_IP, TEST_UA);
+        redisTemplate.opsForValue().set(anotherKey, "1", java.time.Duration.ofHours(6));
 
         mockMvc.perform(get("/api/places/" + placeId)
                         .header("X-Forwarded-For", TEST_IP)
                         .header(HttpHeaders.USER_AGENT, TEST_UA)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.viewCount").value(1))
-                .andExpect(cookie().doesNotExist("placeView"));
+                .andExpect(jsonPath("$.data.viewCount").value(1));
 
+        entityManager.clear();
         Place updatedPlace = placeRepository.findById(placeId).get();
         assertThat(updatedPlace.getViewCount()).isEqualTo(1);
         assertThat(updatedPlace.getWeeklyViewCount()).isEqualTo(1);
@@ -426,14 +423,13 @@ public class PlaceControllerTest {
     @Test
     @DisplayName("주간 핫플레이스 조회 시 weeklyViewCount가 높은 순으로 정렬되어 반환된다")
     void getHotPlaces_success() throws Exception {
-        // given: 테스트를 위해 특정 장소들의 weeklyViewCount 값을 임의로 설정
-        detailPlace.setWeeklyViewCount(100L); // 식당1
-        place2.setWeeklyViewCount(50L);      // 식당2
-        place6.setWeeklyViewCount(200L);     // 카페3
+        detailPlace.setWeeklyViewCount(100L);
+        place2.setWeeklyViewCount(50L);
+        place6.setWeeklyViewCount(200L);
         placeRepository.saveAll(List.of(detailPlace, place2, place6));
 
         // when & then
-        mockMvc.perform(get("/api/places/hot") // 핫플레이스 조회 API 엔드포인트
+        mockMvc.perform(get("/api/places/hot")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("핫플레이스 조회 성공"))
@@ -827,15 +823,8 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"));
     }
 
-    private static String sha256Hex(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(digest.length * 2);
-            for (byte b : digest) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private String redisPvKey(Long placeId) {
+        String viewerKey = ipUaHash(TEST_IP, TEST_UA);
+        return "pv:" + placeId + ":" + VIEWER_TYPE_IPUA + ":" + viewerKey;
     }
 }

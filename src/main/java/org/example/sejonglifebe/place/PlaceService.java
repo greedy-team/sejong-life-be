@@ -1,17 +1,12 @@
 package org.example.sejonglifebe.place;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import java.time.Duration;
-import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
@@ -23,34 +18,20 @@ import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.place.entity.Place;
-import org.example.sejonglifebe.place.entity.PlaceCategory;
 import org.example.sejonglifebe.place.entity.PlaceImage;
-import org.example.sejonglifebe.place.entity.PlaceTag;
-import org.example.sejonglifebe.place.view.PlaceViewLog;
-import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
+import org.example.sejonglifebe.place.view.PlaceViewService;
 import org.example.sejonglifebe.place.view.Viewer;
 import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -60,8 +41,7 @@ public class PlaceService {
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
     private final S3Service s3Service;
-    private final PlaceViewLogRepository placeViewLogRepository;
-    private static final Duration VIEW_TIME_TO_LIVE = Duration.ofHours(6);
+    private final PlaceViewService placeViewService;
 
     @Transactional(readOnly = true)
     public Page<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions, Pageable pageable) {
@@ -148,11 +128,6 @@ public class PlaceService {
         placeRepository.delete(place);
     }
 
-    @Retryable(
-            retryFor = ObjectOptimisticLockingFailureException.class,
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 100)
-    )
     @Transactional(readOnly = true)
     public List<PlaceResponse> getWeeklyHotPlaces() {
         List<Place> hotPlaces = placeRepository.findTop10ByOrderByWeeklyViewCountDesc();
@@ -162,8 +137,11 @@ public class PlaceService {
 
     @Transactional
     public PlaceDetailResponse getPlaceDetail(Long placeId, AuthUser authUser, HttpServletRequest request) {
-        increaseViewCount(placeId, authUser, request);
+        if (!placeRepository.existsById(placeId)) {
+            throw new SejongLifeException(ErrorCode.PLACE_NOT_FOUND);
+        }
 
+        increaseViewCount(placeId, authUser, request);
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
@@ -173,25 +151,11 @@ public class PlaceService {
     private void increaseViewCount(Long placeId, AuthUser authUser, HttpServletRequest request) {
         Viewer viewer = identifyViewer(authUser, request);
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expireBefore = now.minus(VIEW_TIME_TO_LIVE);
-
-        if (placeViewLogRepository.updateIfExpired(
-                placeId, viewer.type(), viewer.key(), now, expireBefore) == 1) {
-            placeRepository.increaseViewCount(placeId);
+        boolean first = placeViewService.recordFirstView(placeId, viewer);
+        if (!first) {
             return;
         }
-
-        if (placeViewLogRepository.existsByPlaceIdAndViewerTypeAndViewerKey(placeId, viewer.type(), viewer.key())) {
-            return;
-        }
-
-        try {
-            placeViewLogRepository.save(new PlaceViewLog(placeId, viewer.type(), viewer.key(), now));
-            placeRepository.increaseViewCount(placeId);
-        } catch (DataIntegrityViolationException e) {
-
-        }
+        placeRepository.increaseViewCount(placeId);
     }
 
     private void attachCategoriesToPlace(Place place, PlaceRequest request) {
