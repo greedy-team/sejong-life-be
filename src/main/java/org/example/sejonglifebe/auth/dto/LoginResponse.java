@@ -62,4 +62,14 @@ public class LoginResponse {
                 .userInfo(UserInfo.from(portalInfo))
                 .build();
     }
+
+    /**
+     * 미팅 신규 회원일 때 : 회원가입 필요, sign-up token 발급 (추가 정보 없음)
+     */
+    public static LoginResponse signUpRequired(String signUpToken) {
+        return LoginResponse.builder()
+                .isNewUser(true)
+                .signUpToken(signUpToken)
+                .build();
+    }
 }
