@@ -41,7 +41,8 @@ public enum ErrorCode {
     KAKAO_USER_INFO_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "카카오 사용자 정보 조회에 실패했습니다."),
     ALREADY_EXIST_USER(HttpStatus.CONFLICT, "이미 가입된 사용자입니다."),
     INVALID_GENDER(HttpStatus.BAD_REQUEST, "유효하지 않은 성별입니다."),
-    INVALID_FACE_TYPE(HttpStatus.BAD_REQUEST, "유효하지 않은 얼굴상입니다.");
+    INVALID_FACE_TYPE(HttpStatus.BAD_REQUEST, "유효하지 않은 얼굴상입니다."),
+    INVALID_OAUTH_STATE(HttpStatus.BAD_REQUEST, "유효하지 않은 OAuth State입니다.");
 
     private final HttpStatus httpStatus;
     private final String errorMessage;
