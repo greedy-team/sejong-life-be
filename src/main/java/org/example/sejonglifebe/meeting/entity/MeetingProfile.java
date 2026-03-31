@@ -54,4 +54,22 @@ public class MeetingProfile {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public void update(
+            Gender gender,
+            FaceType faceType,
+            Integer birthYear,
+            String hobby,
+            String dateStyle,
+            String appeal,
+            String contact
+    ) {
+        this.gender = gender;
+        this.faceType = faceType;
+        this.birthYear = birthYear;
+        this.hobby = hobby;
+        this.dateStyle = dateStyle;
+        this.appeal = appeal;
+        this.contact = contact;
+    }
 }
