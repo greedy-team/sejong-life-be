@@ -19,4 +19,10 @@ public class MeetingProfileController {
     public ResponseEntity<List<MeetingProfileResponse>> getAllMeetingProfiles() {
         return ResponseEntity.ok(meetingProfileService.getAllMeetingProfiles());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMeetingProfile(@PathVariable Long id) {
+        meetingProfileService.deleteMeetingProfile(id);
+        return ResponseEntity.noContent().build();
+    }
 }

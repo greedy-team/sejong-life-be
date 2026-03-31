@@ -20,4 +20,9 @@ public class MeetingProfileService {
                 .map(MeetingProfileResponse::from)
                 .toList();
     }
+
+    @Transactional
+    public void deleteMeetingProfile(Long id) {
+        meetingProfileRepository.deleteById(id);
+    }
 }
