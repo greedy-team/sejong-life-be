@@ -1,6 +1,8 @@
 package org.example.sejonglifebe.meeting.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
@@ -24,14 +26,9 @@ public class MeetingProfileService {
     }
 
     @Transactional
-    public void deleteMeetingProfile(Long id) {
-        meetingProfileRepository.deleteById(id);
-    }
-
-    @Transactional
     public void updateMeetingProfile(Long id, MeetingProfileUpdateRequest request) {
         MeetingProfile profile = meetingProfileRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Profile not found"));
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
 
         profile.update(
                 request.gender(),
@@ -42,5 +39,13 @@ public class MeetingProfileService {
                 request.appeal(),
                 request.contact()
         );
+    }
+
+    @Transactional
+    public void deleteMeetingProfile(Long id) {
+        MeetingProfile profile = meetingProfileRepository.findById(id)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
+
+        meetingProfileRepository.delete(profile);
     }
 }
