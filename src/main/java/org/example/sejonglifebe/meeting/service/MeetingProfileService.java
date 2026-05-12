@@ -36,7 +36,6 @@ public class MeetingProfileService {
                 request.birthYear(),
                 request.hobby(),
                 request.dateStyle(),
-                request.appeal(),
                 request.contact()
         );
     }

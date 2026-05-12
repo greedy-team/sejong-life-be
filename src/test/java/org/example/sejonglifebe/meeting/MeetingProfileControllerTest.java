@@ -60,7 +60,6 @@ class MeetingProfileControllerTest {
                         .birthYear(2000)
                         .hobby("축구")
                         .dateStyle("활동적인 데이트")
-                        .appeal("밝은 성격입니다.")
                         .contact("insta_1")
                         .build()
         );
@@ -73,7 +72,6 @@ class MeetingProfileControllerTest {
                         .birthYear(2001)
                         .hobby("영화")
                         .dateStyle("조용한 데이트")
-                        .appeal("대화가 잘 통합니다.")
                         .contact("insta_2")
                         .build()
         );
@@ -104,7 +102,6 @@ class MeetingProfileControllerTest {
                 1999,
                 "산책",
                 "맛집 데이트",
-                "배려심이 많아요.",
                 "updated_contact"
         );
 
@@ -123,7 +120,6 @@ class MeetingProfileControllerTest {
         assertThat(updated.getBirthYear()).isEqualTo(1999);
         assertThat(updated.getHobby()).isEqualTo("산책");
         assertThat(updated.getDateStyle()).isEqualTo("맛집 데이트");
-        assertThat(updated.getAppeal()).isEqualTo("배려심이 많아요.");
         assertThat(updated.getContact()).isEqualTo("updated_contact");
 
     }
@@ -137,7 +133,6 @@ class MeetingProfileControllerTest {
                 1999,
                 "산책",
                 "맛집 데이트",
-                "배려심이 많아요.",
                 "updated_contact"
         );
 

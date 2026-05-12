@@ -50,7 +50,6 @@ class MeetingProfileServiceTest {
                     .birthYear(2000)
                     .hobby("축구")
                     .dateStyle("활동적인 데이트")
-                    .appeal("밝음")
                     .contact("contact1")
                     .build();
 
@@ -61,7 +60,6 @@ class MeetingProfileServiceTest {
                     .birthYear(2001)
                     .hobby("영화")
                     .dateStyle("조용한 데이트")
-                    .appeal("차분함")
                     .contact("contact2")
                     .build();
 
@@ -96,7 +94,6 @@ class MeetingProfileServiceTest {
                     .birthYear(2000)
                     .hobby("축구")
                     .dateStyle("활동적인 데이트")
-                    .appeal("밝음")
                     .contact("contact1")
                     .build();
 
@@ -109,7 +106,6 @@ class MeetingProfileServiceTest {
                     1999,
                     "산책",
                     "카페 데이트",
-                    "배려심 많음",
                     "updated_contact"
             );
 
@@ -122,7 +118,6 @@ class MeetingProfileServiceTest {
             assertThat(profile.getBirthYear()).isEqualTo(1999);
             assertThat(profile.getHobby()).isEqualTo("산책");
             assertThat(profile.getDateStyle()).isEqualTo("카페 데이트");
-            assertThat(profile.getAppeal()).isEqualTo("배려심 많음");
             assertThat(profile.getContact()).isEqualTo("updated_contact");
 
             assertThat(profile.getKakaoId()).isEqualTo("kakao-1");
@@ -138,7 +133,6 @@ class MeetingProfileServiceTest {
                     1999,
                     "산책",
                     "카페 데이트",
-                    "배려심 많음",
                     "updated_contact"
             );
 
@@ -164,7 +158,6 @@ class MeetingProfileServiceTest {
                     .birthYear(2000)
                     .hobby("축구")
                     .dateStyle("활동적인 데이트")
-                    .appeal("밝음")
                     .contact("contact1")
                     .build();
 
