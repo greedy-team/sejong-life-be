@@ -22,6 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -89,7 +90,27 @@ class MeetingProfileControllerTest {
                 .andExpect(jsonPath("$[0].kakaoId").value("kakao-1"))
                 .andExpect(jsonPath("$[0].gender").value("MALE"))
                 .andExpect(jsonPath("$[0].faceType").value("DOG"))
+                .andExpect(jsonPath("$[0].contact").doesNotExist())
                 .andExpect(jsonPath("$[1].kakaoId").value("kakao-2"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("연락처 열람 시 contact가 반환된다")
+    void openContact_success() throws Exception {
+        Long profileId = profile1.getId();
+
+        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", profileId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contact").value("insta_1"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 프로필 연락처 열람 시 예외를 반환한다")
+    void openContact_fail_notFound() throws Exception {
+        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", NON_EXISTENT_ID))
+                .andExpect(status().isNotFound())
                 .andDo(print());
     }
 
