@@ -13,7 +13,6 @@ public record MeetingProfileResponse(
         String hobby,
         String dateStyle,
         String appeal,
-        String contact,
         LocalDateTime createdAt
 ) {
     public static MeetingProfileResponse from(MeetingProfile meetingProfile) {
@@ -26,7 +25,6 @@ public record MeetingProfileResponse(
                 meetingProfile.getHobby(),
                 meetingProfile.getDateStyle(),
                 meetingProfile.getAppeal(),
-                meetingProfile.getContact(),
                 meetingProfile.getCreatedAt()
         );
     }
