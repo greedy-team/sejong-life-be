@@ -36,7 +36,7 @@ public class SwaggerConfig {
                                 .bearerFormat("JWT")))
                 .addServersItem(new Server().url("/"))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
-                .info(new Info().title("SejongLife API").version("1.0").description("SejongLife API v1"))
+                .info(new Info().title("SejongLife API").version("1.0").description(SwaggerDescription.get()))
                 .servers(servers);
     }
 }
