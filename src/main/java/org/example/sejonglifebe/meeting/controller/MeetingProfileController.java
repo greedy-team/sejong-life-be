@@ -2,6 +2,7 @@ package org.example.sejonglifebe.meeting.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.meeting.dto.MeetingContactResponse;
+import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.service.MeetingProfileService;
@@ -18,8 +19,8 @@ public class MeetingProfileController {
     private final MeetingProfileService meetingProfileService;
 
     @GetMapping
-    public ResponseEntity<List<MeetingProfileResponse>> getAllMeetingProfiles() {
-        return ResponseEntity.ok(meetingProfileService.getAllMeetingProfiles());
+    public ResponseEntity<List<MeetingProfileResponse>> getAllMeetingProfiles(MeetingAuthUser meetingAuthUser) {
+        return ResponseEntity.ok(meetingProfileService.getAllMeetingProfiles(meetingAuthUser));
     }
 
     @PostMapping("/{profileId}/open")

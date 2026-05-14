@@ -3,6 +3,7 @@ package org.example.sejonglifebe.meeting;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.meeting.dto.MeetingContactResponse;
+import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.FaceType;
@@ -71,15 +72,18 @@ class MeetingProfileServiceTest {
             ReflectionTestUtils.setField(profile1, "createdAt", LocalDateTime.of(2026, 3, 31, 10, 0));
             ReflectionTestUtils.setField(profile2, "createdAt", LocalDateTime.of(2026, 3, 31, 11, 0));
 
-            given(meetingProfileRepository.findAll()).willReturn(List.of(profile1, profile2));
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
-            List<MeetingProfileResponse> result = meetingProfileService.getAllMeetingProfiles();
+            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(profile1));
+            given(meetingProfileRepository.findByGender(Gender.FEMALE)).willReturn(List.of(profile2));
 
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).id()).isEqualTo(1L);
-            assertThat(result.get(0).kakaoId()).isEqualTo("kakao-1");
-            assertThat(result.get(0).gender()).isEqualTo("MALE");
-            assertThat(result.get(0).faceType()).isEqualTo("DOG");
+            List<MeetingProfileResponse> result = meetingProfileService.getAllMeetingProfiles(meetingAuthUser);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).id()).isEqualTo(2L);
+            assertThat(result.get(0).kakaoId()).isEqualTo("kakao-2");
+            assertThat(result.get(0).gender()).isEqualTo("FEMALE");
+            assertThat(result.get(0).faceType()).isEqualTo("CAT");
         }
     }
 

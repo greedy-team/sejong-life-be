@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthInterceptor;
 import org.example.sejonglifebe.auth.AuthUserArgumentResolver;
 import org.example.sejonglifebe.common.logging.LogInterceptor;
+import org.example.sejonglifebe.meeting.auth.MeetingAuthUserArgumentResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -17,6 +18,7 @@ import java.util.List;
 public class WebConfig implements WebMvcConfigurer {
 
     private final AuthUserArgumentResolver authUserArgumentResolver;
+    private final MeetingAuthUserArgumentResolver meetingAuthUserArgumentResolver;
     private final AuthInterceptor authInterceptor;
     private final ObjectMapper objectMapper;
     private final LogInterceptor logInterceptor;
@@ -24,6 +26,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
         resolvers.add(authUserArgumentResolver);
+        resolvers.add(meetingAuthUserArgumentResolver);
     }
 
     @Override

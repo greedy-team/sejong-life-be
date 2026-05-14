@@ -96,6 +96,36 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    // 미팅 최종 토큰 검증 및 카카오 ID 추출
+    public String validateMeetingToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            String type = claims.get("type", String.class);
+            if (!"meeting".equals(type)) {
+                throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+            }
+
+            return claims.getSubject();
+
+        } catch (ExpiredJwtException e) {
+            throw new SejongLifeException(ErrorCode.EXPIRED_TOKEN);
+
+        } catch (MalformedJwtException e) {
+            throw new SejongLifeException(ErrorCode.MALFORMED_TOKEN);
+
+        } catch (SignatureException e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+
+        } catch (Exception e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+        }
+    }
+
     // 미팅 회원가입 토큰 검증 및 카카오 ID 추출
     public String validateMeetingSignUpToken(String token) {
         try {
