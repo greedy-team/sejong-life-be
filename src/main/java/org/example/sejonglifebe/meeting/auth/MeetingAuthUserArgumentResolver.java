@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.common.jwt.JwtTokenExtractor;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
@@ -31,12 +33,12 @@ public class MeetingAuthUserArgumentResolver implements HandlerMethodArgumentRes
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null) {
-            return null;
+            throw new SejongLifeException(ErrorCode.INVALID_AUTH_HEADER);
         }
 
         String token = jwtTokenExtractor.extractToken(authHeader);
         if (token.isBlank()) {
-            return null;
+            throw new SejongLifeException(ErrorCode.INVALID_AUTH_HEADER);
         }
 
         String kakaoId = jwtTokenProvider.validateMeetingToken(token);
