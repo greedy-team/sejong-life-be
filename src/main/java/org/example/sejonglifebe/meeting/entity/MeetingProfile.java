@@ -45,9 +45,6 @@ public class MeetingProfile {
     @Column(name = "date_style", nullable = false, length = 100)
     private String dateStyle;
 
-    @Column(name = "appeal", columnDefinition = "TEXT")
-    private String appeal;
-
     @Column(name = "contact", nullable = false, length = 100)
     private String contact;
 
@@ -61,7 +58,6 @@ public class MeetingProfile {
             Integer birthYear,
             String hobby,
             String dateStyle,
-            String appeal,
             String contact
     ) {
         this.gender = gender;
@@ -69,7 +65,6 @@ public class MeetingProfile {
         this.birthYear = birthYear;
         this.hobby = hobby;
         this.dateStyle = dateStyle;
-        this.appeal = appeal;
         this.contact = contact;
     }
 }

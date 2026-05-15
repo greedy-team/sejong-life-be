@@ -38,7 +38,6 @@ public class MeetingSignUpService {
                 .birthYear(request.birthYear())
                 .hobby(request.hobby())
                 .dateStyle(request.dateStyle())
-                .appeal(request.appeal())
                 .contact(request.contact())
                 .build();
 

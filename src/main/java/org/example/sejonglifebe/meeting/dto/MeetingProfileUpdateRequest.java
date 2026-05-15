@@ -9,6 +9,5 @@ public record MeetingProfileUpdateRequest(
         Integer birthYear,
         String hobby,
         String dateStyle,
-        String appeal,
         String contact
 ) {}
