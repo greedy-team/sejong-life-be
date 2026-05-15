@@ -163,7 +163,6 @@ class MeetingProfileServiceTest {
                     .birthYear(2000)
                     .hobby("축구")
                     .dateStyle("활동적인 데이트")
-                    .appeal("밝음")
                     .contact("insta_contact")
                     .build();
 
