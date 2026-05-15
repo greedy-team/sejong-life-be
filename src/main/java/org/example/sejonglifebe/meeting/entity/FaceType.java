@@ -11,10 +11,11 @@ import org.example.sejonglifebe.exception.SejongLifeException;
 public enum FaceType {
     DOG("강아지상"),
     CAT("고양이상"),
+    FOX("여우상"),
     RABBIT("토끼상"),
     BEAR("곰상"),
     DEER("사슴상"),
-    FOX("여우상"),
+    HAMSTER("햄스터상"),
     DINOSAUR("공룡상");
 
     private final String description;

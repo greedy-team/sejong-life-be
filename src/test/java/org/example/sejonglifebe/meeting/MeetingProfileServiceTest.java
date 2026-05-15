@@ -2,6 +2,8 @@ package org.example.sejonglifebe.meeting;
 
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.meeting.dto.MeetingContactResponse;
+import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.FaceType;
@@ -68,15 +70,18 @@ class MeetingProfileServiceTest {
             ReflectionTestUtils.setField(profile1, "createdAt", LocalDateTime.of(2026, 3, 31, 10, 0));
             ReflectionTestUtils.setField(profile2, "createdAt", LocalDateTime.of(2026, 3, 31, 11, 0));
 
-            given(meetingProfileRepository.findAll()).willReturn(List.of(profile1, profile2));
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
-            List<MeetingProfileResponse> result = meetingProfileService.getAllMeetingProfiles();
+            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(profile1));
+            given(meetingProfileRepository.findByGender(Gender.FEMALE)).willReturn(List.of(profile2));
 
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).id()).isEqualTo(1L);
-            assertThat(result.get(0).kakaoId()).isEqualTo("kakao-1");
-            assertThat(result.get(0).gender()).isEqualTo("MALE");
-            assertThat(result.get(0).faceType()).isEqualTo("DOG");
+            List<MeetingProfileResponse> result = meetingProfileService.getAllMeetingProfiles(meetingAuthUser);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).id()).isEqualTo(2L);
+            assertThat(result.get(0).kakaoId()).isEqualTo("kakao-2");
+            assertThat(result.get(0).gender()).isEqualTo("FEMALE");
+            assertThat(result.get(0).faceType()).isEqualTo("CAT");
         }
     }
 
@@ -139,6 +144,44 @@ class MeetingProfileServiceTest {
             given(meetingProfileRepository.findById(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> meetingProfileService.updateMeetingProfile(999L, request))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.MEETING_PROFILE_NOT_FOUND.getErrorMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("연락처 열람")
+    class OpenContactTest {
+
+        @Test
+        @DisplayName("연락처를 정상적으로 반환한다")
+        void openContact_success() {
+            MeetingProfile profile = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .appeal("밝음")
+                    .contact("insta_contact")
+                    .build();
+
+            ReflectionTestUtils.setField(profile, "id", 1L);
+
+            given(meetingProfileRepository.findById(1L)).willReturn(Optional.of(profile));
+
+            MeetingContactResponse result = meetingProfileService.openContact(1L);
+
+            assertThat(result.contact()).isEqualTo("insta_contact");
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 프로필 연락처 열람 시 예외를 던진다")
+        void openContact_fail_notFound() {
+            given(meetingProfileRepository.findById(999L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> meetingProfileService.openContact(999L))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.MEETING_PROFILE_NOT_FOUND.getErrorMessage());
         }

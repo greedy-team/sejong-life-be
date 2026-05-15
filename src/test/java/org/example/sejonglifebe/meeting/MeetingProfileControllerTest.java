@@ -2,6 +2,7 @@ package org.example.sejonglifebe.meeting;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
+import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.FaceType;
 import org.example.sejonglifebe.meeting.entity.Gender;
@@ -17,14 +18,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 @SpringBootTest
@@ -44,6 +45,9 @@ class MeetingProfileControllerTest {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     private MeetingProfile profile1;
     private MeetingProfile profile2;
@@ -80,14 +84,36 @@ class MeetingProfileControllerTest {
     @Test
     @DisplayName("전체 미팅 프로필이 조회된다")
     void getAllMeetingProfiles_success() throws Exception {
+        String token = jwtTokenProvider.createMeetingToken("kakao-1");
+
         mockMvc.perform(get("/api/meeting/profiles")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].kakaoId").value("kakao-1"))
-                .andExpect(jsonPath("$[0].gender").value("MALE"))
-                .andExpect(jsonPath("$[0].faceType").value("DOG"))
-                .andExpect(jsonPath("$[1].kakaoId").value("kakao-2"))
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].kakaoId").value("kakao-2"))
+                .andExpect(jsonPath("$[0].gender").value("FEMALE"))
+                .andExpect(jsonPath("$[0].faceType").value("CAT"))
+                .andExpect(jsonPath("$[0].contact").doesNotExist())
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("연락처 열람 시 contact가 반환된다")
+    void openContact_success() throws Exception {
+        Long profileId = profile1.getId();
+
+        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", profileId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contact").value("insta_1"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 프로필 연락처 열람 시 예외를 반환한다")
+    void openContact_fail_notFound() throws Exception {
+        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", NON_EXISTENT_ID))
+                .andExpect(status().isNotFound())
                 .andDo(print());
     }
 
