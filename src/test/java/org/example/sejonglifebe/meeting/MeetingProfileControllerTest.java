@@ -137,6 +137,17 @@ class MeetingProfileControllerTest {
     }
 
     @Test
+    @DisplayName("자신의 프로필 열람 시 400을 반환한다")
+    void openContact_fail_selfProfile() throws Exception {
+        String token = jwtTokenProvider.createMeetingToken("kakao-1");
+
+        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", profile1.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("존재하지 않는 프로필 연락처 열람 시 예외를 반환한다")
     void openContact_fail_notFound() throws Exception {
         String token = jwtTokenProvider.createMeetingToken("kakao-1");

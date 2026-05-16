@@ -215,6 +215,32 @@ class MeetingProfileServiceTest {
         }
 
         @Test
+        @DisplayName("자신의 프로필 열람 시 예외를 던진다")
+        void openContact_fail_selfProfile() {
+            MeetingProfile requester = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("requester_contact")
+                    .availableOpenCount(1)
+                    .build();
+
+            ReflectionTestUtils.setField(requester, "id", 1L);
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findById(1L)).willReturn(Optional.of(requester));
+
+            assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 1L))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.SELF_PROFILE_OPEN_NOT_ALLOWED.getErrorMessage());
+        }
+
+        @Test
         @DisplayName("존재하지 않는 프로필 연락처 열람 시 예외를 던진다")
         void openContact_fail_notFound() {
             MeetingProfile requester = MeetingProfile.builder()

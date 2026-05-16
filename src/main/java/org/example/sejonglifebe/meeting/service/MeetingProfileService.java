@@ -60,6 +60,10 @@ public class MeetingProfileService {
         MeetingProfile target = meetingProfileRepository.findById(profileId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
 
+        if (requester.getKakaoId().equals(target.getKakaoId())) {
+            throw new SejongLifeException(ErrorCode.SELF_PROFILE_OPEN_NOT_ALLOWED);
+        }
+
         requester.decreaseOpenCount();
 
         return new MeetingContactResponse(target.getContact());
