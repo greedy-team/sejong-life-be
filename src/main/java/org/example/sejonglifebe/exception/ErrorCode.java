@@ -43,7 +43,8 @@ public enum ErrorCode {
     INVALID_GENDER(HttpStatus.BAD_REQUEST, "유효하지 않은 성별입니다."),
     INVALID_FACE_TYPE(HttpStatus.BAD_REQUEST, "유효하지 않은 얼굴상입니다."),
     INVALID_OAUTH_STATE(HttpStatus.BAD_REQUEST, "유효하지 않은 OAuth State입니다."),
-    MEETING_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 미팅 프로필입니다.");
+    MEETING_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 미팅 프로필입니다."),
+    INSUFFICIENT_OPEN_COUNT(HttpStatus.FORBIDDEN, "열람권이 부족합니다.");
 
     private final HttpStatus httpStatus;
     private final String errorMessage;

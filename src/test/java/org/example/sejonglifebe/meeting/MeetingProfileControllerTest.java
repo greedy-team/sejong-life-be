@@ -65,6 +65,7 @@ class MeetingProfileControllerTest {
                         .hobby("축구")
                         .dateStyle("활동적인 데이트")
                         .contact("insta_1")
+                        .availableOpenCount(1)
                         .build()
         );
 
@@ -77,6 +78,7 @@ class MeetingProfileControllerTest {
                         .hobby("영화")
                         .dateStyle("조용한 데이트")
                         .contact("insta_2")
+                        .availableOpenCount(1)
                         .build()
         );
     }
@@ -99,20 +101,48 @@ class MeetingProfileControllerTest {
     }
 
     @Test
-    @DisplayName("연락처 열람 시 contact가 반환된다")
+    @DisplayName("열람권이 있을 때 연락처가 반환되고 열람권이 차감된다")
     void openContact_success() throws Exception {
-        Long profileId = profile1.getId();
+        String token = jwtTokenProvider.createMeetingToken("kakao-1");
+        Long targetProfileId = profile2.getId();
 
-        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", profileId))
+        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", targetProfileId)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.contact").value("insta_1"))
+                .andExpect(jsonPath("$.contact").value("insta_2"))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("열람권이 없을 때 403을 반환한다")
+    void openContact_fail_insufficientOpenCount() throws Exception {
+        meetingProfileRepository.save(
+                MeetingProfile.builder()
+                        .kakaoId("kakao-3")
+                        .gender(Gender.MALE)
+                        .faceType(FaceType.BEAR)
+                        .birthYear(1999)
+                        .hobby("독서")
+                        .dateStyle("집에서 데이트")
+                        .contact("insta_3")
+                        .availableOpenCount(0)
+                        .build()
+        );
+        String token = jwtTokenProvider.createMeetingToken("kakao-3");
+
+        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", profile2.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden())
                 .andDo(print());
     }
 
     @Test
     @DisplayName("존재하지 않는 프로필 연락처 열람 시 예외를 반환한다")
     void openContact_fail_notFound() throws Exception {
-        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", NON_EXISTENT_ID))
+        String token = jwtTokenProvider.createMeetingToken("kakao-1");
+
+        mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", NON_EXISTENT_ID)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andDo(print());
     }

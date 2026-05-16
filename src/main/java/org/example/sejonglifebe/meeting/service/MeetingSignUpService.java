@@ -39,6 +39,7 @@ public class MeetingSignUpService {
                 .hobby(request.hobby())
                 .dateStyle(request.dateStyle())
                 .contact(request.contact())
+                .availableOpenCount(1)
                 .build();
 
         meetingProfileRepository.save(meetingProfile);
