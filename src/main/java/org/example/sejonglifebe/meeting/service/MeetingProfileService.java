@@ -50,7 +50,7 @@ public class MeetingProfileService {
 
     @Transactional
     public MeetingContactResponse openContact(MeetingAuthUser meetingAuthUser, Long profileId) {
-        MeetingProfile requester = meetingProfileRepository.findByKakaoId(meetingAuthUser.kakaoId())
+        MeetingProfile requester = meetingProfileRepository.findByKakaoIdWithLock(meetingAuthUser.kakaoId())
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
 
         if (requester.getAvailableOpenCount() <= 0) {

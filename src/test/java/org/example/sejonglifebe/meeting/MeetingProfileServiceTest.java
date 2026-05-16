@@ -182,7 +182,7 @@ class MeetingProfileServiceTest {
 
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
-            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
             given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
 
             MeetingContactResponse result = meetingProfileService.openContact(meetingAuthUser, 2L);
@@ -207,7 +207,7 @@ class MeetingProfileServiceTest {
 
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
-            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 2L))
                     .isInstanceOf(SejongLifeException.class)
@@ -232,7 +232,7 @@ class MeetingProfileServiceTest {
 
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
-            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
             given(meetingProfileRepository.findById(1L)).willReturn(Optional.of(requester));
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 1L))
@@ -256,7 +256,7 @@ class MeetingProfileServiceTest {
 
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
-            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
             given(meetingProfileRepository.findById(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 999L))
