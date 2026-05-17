@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -48,18 +51,26 @@ public class MeetingProfile {
     @Column(name = "contact", nullable = false, length = 100)
     private String contact;
 
-    @Column(name = "available_open_count", nullable = false)
-    private int availableOpenCount;
+    @Column(name = "bonus_open_count", nullable = false)
+    private int bonusOpenCount;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public void decreaseOpenCount() {
-        if (this.availableOpenCount <= 0) {
-            throw new IllegalStateException("열람권이 없습니다.");
+    public void increaseBonusOpenCount() {
+        this.bonusOpenCount++;
+    }
+
+    public boolean hasBonusOpenCount() {
+        return this.bonusOpenCount > 0;
+    }
+
+    public void decreaseBonusOpenCount() {
+        if (this.bonusOpenCount <= 0) {
+            throw new SejongLifeException(ErrorCode.INSUFFICIENT_OPEN_COUNT);
         }
-        this.availableOpenCount--;
+        this.bonusOpenCount--;
     }
 
     public void update(

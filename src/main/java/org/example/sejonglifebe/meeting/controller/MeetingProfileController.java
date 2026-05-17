@@ -3,6 +3,7 @@ package org.example.sejonglifebe.meeting.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.meeting.dto.MeetingContactResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
+import org.example.sejonglifebe.meeting.dto.MeetingOpenCountResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.service.MeetingProfileService;
@@ -14,13 +15,18 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/meeting/profiles")
-public class MeetingProfileController {
+public class MeetingProfileController implements MeetingProfileControllerSwagger {
 
     private final MeetingProfileService meetingProfileService;
 
     @GetMapping
     public ResponseEntity<List<MeetingProfileResponse>> getAllMeetingProfiles(MeetingAuthUser meetingAuthUser) {
         return ResponseEntity.ok(meetingProfileService.getAllMeetingProfiles(meetingAuthUser));
+    }
+
+    @GetMapping("/open-count")
+    public ResponseEntity<MeetingOpenCountResponse> getOpenCount(MeetingAuthUser meetingAuthUser) {
+        return ResponseEntity.ok(meetingProfileService.getOpenCount(meetingAuthUser));
     }
 
     @PostMapping("/{profileId}/open")
