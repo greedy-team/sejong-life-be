@@ -178,6 +178,7 @@ class MeetingProfileServiceTest {
                     .availableOpenCount(1)
                     .build();
 
+            ReflectionTestUtils.setField(requester, "id", 1L);
             ReflectionTestUtils.setField(target, "id", 2L);
 
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
@@ -204,6 +205,8 @@ class MeetingProfileServiceTest {
                     .contact("requester_contact")
                     .availableOpenCount(0)
                     .build();
+
+            ReflectionTestUtils.setField(requester, "id", 1L);
 
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
@@ -233,7 +236,6 @@ class MeetingProfileServiceTest {
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
-            given(meetingProfileRepository.findById(1L)).willReturn(Optional.of(requester));
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 1L))
                     .isInstanceOf(SejongLifeException.class)
@@ -253,6 +255,8 @@ class MeetingProfileServiceTest {
                     .contact("requester_contact")
                     .availableOpenCount(1)
                     .build();
+
+            ReflectionTestUtils.setField(requester, "id", 1L);
 
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
