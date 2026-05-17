@@ -10,6 +10,7 @@ import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.FaceType;
 import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
+import org.example.sejonglifebe.meeting.repository.ContactViewHistoryRepository;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
 import org.example.sejonglifebe.meeting.service.MeetingOpenCountService;
 import org.example.sejonglifebe.meeting.service.MeetingProfileService;
@@ -36,6 +37,9 @@ class MeetingProfileServiceTest {
 
     @Mock
     private MeetingProfileRepository meetingProfileRepository;
+
+    @Mock
+    private ContactViewHistoryRepository contactViewHistoryRepository;
 
     @Mock
     private MeetingOpenCountService meetingOpenCountService;
@@ -190,11 +194,13 @@ class MeetingProfileServiceTest {
 
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
             given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
+            given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 2L)).willReturn(false);
             given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(true);
 
             MeetingContactResponse result = meetingProfileService.openContact(meetingAuthUser, 2L);
 
             assertThat(result.contact()).isEqualTo("insta_contact");
+            assertThat(result.alreadyViewed()).isFalse();
             verify(meetingOpenCountService).startCooldown("kakao-1");
         }
 
@@ -230,6 +236,7 @@ class MeetingProfileServiceTest {
 
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
             given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
+            given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 2L)).willReturn(false);
 
             meetingProfileService.openContact(meetingAuthUser, 2L);
 
@@ -259,11 +266,53 @@ class MeetingProfileServiceTest {
                     .kakaoId("kakao-2").gender(Gender.FEMALE).faceType(FaceType.CAT)
                     .birthYear(2001).hobby("영화").dateStyle("조용한 데이트").contact("insta_contact")
                     .bonusOpenCount(0).build()));
+            given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 2L)).willReturn(false);
             given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(false);
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 2L))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.INSUFFICIENT_OPEN_COUNT.getErrorMessage());
+        }
+
+        @Test
+        @DisplayName("이미 열람한 프로필은 열람권 차감 없이 연락처를 반환한다")
+        void openContact_alreadyViewed() {
+            MeetingProfile requester = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("requester_contact")
+                    .bonusOpenCount(0)
+                    .build();
+
+            MeetingProfile target = MeetingProfile.builder()
+                    .kakaoId("kakao-2")
+                    .gender(Gender.FEMALE)
+                    .faceType(FaceType.CAT)
+                    .birthYear(2001)
+                    .hobby("영화")
+                    .dateStyle("조용한 데이트")
+                    .contact("insta_contact")
+                    .bonusOpenCount(0)
+                    .build();
+
+            ReflectionTestUtils.setField(requester, "id", 1L);
+            ReflectionTestUtils.setField(target, "id", 2L);
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
+            given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 2L)).willReturn(true);
+
+            MeetingContactResponse result = meetingProfileService.openContact(meetingAuthUser, 2L);
+
+            assertThat(result.contact()).isEqualTo("insta_contact");
+            assertThat(result.alreadyViewed()).isTrue();
+            verify(meetingOpenCountService, org.mockito.Mockito.never()).startCooldown("kakao-1");
         }
 
         @Test
