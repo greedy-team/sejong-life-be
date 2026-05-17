@@ -8,8 +8,10 @@ import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
 import org.example.sejonglifebe.meeting.dto.MeetingOpenCountResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
+import org.example.sejonglifebe.meeting.entity.ContactViewHistory;
 import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
+import org.example.sejonglifebe.meeting.repository.ContactViewHistoryRepository;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import java.util.List;
 public class MeetingProfileService {
 
     private final MeetingProfileRepository meetingProfileRepository;
+    private final ContactViewHistoryRepository contactViewHistoryRepository;
     private final MeetingOpenCountService meetingOpenCountService;
 
     public MeetingOpenCountResponse getOpenCount(MeetingAuthUser meetingAuthUser) {
@@ -72,15 +75,18 @@ public class MeetingProfileService {
         MeetingProfile target = meetingProfileRepository.findById(profileId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
 
-        if (requester.hasBonusOpenCount()) {
-            requester.decreaseBonusOpenCount();
-        } else if (meetingOpenCountService.isRechargeable(meetingAuthUser.kakaoId())) {
-            meetingOpenCountService.startCooldown(meetingAuthUser.kakaoId());
-        } else {
-            throw new SejongLifeException(ErrorCode.INSUFFICIENT_OPEN_COUNT);
+        boolean alreadyViewed = contactViewHistoryRepository
+                .existsByViewerIdAndTargetId(requester.getId(), profileId);
+
+        if (!alreadyViewed) {
+            useOpenCount(requester, meetingAuthUser.kakaoId());
+            contactViewHistoryRepository.save(ContactViewHistory.builder()
+                    .viewer(requester)
+                    .target(target)
+                    .build());
         }
 
-        return new MeetingContactResponse(target.getContact());
+        return new MeetingContactResponse(target.getContact(), alreadyViewed);
     }
 
     @Transactional
@@ -89,5 +95,15 @@ public class MeetingProfileService {
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
 
         meetingProfileRepository.delete(profile);
+    }
+
+    private void useOpenCount(MeetingProfile requester, String kakaoId) {
+        if (requester.hasBonusOpenCount()) {
+            requester.decreaseBonusOpenCount();
+        } else if (meetingOpenCountService.isRechargeable(kakaoId)) {
+            meetingOpenCountService.startCooldown(kakaoId);
+        } else {
+            throw new SejongLifeException(ErrorCode.INSUFFICIENT_OPEN_COUNT);
+        }
     }
 }
