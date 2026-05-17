@@ -154,33 +154,112 @@ class MeetingProfileServiceTest {
     class OpenContactTest {
 
         @Test
-        @DisplayName("연락처를 정상적으로 반환한다")
+        @DisplayName("열람권이 있을 때 연락처를 정상적으로 반환하고 열람권을 차감한다")
         void openContact_success() {
-            MeetingProfile profile = MeetingProfile.builder()
+            MeetingProfile requester = MeetingProfile.builder()
                     .kakaoId("kakao-1")
                     .gender(Gender.MALE)
                     .faceType(FaceType.DOG)
                     .birthYear(2000)
                     .hobby("축구")
                     .dateStyle("활동적인 데이트")
-                    .contact("insta_contact")
+                    .contact("requester_contact")
+                    .availableOpenCount(1)
                     .build();
 
-            ReflectionTestUtils.setField(profile, "id", 1L);
+            MeetingProfile target = MeetingProfile.builder()
+                    .kakaoId("kakao-2")
+                    .gender(Gender.FEMALE)
+                    .faceType(FaceType.CAT)
+                    .birthYear(2001)
+                    .hobby("영화")
+                    .dateStyle("조용한 데이트")
+                    .contact("insta_contact")
+                    .availableOpenCount(1)
+                    .build();
 
-            given(meetingProfileRepository.findById(1L)).willReturn(Optional.of(profile));
+            ReflectionTestUtils.setField(target, "id", 2L);
 
-            MeetingContactResponse result = meetingProfileService.openContact(1L);
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
+
+            MeetingContactResponse result = meetingProfileService.openContact(meetingAuthUser, 2L);
 
             assertThat(result.contact()).isEqualTo("insta_contact");
+            assertThat(requester.getAvailableOpenCount()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("열람권이 없을 때 예외를 던진다")
+        void openContact_fail_insufficientOpenCount() {
+            MeetingProfile requester = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("requester_contact")
+                    .availableOpenCount(0)
+                    .build();
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+
+            assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 2L))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.INSUFFICIENT_OPEN_COUNT.getErrorMessage());
+        }
+
+        @Test
+        @DisplayName("자신의 프로필 열람 시 예외를 던진다")
+        void openContact_fail_selfProfile() {
+            MeetingProfile requester = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("requester_contact")
+                    .availableOpenCount(1)
+                    .build();
+
+            ReflectionTestUtils.setField(requester, "id", 1L);
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findById(1L)).willReturn(Optional.of(requester));
+
+            assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 1L))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.SELF_PROFILE_OPEN_NOT_ALLOWED.getErrorMessage());
         }
 
         @Test
         @DisplayName("존재하지 않는 프로필 연락처 열람 시 예외를 던진다")
         void openContact_fail_notFound() {
+            MeetingProfile requester = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("requester_contact")
+                    .availableOpenCount(1)
+                    .build();
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
             given(meetingProfileRepository.findById(999L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> meetingProfileService.openContact(999L))
+            assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 999L))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.MEETING_PROFILE_NOT_FOUND.getErrorMessage());
         }

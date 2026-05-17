@@ -48,10 +48,25 @@ public class MeetingProfileService {
         );
     }
 
-    public MeetingContactResponse openContact(Long id) {
-        MeetingProfile profile = meetingProfileRepository.findById(id)
+    @Transactional
+    public MeetingContactResponse openContact(MeetingAuthUser meetingAuthUser, Long profileId) {
+        MeetingProfile requester = meetingProfileRepository.findByKakaoIdWithLock(meetingAuthUser.kakaoId())
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
+
+        if (requester.getId().equals(profileId)) {
+            throw new SejongLifeException(ErrorCode.SELF_PROFILE_OPEN_NOT_ALLOWED);
+        }
+
+        if (requester.getAvailableOpenCount() <= 0) {
+            throw new SejongLifeException(ErrorCode.INSUFFICIENT_OPEN_COUNT);
+        }
+
+        MeetingProfile target = meetingProfileRepository.findById(profileId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
-        return new MeetingContactResponse(profile.getContact());
+
+        requester.decreaseOpenCount();
+
+        return new MeetingContactResponse(target.getContact());
     }
 
     @Transactional

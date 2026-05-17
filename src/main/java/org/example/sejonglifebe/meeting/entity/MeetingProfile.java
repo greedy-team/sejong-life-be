@@ -48,9 +48,19 @@ public class MeetingProfile {
     @Column(name = "contact", nullable = false, length = 100)
     private String contact;
 
+    @Column(name = "available_open_count", nullable = false)
+    private int availableOpenCount;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public void decreaseOpenCount() {
+        if (this.availableOpenCount <= 0) {
+            throw new IllegalStateException("열람권이 없습니다.");
+        }
+        this.availableOpenCount--;
+    }
 
     public void update(
             Gender gender,

@@ -24,8 +24,11 @@ public class MeetingProfileController {
     }
 
     @PostMapping("/{profileId}/open")
-    public ResponseEntity<MeetingContactResponse> openContact(@PathVariable Long profileId) {
-        return ResponseEntity.ok(meetingProfileService.openContact(profileId));
+    public ResponseEntity<MeetingContactResponse> openContact(
+            MeetingAuthUser meetingAuthUser,
+            @PathVariable Long profileId
+    ) {
+        return ResponseEntity.ok(meetingProfileService.openContact(meetingAuthUser, profileId));
     }
 
     @DeleteMapping("/{id}")
