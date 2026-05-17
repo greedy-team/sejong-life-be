@@ -56,6 +56,9 @@ public class MeetingProfile {
     private LocalDateTime createdAt;
 
     public void decreaseOpenCount() {
+        if (this.availableOpenCount <= 0) {
+            throw new IllegalStateException("열람권이 없습니다.");
+        }
         this.availableOpenCount--;
     }
 
