@@ -233,8 +233,8 @@ class MeetingProfileServiceTest {
         }
 
         @Test
-        @DisplayName("보너스 열람권이 있을 때 보너스 열람권을 먼저 차감한다")
-        void openContact_success_bonusFirst() {
+        @DisplayName("쿨다운 중이고 보너스 열람권이 있을 때 보너스 열람권을 차감한다")
+        void openContact_success_bonusUsedDuringCooldown() {
             MeetingProfile requester = MeetingProfile.builder()
                     .kakaoId("kakao-1")
                     .gender(Gender.MALE)
@@ -265,10 +265,55 @@ class MeetingProfileServiceTest {
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
             given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
             given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 2L)).willReturn(false);
+            given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(false);
 
             meetingProfileService.openContact(meetingAuthUser, 2L);
 
             assertThat(requester.getBonusOpenCount()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("보너스 열람권이 있어도 기본 열람권이 있으면 기본 열람권을 먼저 사용한다")
+        void openContact_success_basicUsedBeforeBonus() {
+            MeetingProfile requester = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("requester_contact")
+                    .bonusOpenCount(1)
+                    .build();
+
+            MeetingProfile target = MeetingProfile.builder()
+                    .kakaoId("kakao-2")
+                    .gender(Gender.FEMALE)
+                    .faceType(FaceType.CAT)
+                    .birthYear(2001)
+                    .hobby("영화")
+                    .dateStyle("조용한 데이트")
+                    .contact("insta_contact")
+                    .bonusOpenCount(0)
+                    .build();
+
+            ReflectionTestUtils.setField(requester, "id", 1L);
+            ReflectionTestUtils.setField(target, "id", 2L);
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
+            given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 2L)).willReturn(false);
+            given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(true);
+
+            meetingProfileService.openContact(meetingAuthUser, 2L);
+
+            assertThat(requester.getBonusOpenCount()).isEqualTo(1);
+
+            ArgumentCaptor<CooldownStartEvent> captor = ArgumentCaptor.forClass(CooldownStartEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertThat(captor.getValue().kakaoId()).isEqualTo("kakao-1");
         }
 
         @Test
