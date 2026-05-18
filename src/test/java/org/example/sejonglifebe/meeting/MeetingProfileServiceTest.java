@@ -5,6 +5,7 @@ import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.meeting.dto.MeetingContactResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
 import org.example.sejonglifebe.meeting.dto.MeetingOpenCountResponse;
+import org.example.sejonglifebe.meeting.dto.MeetingProfileCountResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.FaceType;
@@ -52,6 +53,24 @@ class MeetingProfileServiceTest {
 
     @InjectMocks
     private MeetingProfileService meetingProfileService;
+
+    @Nested
+    @DisplayName("프로필 수 조회")
+    class GetProfileCountTest {
+
+        @Test
+        @DisplayName("남/녀/전체 프로필 수를 반환한다")
+        void getProfileCount_success() {
+            given(meetingProfileRepository.countByGender(Gender.MALE)).willReturn(80L);
+            given(meetingProfileRepository.countByGender(Gender.FEMALE)).willReturn(70L);
+
+            MeetingProfileCountResponse result = meetingProfileService.getProfileCount();
+
+            assertThat(result.total()).isEqualTo(150L);
+            assertThat(result.male()).isEqualTo(80L);
+            assertThat(result.female()).isEqualTo(70L);
+        }
+    }
 
     @Nested
     @DisplayName("전체 조회")
