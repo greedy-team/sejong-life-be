@@ -102,6 +102,8 @@ public class MeetingProfileService {
         MeetingProfile profile = meetingProfileRepository.findById(id)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
 
+        contactViewHistoryRepository.deleteByViewerId(id);
+        contactViewHistoryRepository.deleteByTargetId(id);
         meetingProfileRepository.delete(profile);
     }
 }

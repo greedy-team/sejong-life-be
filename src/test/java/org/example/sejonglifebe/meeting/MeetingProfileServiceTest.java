@@ -469,6 +469,8 @@ class MeetingProfileServiceTest {
 
             meetingProfileService.deleteMeetingProfile(1L);
 
+            verify(contactViewHistoryRepository).deleteByViewerId(1L);
+            verify(contactViewHistoryRepository).deleteByTargetId(1L);
             verify(meetingProfileRepository).delete(profile);
         }
 
