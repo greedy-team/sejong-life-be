@@ -264,10 +264,6 @@ class MeetingProfileServiceTest {
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
-            given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(MeetingProfile.builder()
-                    .kakaoId("kakao-2").gender(Gender.FEMALE).faceType(FaceType.CAT)
-                    .birthYear(2001).hobby("영화").dateStyle("조용한 데이트").contact("insta_contact")
-                    .bonusOpenCount(0).build()));
             given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(false);
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 2L))
@@ -319,6 +315,7 @@ class MeetingProfileServiceTest {
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(true);
             given(meetingProfileRepository.findById(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 999L))
