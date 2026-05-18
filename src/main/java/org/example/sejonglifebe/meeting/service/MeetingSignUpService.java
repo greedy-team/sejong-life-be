@@ -43,7 +43,7 @@ public class MeetingSignUpService {
         rewardRecommender(kakaoId, ref);
 
         String accessToken = jwtTokenProvider.createMeetingToken(kakaoId);
-        return LoginResponse.loginSuccess(accessToken);
+        return LoginResponse.loginSuccess(accessToken, kakaoId);
     }
 
     private void rewardRecommender(String newUserKakaoId, String recommendId) {

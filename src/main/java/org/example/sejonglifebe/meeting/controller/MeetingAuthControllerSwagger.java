@@ -26,14 +26,14 @@ public interface MeetingAuthControllerSwagger {
 
     @Operation(
             summary = "카카오 로그인",
-            description = "카카오 인가 코드를 받아 로그인 처리합니다. 신규 사용자는 signUpToken을 반환하고 기존 사용자는 accessToken을 반환합니다."
+            description = "카카오 인가 코드를 받아 로그인 처리합니다. 신규 사용자는 signUpToken을, 기존 사용자는 accessToken을 반환하며 두 경우 모두 kakaoId를 함께 반환합니다."
     )
     ResponseEntity<CommonResponse<LoginResponse>> kakaoLogin(@Valid @RequestBody KakaoLoginRequest request, HttpSession session);
 
 
     @Operation(
             summary = "미팅 회원가입",
-            description = "signUpToken과 함께 추가 정보를 입력받아 회원가입을 완료하고 최종 JWT 토큰을 반환합니다."
+            description = "signUpToken과 함께 추가 정보를 입력받아 회원가입을 완료하고 accessToken과 kakaoId를 반환합니다."
     )
     ResponseEntity<CommonResponse<LoginResponse>> signUp(
             @Parameter(description = "회원가입용 임시 토큰", required = true)

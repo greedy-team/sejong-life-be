@@ -64,6 +64,7 @@ class MeetingSignUpServiceTest {
             LoginResponse response = meetingSignUpService.signUp("signUpToken", buildRequest(), null);
 
             assertThat(response.getAccessToken()).isEqualTo("accessToken");
+            assertThat(response.getKakaoId()).isEqualTo("kakao-1");
             verify(meetingProfileRepository, never()).findByKakaoIdWithLock(any());
         }
 

@@ -40,12 +40,12 @@ public class KakaoLoginService {
         if (profileOptional.isPresent()) {
             // 이미 회원가입 완료: 미팅 JWT 발급
             String accessToken = jwtTokenProvider.createMeetingToken(kakaoId);
-            return LoginResponse.loginSuccess(accessToken);
+            return LoginResponse.loginSuccess(accessToken, kakaoId);
 
         } else {
             // 신규 사용자: 회원가입용 임시 토큰 발급
             String signUpToken = jwtTokenProvider.createMeetingSignUpToken(kakaoId);
-            return LoginResponse.signUpRequired(signUpToken);
+            return LoginResponse.signUpRequired(signUpToken, kakaoId);
         }
     }
 }
