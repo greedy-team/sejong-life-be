@@ -21,4 +21,6 @@ public interface MeetingProfileRepository extends JpaRepository<MeetingProfile, 
     boolean existsByKakaoId(String kakaoId);
 
     List<MeetingProfile> findByGender(Gender gender);
+
+    long countByGender(Gender gender);
 }

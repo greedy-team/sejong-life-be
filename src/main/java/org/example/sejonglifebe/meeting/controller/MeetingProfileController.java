@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.meeting.dto.MeetingContactResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
 import org.example.sejonglifebe.meeting.dto.MeetingOpenCountResponse;
+import org.example.sejonglifebe.meeting.dto.MeetingProfileCountResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.service.MeetingProfileService;
@@ -18,6 +19,11 @@ import java.util.List;
 public class MeetingProfileController implements MeetingProfileControllerSwagger {
 
     private final MeetingProfileService meetingProfileService;
+
+    @GetMapping("/count")
+    public ResponseEntity<MeetingProfileCountResponse> getProfileCount() {
+        return ResponseEntity.ok(meetingProfileService.getProfileCount());
+    }
 
     @GetMapping
     public ResponseEntity<List<MeetingProfileResponse>> getAllMeetingProfiles(MeetingAuthUser meetingAuthUser) {
