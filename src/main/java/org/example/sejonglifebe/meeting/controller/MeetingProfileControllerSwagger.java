@@ -38,7 +38,7 @@ public interface MeetingProfileControllerSwagger {
 
     @Operation(
             summary = "연락처 열람",
-            description = "열람권을 사용해 상대방의 연락처를 조회합니다. 보너스 열람권을 먼저 차감하며, 보너스가 없고 쿨다운이 끝났으면 쿨다운을 시작하고 연락처를 반환합니다."
+            description = "열람권을 사용해 상대방의 연락처를 조회합니다. 쿨다운이 끝났으면 기본 열람권을 먼저 사용하고, 쿨다운 중이면 보너스 열람권을 차감합니다. 열람권이 모두 없으면 예외를 반환합니다."
     )
     ResponseEntity<MeetingContactResponse> openContact(
             MeetingAuthUser meetingAuthUser,
