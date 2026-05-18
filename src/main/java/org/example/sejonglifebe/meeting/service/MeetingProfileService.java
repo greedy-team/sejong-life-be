@@ -13,6 +13,7 @@ import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
 import org.example.sejonglifebe.meeting.repository.ContactViewHistoryRepository;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class MeetingProfileService {
     private final MeetingProfileRepository meetingProfileRepository;
     private final ContactViewHistoryRepository contactViewHistoryRepository;
     private final MeetingOpenCountService meetingOpenCountService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public MeetingOpenCountResponse getOpenCount(MeetingAuthUser meetingAuthUser) {
         MeetingProfile profile = meetingProfileRepository.findByKakaoId(meetingAuthUser.kakaoId())
@@ -72,14 +74,20 @@ public class MeetingProfileService {
             throw new SejongLifeException(ErrorCode.SELF_PROFILE_OPEN_NOT_ALLOWED);
         }
 
-        MeetingProfile target = meetingProfileRepository.findById(profileId)
-                .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
-
         boolean alreadyViewed = contactViewHistoryRepository
                 .existsByViewerIdAndTargetId(requester.getId(), profileId);
 
+        MeetingProfile target = meetingProfileRepository.findById(profileId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
+
         if (!alreadyViewed) {
-            useOpenCount(requester, meetingAuthUser.kakaoId());
+            if (requester.hasBonusOpenCount()) {
+                requester.decreaseBonusOpenCount();
+            } else if (meetingOpenCountService.isRechargeable(meetingAuthUser.kakaoId())) {
+                eventPublisher.publishEvent(new CooldownStartEvent(meetingAuthUser.kakaoId()));
+            } else {
+                throw new SejongLifeException(ErrorCode.INSUFFICIENT_OPEN_COUNT);
+            }
             contactViewHistoryRepository.save(ContactViewHistory.builder()
                     .viewer(requester)
                     .target(target)
@@ -95,15 +103,5 @@ public class MeetingProfileService {
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
 
         meetingProfileRepository.delete(profile);
-    }
-
-    private void useOpenCount(MeetingProfile requester, String kakaoId) {
-        if (requester.hasBonusOpenCount()) {
-            requester.decreaseBonusOpenCount();
-        } else if (meetingOpenCountService.isRechargeable(kakaoId)) {
-            meetingOpenCountService.startCooldown(kakaoId);
-        } else {
-            throw new SejongLifeException(ErrorCode.INSUFFICIENT_OPEN_COUNT);
-        }
     }
 }

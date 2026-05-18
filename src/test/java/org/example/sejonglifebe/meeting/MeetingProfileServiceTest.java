@@ -12,15 +12,18 @@ import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
 import org.example.sejonglifebe.meeting.repository.ContactViewHistoryRepository;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
+import org.example.sejonglifebe.meeting.service.CooldownStartEvent;
 import org.example.sejonglifebe.meeting.service.MeetingOpenCountService;
 import org.example.sejonglifebe.meeting.service.MeetingProfileService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -43,6 +46,9 @@ class MeetingProfileServiceTest {
 
     @Mock
     private MeetingOpenCountService meetingOpenCountService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private MeetingProfileService meetingProfileService;
@@ -201,7 +207,10 @@ class MeetingProfileServiceTest {
 
             assertThat(result.contact()).isEqualTo("insta_contact");
             assertThat(result.alreadyViewed()).isFalse();
-            verify(meetingOpenCountService).startCooldown("kakao-1");
+
+            ArgumentCaptor<CooldownStartEvent> captor = ArgumentCaptor.forClass(CooldownStartEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertThat(captor.getValue().kakaoId()).isEqualTo("kakao-1");
         }
 
         @Test
@@ -262,11 +271,11 @@ class MeetingProfileServiceTest {
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 2L)).willReturn(false);
             given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(MeetingProfile.builder()
                     .kakaoId("kakao-2").gender(Gender.FEMALE).faceType(FaceType.CAT)
                     .birthYear(2001).hobby("영화").dateStyle("조용한 데이트").contact("insta_contact")
                     .bonusOpenCount(0).build()));
-            given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 2L)).willReturn(false);
             given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(false);
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 2L))
@@ -312,7 +321,7 @@ class MeetingProfileServiceTest {
 
             assertThat(result.contact()).isEqualTo("insta_contact");
             assertThat(result.alreadyViewed()).isTrue();
-            verify(meetingOpenCountService, org.mockito.Mockito.never()).startCooldown("kakao-1");
+            verify(eventPublisher, org.mockito.Mockito.never()).publishEvent(org.mockito.ArgumentMatchers.any());
         }
 
         @Test
@@ -359,6 +368,7 @@ class MeetingProfileServiceTest {
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 999L)).willReturn(false);
             given(meetingProfileRepository.findById(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 999L))
