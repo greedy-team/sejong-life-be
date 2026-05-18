@@ -11,6 +11,7 @@ import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class MeetingProfileService {
 
     private final MeetingProfileRepository meetingProfileRepository;
     private final MeetingOpenCountService meetingOpenCountService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public MeetingOpenCountResponse getOpenCount(MeetingAuthUser meetingAuthUser) {
         MeetingProfile profile = meetingProfileRepository.findByKakaoId(meetingAuthUser.kakaoId())
@@ -75,7 +77,7 @@ public class MeetingProfileService {
         if (requester.hasBonusOpenCount()) {
             requester.decreaseBonusOpenCount();
         } else if (meetingOpenCountService.isRechargeable(meetingAuthUser.kakaoId())) {
-            meetingOpenCountService.startCooldown(meetingAuthUser.kakaoId());
+            eventPublisher.publishEvent(new CooldownStartEvent(meetingAuthUser.kakaoId()));
         } else {
             throw new SejongLifeException(ErrorCode.INSUFFICIENT_OPEN_COUNT);
         }
