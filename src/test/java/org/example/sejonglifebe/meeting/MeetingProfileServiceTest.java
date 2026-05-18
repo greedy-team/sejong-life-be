@@ -11,15 +11,18 @@ import org.example.sejonglifebe.meeting.entity.FaceType;
 import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
+import org.example.sejonglifebe.meeting.service.CooldownStartEvent;
 import org.example.sejonglifebe.meeting.service.MeetingOpenCountService;
 import org.example.sejonglifebe.meeting.service.MeetingProfileService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -39,6 +42,9 @@ class MeetingProfileServiceTest {
 
     @Mock
     private MeetingOpenCountService meetingOpenCountService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private MeetingProfileService meetingProfileService;
@@ -195,7 +201,10 @@ class MeetingProfileServiceTest {
             MeetingContactResponse result = meetingProfileService.openContact(meetingAuthUser, 2L);
 
             assertThat(result.contact()).isEqualTo("insta_contact");
-            verify(meetingOpenCountService).startCooldown("kakao-1");
+
+            ArgumentCaptor<CooldownStartEvent> captor = ArgumentCaptor.forClass(CooldownStartEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertThat(captor.getValue().kakaoId()).isEqualTo("kakao-1");
         }
 
         @Test
