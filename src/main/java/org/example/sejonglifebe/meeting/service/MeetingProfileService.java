@@ -71,9 +71,6 @@ public class MeetingProfileService {
             throw new SejongLifeException(ErrorCode.SELF_PROFILE_OPEN_NOT_ALLOWED);
         }
 
-        MeetingProfile target = meetingProfileRepository.findById(profileId)
-                .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
-
         if (requester.hasBonusOpenCount()) {
             requester.decreaseBonusOpenCount();
         } else if (meetingOpenCountService.isRechargeable(meetingAuthUser.kakaoId())) {
@@ -81,6 +78,9 @@ public class MeetingProfileService {
         } else {
             throw new SejongLifeException(ErrorCode.INSUFFICIENT_OPEN_COUNT);
         }
+
+        MeetingProfile target = meetingProfileRepository.findById(profileId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
 
         return new MeetingContactResponse(target.getContact());
     }
