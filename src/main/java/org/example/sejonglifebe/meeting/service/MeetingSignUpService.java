@@ -17,8 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MeetingSignUpService {
 
-    private static final int INITIAL_OPEN_COUNT = 1;
-
     private final MeetingProfileRepository meetingProfileRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -41,7 +39,6 @@ public class MeetingSignUpService {
                 .hobby(request.hobby())
                 .dateStyle(request.dateStyle())
                 .contact(request.contact())
-                .availableOpenCount(INITIAL_OPEN_COUNT)
                 .build();
 
         meetingProfileRepository.save(meetingProfile);

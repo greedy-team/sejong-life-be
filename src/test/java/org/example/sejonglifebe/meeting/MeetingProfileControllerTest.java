@@ -8,6 +8,7 @@ import org.example.sejonglifebe.meeting.entity.FaceType;
 import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
+import org.example.sejonglifebe.meeting.service.MeetingOpenCountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,11 +50,17 @@ class MeetingProfileControllerTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private MeetingOpenCountService meetingOpenCountService;
+
     private MeetingProfile profile1;
     private MeetingProfile profile2;
 
     @BeforeEach
     void setUp() {
+        meetingOpenCountService.clearCooldown("kakao-1");
+        meetingOpenCountService.clearCooldown("kakao-2");
+        meetingOpenCountService.clearCooldown("kakao-3");
         meetingProfileRepository.deleteAll();
 
         profile1 = meetingProfileRepository.save(
@@ -65,7 +72,6 @@ class MeetingProfileControllerTest {
                         .hobby("축구")
                         .dateStyle("활동적인 데이트")
                         .contact("insta_1")
-                        .availableOpenCount(1)
                         .build()
         );
 
@@ -78,7 +84,6 @@ class MeetingProfileControllerTest {
                         .hobby("영화")
                         .dateStyle("조용한 데이트")
                         .contact("insta_2")
-                        .availableOpenCount(1)
                         .build()
         );
     }
@@ -125,9 +130,10 @@ class MeetingProfileControllerTest {
                         .hobby("독서")
                         .dateStyle("집에서 데이트")
                         .contact("insta_3")
-                        .availableOpenCount(0)
                         .build()
         );
+        meetingOpenCountService.startCooldown("kakao-3");
+
         String token = jwtTokenProvider.createMeetingToken("kakao-3");
 
         mockMvc.perform(post("/api/meeting/profiles/{profileId}/open", profile2.getId())

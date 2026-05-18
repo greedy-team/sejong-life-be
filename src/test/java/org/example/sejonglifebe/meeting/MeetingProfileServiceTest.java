@@ -4,20 +4,25 @@ import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.meeting.dto.MeetingContactResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
+import org.example.sejonglifebe.meeting.dto.MeetingOpenCountResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.FaceType;
 import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
+import org.example.sejonglifebe.meeting.service.CooldownStartEvent;
+import org.example.sejonglifebe.meeting.service.MeetingOpenCountService;
 import org.example.sejonglifebe.meeting.service.MeetingProfileService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -34,6 +39,12 @@ class MeetingProfileServiceTest {
 
     @Mock
     private MeetingProfileRepository meetingProfileRepository;
+
+    @Mock
+    private MeetingOpenCountService meetingOpenCountService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private MeetingProfileService meetingProfileService;
@@ -154,7 +165,7 @@ class MeetingProfileServiceTest {
     class OpenContactTest {
 
         @Test
-        @DisplayName("열람권이 있을 때 연락처를 정상적으로 반환하고 열람권을 차감한다")
+        @DisplayName("쿨다운이 끝났을 때 연락처를 반환하고 쿨다운을 시작한다")
         void openContact_success() {
             MeetingProfile requester = MeetingProfile.builder()
                     .kakaoId("kakao-1")
@@ -164,7 +175,7 @@ class MeetingProfileServiceTest {
                     .hobby("축구")
                     .dateStyle("활동적인 데이트")
                     .contact("requester_contact")
-                    .availableOpenCount(1)
+                    .bonusOpenCount(0)
                     .build();
 
             MeetingProfile target = MeetingProfile.builder()
@@ -175,7 +186,50 @@ class MeetingProfileServiceTest {
                     .hobby("영화")
                     .dateStyle("조용한 데이트")
                     .contact("insta_contact")
-                    .availableOpenCount(1)
+                    .bonusOpenCount(0)
+                    .build();
+
+            ReflectionTestUtils.setField(requester, "id", 1L);
+            ReflectionTestUtils.setField(target, "id", 2L);
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
+            given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(true);
+
+            MeetingContactResponse result = meetingProfileService.openContact(meetingAuthUser, 2L);
+
+            assertThat(result.contact()).isEqualTo("insta_contact");
+
+            ArgumentCaptor<CooldownStartEvent> captor = ArgumentCaptor.forClass(CooldownStartEvent.class);
+            verify(eventPublisher).publishEvent(captor.capture());
+            assertThat(captor.getValue().kakaoId()).isEqualTo("kakao-1");
+        }
+
+        @Test
+        @DisplayName("보너스 열람권이 있을 때 보너스 열람권을 먼저 차감한다")
+        void openContact_success_bonusFirst() {
+            MeetingProfile requester = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("requester_contact")
+                    .bonusOpenCount(1)
+                    .build();
+
+            MeetingProfile target = MeetingProfile.builder()
+                    .kakaoId("kakao-2")
+                    .gender(Gender.FEMALE)
+                    .faceType(FaceType.CAT)
+                    .birthYear(2001)
+                    .hobby("영화")
+                    .dateStyle("조용한 데이트")
+                    .contact("insta_contact")
+                    .bonusOpenCount(0)
                     .build();
 
             ReflectionTestUtils.setField(requester, "id", 1L);
@@ -186,14 +240,13 @@ class MeetingProfileServiceTest {
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
             given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
 
-            MeetingContactResponse result = meetingProfileService.openContact(meetingAuthUser, 2L);
+            meetingProfileService.openContact(meetingAuthUser, 2L);
 
-            assertThat(result.contact()).isEqualTo("insta_contact");
-            assertThat(requester.getAvailableOpenCount()).isEqualTo(0);
+            assertThat(requester.getBonusOpenCount()).isEqualTo(0);
         }
 
         @Test
-        @DisplayName("열람권이 없을 때 예외를 던진다")
+        @DisplayName("열람권이 없고 쿨다운 중이면 예외를 던진다")
         void openContact_fail_insufficientOpenCount() {
             MeetingProfile requester = MeetingProfile.builder()
                     .kakaoId("kakao-1")
@@ -203,7 +256,7 @@ class MeetingProfileServiceTest {
                     .hobby("축구")
                     .dateStyle("활동적인 데이트")
                     .contact("requester_contact")
-                    .availableOpenCount(0)
+                    .bonusOpenCount(0)
                     .build();
 
             ReflectionTestUtils.setField(requester, "id", 1L);
@@ -211,6 +264,7 @@ class MeetingProfileServiceTest {
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(false);
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 2L))
                     .isInstanceOf(SejongLifeException.class)
@@ -228,7 +282,7 @@ class MeetingProfileServiceTest {
                     .hobby("축구")
                     .dateStyle("활동적인 데이트")
                     .contact("requester_contact")
-                    .availableOpenCount(1)
+                    .bonusOpenCount(0)
                     .build();
 
             ReflectionTestUtils.setField(requester, "id", 1L);
@@ -253,7 +307,7 @@ class MeetingProfileServiceTest {
                     .hobby("축구")
                     .dateStyle("활동적인 데이트")
                     .contact("requester_contact")
-                    .availableOpenCount(1)
+                    .bonusOpenCount(0)
                     .build();
 
             ReflectionTestUtils.setField(requester, "id", 1L);
@@ -261,11 +315,81 @@ class MeetingProfileServiceTest {
             MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
 
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
+            given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(true);
             given(meetingProfileRepository.findById(999L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> meetingProfileService.openContact(meetingAuthUser, 999L))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.MEETING_PROFILE_NOT_FOUND.getErrorMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("열람권 조회")
+    class GetOpenCountTest {
+
+        @Test
+        @DisplayName("쿨다운 중일 때 열람권 0과 남은 시간을 반환한다")
+        void getOpenCount_duringCooldown() {
+            MeetingProfile profile = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("contact1")
+                    .bonusOpenCount(1)
+                    .build();
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(profile));
+            given(meetingOpenCountService.getRemainingCooldownSeconds("kakao-1")).willReturn(2400L);
+
+            MeetingOpenCountResponse result = meetingProfileService.getOpenCount(meetingAuthUser);
+
+            assertThat(result.availableOpenCount()).isEqualTo(0);
+            assertThat(result.bonusOpenCount()).isEqualTo(1);
+            assertThat(result.cooldownRemainingSeconds()).isEqualTo(2400L);
+        }
+
+        @Test
+        @DisplayName("쿨다운이 끝났을 때 열람권 1과 남은 시간 0을 반환한다")
+        void getOpenCount_cooldownFinished() {
+            MeetingProfile profile = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("contact1")
+                    .bonusOpenCount(0)
+                    .build();
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(profile));
+            given(meetingOpenCountService.getRemainingCooldownSeconds("kakao-1")).willReturn(0L);
+
+            MeetingOpenCountResponse result = meetingProfileService.getOpenCount(meetingAuthUser);
+
+            assertThat(result.availableOpenCount()).isEqualTo(1);
+            assertThat(result.bonusOpenCount()).isEqualTo(0);
+            assertThat(result.cooldownRemainingSeconds()).isEqualTo(0L);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 유저 열람권 조회 시 예외를 던진다")
+        void getOpenCount_fail_userNotFound() {
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-999");
+
+            given(meetingProfileRepository.findByKakaoId("kakao-999")).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> meetingProfileService.getOpenCount(meetingAuthUser))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.USER_NOT_FOUND.getErrorMessage());
         }
     }
 
