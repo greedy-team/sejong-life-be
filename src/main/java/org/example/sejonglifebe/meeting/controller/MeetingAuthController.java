@@ -57,11 +57,12 @@ public class MeetingAuthController implements MeetingAuthControllerSwagger{
     public ResponseEntity<CommonResponse<LoginResponse>> signUp(
             @Parameter(description = "회원가입용 임시 토큰", required = true)
             @RequestHeader("Authorization") String authHeader,
-            @Valid @RequestBody MeetingSignUpRequest request) {
+            @Valid @RequestBody MeetingSignUpRequest request,
+            @RequestParam(required = false) String ref) {
 
         String signUpToken = jwtTokenExtractor.extractToken(authHeader);
 
-        LoginResponse response = meetingSignUpService.signUp(signUpToken, request);
+        LoginResponse response = meetingSignUpService.signUp(signUpToken, request, ref);
         return CommonResponse.of(HttpStatus.CREATED, "회원가입 완료", response);
     }
 }
