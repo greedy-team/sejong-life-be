@@ -13,6 +13,7 @@ import org.example.sejonglifebe.meeting.dto.StateResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Meeting Auth", description = "미팅 서비스 인증 (카카오 로그인)")
 public interface MeetingAuthControllerSwagger {
@@ -37,6 +38,7 @@ public interface MeetingAuthControllerSwagger {
     ResponseEntity<CommonResponse<LoginResponse>> signUp(
             @Parameter(description = "회원가입용 임시 토큰", required = true)
             @RequestHeader("Authorization") String authHeader,
-            @Valid @RequestBody MeetingSignUpRequest request);
+            @Valid @RequestBody MeetingSignUpRequest request,
+            @RequestParam(required = false) String ref);
 
 }

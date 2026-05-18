@@ -21,16 +21,13 @@ public class MeetingSignUpService {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
-    public LoginResponse signUp(String signUpToken, MeetingSignUpRequest request) {
-        // 1. signUpToken 검증 및 kakaoId 추출
+    public LoginResponse signUp(String signUpToken, MeetingSignUpRequest request, String ref) {
         String kakaoId = jwtTokenProvider.validateMeetingSignUpToken(signUpToken);
 
-        // 2. 이미 가입된 사용자인지 확인
         if (meetingProfileRepository.existsByKakaoId(kakaoId)) {
             throw new SejongLifeException(ErrorCode.ALREADY_EXIST_USER);
         }
 
-        // 3. MeetingProfile 생성 및 저장
         MeetingProfile meetingProfile = MeetingProfile.builder()
                 .kakaoId(kakaoId)
                 .gender(request.gender())
@@ -43,8 +40,20 @@ public class MeetingSignUpService {
 
         meetingProfileRepository.save(meetingProfile);
 
-        // 4. 최종 JWT 토큰 발급 (미팅 전용)
+        rewardRecommender(kakaoId, ref);
+
         String accessToken = jwtTokenProvider.createMeetingToken(kakaoId);
         return LoginResponse.loginSuccess(accessToken);
+    }
+
+    private void rewardRecommender(String newUserKakaoId, String recommendId) {
+        if (recommendId == null || recommendId.isBlank()) {
+            return;
+        }
+        if (recommendId.equals(newUserKakaoId)) {
+            return;
+        }
+        meetingProfileRepository.findByKakaoIdWithLock(recommendId)
+                .ifPresent(MeetingProfile::increaseBonusOpenCount);
     }
 }
