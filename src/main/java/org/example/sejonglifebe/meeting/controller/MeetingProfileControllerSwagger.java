@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
 import org.example.sejonglifebe.meeting.dto.MeetingContactResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingOpenCountResponse;
+import org.example.sejonglifebe.meeting.dto.MeetingProfileCountResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,12 @@ import java.util.List;
 
 @Tag(name = "Meeting Profile", description = "미팅 프로필 관리")
 public interface MeetingProfileControllerSwagger {
+
+    @Operation(
+            summary = "미팅 프로필 수 조회",
+            description = "전체/남성/여성 미팅 프로필 수를 반환합니다."
+    )
+    ResponseEntity<MeetingProfileCountResponse> getProfileCount();
 
     @Operation(
             summary = "미팅 프로필 전체 조회",

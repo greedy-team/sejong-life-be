@@ -6,6 +6,7 @@ import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.meeting.dto.MeetingContactResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingAuthUser;
 import org.example.sejonglifebe.meeting.dto.MeetingOpenCountResponse;
+import org.example.sejonglifebe.meeting.dto.MeetingProfileCountResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileResponse;
 import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.ContactViewHistory;
@@ -37,6 +38,12 @@ public class MeetingProfileService {
         int availableCount = remaining == 0 ? 1 : 0;
 
         return new MeetingOpenCountResponse(availableCount, profile.getBonusOpenCount(), remaining);
+    }
+
+    public MeetingProfileCountResponse getProfileCount() {
+        long male = meetingProfileRepository.countByGender(Gender.MALE);
+        long female = meetingProfileRepository.countByGender(Gender.FEMALE);
+        return new MeetingProfileCountResponse(male + female, male, female);
     }
 
     public List<MeetingProfileResponse> getAllMeetingProfiles(MeetingAuthUser meetingAuthUser) {
