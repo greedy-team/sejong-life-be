@@ -88,10 +88,10 @@ public class MeetingProfileService {
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
 
         if (!alreadyViewed) {
-            if (requester.hasBonusOpenCount()) {
-                requester.decreaseBonusOpenCount();
-            } else if (meetingOpenCountService.isRechargeable(meetingAuthUser.kakaoId())) {
+            if (meetingOpenCountService.isRechargeable(meetingAuthUser.kakaoId())) {
                 eventPublisher.publishEvent(new CooldownStartEvent(meetingAuthUser.kakaoId()));
+            } else if (requester.hasBonusOpenCount()) {
+                requester.decreaseBonusOpenCount();
             } else {
                 throw new SejongLifeException(ErrorCode.INSUFFICIENT_OPEN_COUNT);
             }

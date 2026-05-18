@@ -233,8 +233,8 @@ class MeetingProfileServiceTest {
         }
 
         @Test
-        @DisplayName("보너스 열람권이 있을 때 보너스 열람권을 먼저 차감한다")
-        void openContact_success_bonusFirst() {
+        @DisplayName("쿨다운 중이고 보너스 열람권이 있을 때 보너스 열람권을 차감한다")
+        void openContact_success_bonusUsedDuringCooldown() {
             MeetingProfile requester = MeetingProfile.builder()
                     .kakaoId("kakao-1")
                     .gender(Gender.MALE)
@@ -265,6 +265,7 @@ class MeetingProfileServiceTest {
             given(meetingProfileRepository.findByKakaoIdWithLock("kakao-1")).willReturn(Optional.of(requester));
             given(meetingProfileRepository.findById(2L)).willReturn(Optional.of(target));
             given(contactViewHistoryRepository.existsByViewerIdAndTargetId(1L, 2L)).willReturn(false);
+            given(meetingOpenCountService.isRechargeable("kakao-1")).willReturn(false);
 
             meetingProfileService.openContact(meetingAuthUser, 2L);
 
