@@ -18,6 +18,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -52,7 +54,9 @@ public class MeetingProfileService {
 
         Gender oppositeGender = meetingProfile.getGender() == Gender.MALE ? Gender.FEMALE : Gender.MALE;
 
-        return meetingProfileRepository.findByGender(oppositeGender).stream()
+        List<MeetingProfile> profiles = new ArrayList<>(meetingProfileRepository.findByGender(oppositeGender));
+        Collections.shuffle(profiles);
+        return profiles.stream()
                 .map(MeetingProfileResponse::from)
                 .toList();
     }
