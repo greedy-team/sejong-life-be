@@ -192,9 +192,18 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token)
                     .getPayload();
 
+            // type 클레임이 있으면 미팅 전용 토큰이므로 거부
+            String type = claims.get("type", String.class);
+            if (type != null) {
+                throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+            }
+
             Role role = Role.fromString(claims.get("role", String.class));
 
             return new AuthUser(claims.getSubject(), role);
+
+        } catch (SejongLifeException e) {
+            throw e;
 
         } catch (ExpiredJwtException e) {
             throw new SejongLifeException(ErrorCode.EXPIRED_TOKEN);
