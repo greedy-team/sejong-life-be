@@ -57,6 +57,12 @@ public interface MeetingProfileControllerSwagger {
     );
 
     @Operation(
+            summary = "미팅 회원 탈퇴",
+            description = "토큰 기반으로 본인의 미팅 프로필을 삭제합니다."
+    )
+    ResponseEntity<Void> deleteMyMeetingProfile(MeetingAuthUser meetingAuthUser);
+
+    @Operation(
             summary = "미팅 프로필 삭제",
             description = "미팅 프로필을 삭제합니다."
     )

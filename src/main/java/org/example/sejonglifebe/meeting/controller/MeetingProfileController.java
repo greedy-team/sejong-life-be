@@ -49,6 +49,12 @@ public class MeetingProfileController implements MeetingProfileControllerSwagger
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("")
+    public ResponseEntity<Void> deleteMyMeetingProfile(MeetingAuthUser meetingAuthUser) {
+        meetingProfileService.deleteMyMeetingProfile(meetingAuthUser);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateMeetingProfile(
             @PathVariable Long id,
