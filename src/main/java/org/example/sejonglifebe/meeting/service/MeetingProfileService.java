@@ -12,8 +12,10 @@ import org.example.sejonglifebe.meeting.dto.MeetingProfileUpdateRequest;
 import org.example.sejonglifebe.meeting.entity.ContactViewHistory;
 import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
+import org.example.sejonglifebe.meeting.entity.MeetingWithdrawal;
 import org.example.sejonglifebe.meeting.repository.ContactViewHistoryRepository;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
+import org.example.sejonglifebe.meeting.repository.MeetingWithdrawalRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class MeetingProfileService {
 
     private final MeetingProfileRepository meetingProfileRepository;
     private final ContactViewHistoryRepository contactViewHistoryRepository;
+    private final MeetingWithdrawalRepository meetingWithdrawalRepository;
     private final MeetingOpenCountService meetingOpenCountService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -109,12 +112,36 @@ public class MeetingProfileService {
     }
 
     @Transactional
+    public void deleteMyMeetingProfile(MeetingAuthUser meetingAuthUser) {
+        MeetingProfile profile = meetingProfileRepository.findByKakaoId(meetingAuthUser.kakaoId())
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
+
+        contactViewHistoryRepository.deleteByViewerId(profile.getId());
+        contactViewHistoryRepository.deleteByTargetId(profile.getId());
+        meetingProfileRepository.delete(profile);
+        meetingWithdrawalRepository.save(
+                MeetingWithdrawal.builder()
+                .kakaoId(meetingAuthUser.kakaoId())
+                .build());
+    }
+
+    @Transactional
     public void deleteMeetingProfile(Long id) {
         MeetingProfile profile = meetingProfileRepository.findById(id)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.MEETING_PROFILE_NOT_FOUND));
 
         contactViewHistoryRepository.deleteByViewerId(id);
         contactViewHistoryRepository.deleteByTargetId(id);
+        meetingProfileRepository.delete(profile);
+    }
+
+    @Transactional
+    public void withdrawMeetingProfile(MeetingAuthUser meetingAuthUser) {
+        MeetingProfile profile = meetingProfileRepository.findByKakaoId(meetingAuthUser.kakaoId())
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
+
+        contactViewHistoryRepository.deleteByViewerId(profile.getId());
+        contactViewHistoryRepository.deleteByTargetId(profile.getId());
         meetingProfileRepository.delete(profile);
     }
 }

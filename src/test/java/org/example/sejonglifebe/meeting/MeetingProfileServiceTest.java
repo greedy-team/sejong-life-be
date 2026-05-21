@@ -13,6 +13,7 @@ import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
 import org.example.sejonglifebe.meeting.repository.ContactViewHistoryRepository;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
+import org.example.sejonglifebe.meeting.repository.MeetingWithdrawalRepository;
 import org.example.sejonglifebe.meeting.service.CooldownStartEvent;
 import org.example.sejonglifebe.meeting.service.MeetingOpenCountService;
 import org.example.sejonglifebe.meeting.service.MeetingProfileService;
@@ -33,6 +34,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -44,6 +46,9 @@ class MeetingProfileServiceTest {
 
     @Mock
     private ContactViewHistoryRepository contactViewHistoryRepository;
+
+    @Mock
+    private MeetingWithdrawalRepository meetingWithdrawalRepository;
 
     @Mock
     private MeetingOpenCountService meetingOpenCountService;
@@ -511,7 +516,7 @@ class MeetingProfileServiceTest {
     }
 
     @Nested
-    @DisplayName("삭제")
+    @DisplayName("삭제 (관리자)")
     class DeleteMeetingProfileTest {
 
         @Test
@@ -546,6 +551,50 @@ class MeetingProfileServiceTest {
             assertThatThrownBy(() -> meetingProfileService.deleteMeetingProfile(999L))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.MEETING_PROFILE_NOT_FOUND.getErrorMessage());
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 탈퇴")
+    class DeleteMyMeetingProfileTest {
+
+        @Test
+        @DisplayName("탈퇴 시 ContactViewHistory를 삭제하고 탈퇴 이력을 저장한다")
+        void deleteMyMeetingProfile_success() {
+            MeetingProfile profile = MeetingProfile.builder()
+                    .kakaoId("kakao-1")
+                    .gender(Gender.MALE)
+                    .faceType(FaceType.DOG)
+                    .birthYear(2000)
+                    .hobby("축구")
+                    .dateStyle("활동적인 데이트")
+                    .contact("contact1")
+                    .build();
+
+            ReflectionTestUtils.setField(profile, "id", 1L);
+
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-1");
+
+            given(meetingProfileRepository.findByKakaoId("kakao-1")).willReturn(Optional.of(profile));
+
+            meetingProfileService.deleteMyMeetingProfile(meetingAuthUser);
+
+            verify(contactViewHistoryRepository).deleteByViewerId(1L);
+            verify(contactViewHistoryRepository).deleteByTargetId(1L);
+            verify(meetingProfileRepository).delete(profile);
+            verify(meetingWithdrawalRepository).save(any());
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 유저가 탈퇴 시 예외를 던진다")
+        void deleteMyMeetingProfile_fail_notFound() {
+            MeetingAuthUser meetingAuthUser = new MeetingAuthUser("kakao-999");
+
+            given(meetingProfileRepository.findByKakaoId("kakao-999")).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> meetingProfileService.deleteMyMeetingProfile(meetingAuthUser))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.USER_NOT_FOUND.getErrorMessage());
         }
     }
 }

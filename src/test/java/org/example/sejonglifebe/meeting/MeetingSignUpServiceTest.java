@@ -9,6 +9,7 @@ import org.example.sejonglifebe.meeting.entity.FaceType;
 import org.example.sejonglifebe.meeting.entity.Gender;
 import org.example.sejonglifebe.meeting.entity.MeetingProfile;
 import org.example.sejonglifebe.meeting.repository.MeetingProfileRepository;
+import org.example.sejonglifebe.meeting.repository.MeetingWithdrawalRepository;
 import org.example.sejonglifebe.meeting.service.MeetingSignUpService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,6 +33,9 @@ class MeetingSignUpServiceTest {
 
     @Mock
     private MeetingProfileRepository meetingProfileRepository;
+
+    @Mock
+    private MeetingWithdrawalRepository meetingWithdrawalRepository;
 
     @Mock
     private JwtTokenProvider jwtTokenProvider;
@@ -128,6 +132,31 @@ class MeetingSignUpServiceTest {
             assertThatThrownBy(() -> meetingSignUpService.signUp("signUpToken", buildRequest(), null))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.ALREADY_EXIST_USER.getErrorMessage());
+        }
+
+        @Test
+        @DisplayName("탈퇴 이력이 있는 유저가 재가입하면 추천인 보상이 지급되지 않는다")
+        void signUp_success_noRewardForRejoiner() {
+            MeetingProfile recommender = MeetingProfile.builder()
+                    .kakaoId("kakao-recommender")
+                    .gender(Gender.FEMALE)
+                    .faceType(FaceType.CAT)
+                    .birthYear(1999)
+                    .hobby("영화")
+                    .dateStyle("조용한 데이트")
+                    .contact("contact")
+                    .bonusOpenCount(0)
+                    .build();
+
+            given(jwtTokenProvider.validateMeetingSignUpToken("signUpToken")).willReturn("kakao-1");
+            given(meetingProfileRepository.existsByKakaoId("kakao-1")).willReturn(false);
+            given(jwtTokenProvider.createMeetingToken("kakao-1")).willReturn("accessToken");
+            given(meetingWithdrawalRepository.existsByKakaoId("kakao-1")).willReturn(true);
+
+            meetingSignUpService.signUp("signUpToken", buildRequest(), "kakao-recommender");
+
+            assertThat(recommender.getBonusOpenCount()).isEqualTo(0);
+            verify(meetingProfileRepository, never()).findByKakaoIdWithLock(any());
         }
     }
 }
