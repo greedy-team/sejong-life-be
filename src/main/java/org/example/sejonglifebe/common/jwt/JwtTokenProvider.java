@@ -61,10 +61,99 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .subject(portalInfo.getStudentId())
                 .claim("name", portalInfo.getName())
+                .claim("department", portalInfo.getDepartment())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
                 .compact();
+    }
+
+    // 미팅 회원가입용 임시 토큰 (카카오 ID만 포함)
+    public String createMeetingSignUpToken(String kakaoId) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + signUpTokenExpirationTime);
+
+        return Jwts.builder()
+                .subject(kakaoId)
+                .claim("type", "meeting_signup")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(key)
+                .compact();
+    }
+
+    // 미팅용 최종 JWT 토큰 생성
+    public String createMeetingToken(String kakaoId) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expirationTime);
+
+        return Jwts.builder()
+                .subject(kakaoId)
+                .claim("type", "meeting")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(key)
+                .compact();
+    }
+
+    // 미팅 최종 토큰 검증 및 카카오 ID 추출
+    public String validateMeetingToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            String type = claims.get("type", String.class);
+            if (!"meeting".equals(type)) {
+                throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+            }
+
+            return claims.getSubject();
+
+        } catch (ExpiredJwtException e) {
+            throw new SejongLifeException(ErrorCode.EXPIRED_TOKEN);
+
+        } catch (MalformedJwtException e) {
+            throw new SejongLifeException(ErrorCode.MALFORMED_TOKEN);
+
+        } catch (SignatureException e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+
+        } catch (Exception e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+        }
+    }
+
+    // 미팅 회원가입 토큰 검증 및 카카오 ID 추출
+    public String validateMeetingSignUpToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            String type = claims.get("type", String.class);
+            if (!"meeting_signup".equals(type)) {
+                throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+            }
+
+            return claims.getSubject();
+
+        } catch (ExpiredJwtException e) {
+            throw new SejongLifeException(ErrorCode.EXPIRED_TOKEN);
+
+        } catch (MalformedJwtException e) {
+            throw new SejongLifeException(ErrorCode.MALFORMED_TOKEN);
+
+        } catch (SignatureException e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+
+        } catch (Exception e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+        }
     }
 
     public PortalStudentInfo validateAndGetPortalInfo(String token) {
@@ -78,6 +167,7 @@ public class JwtTokenProvider {
             return PortalStudentInfo.builder()
                     .studentId(claims.getSubject())
                     .name(claims.get("name", String.class))
+                    .department(claims.get("department", String.class))
                     .build();
 
         } catch (ExpiredJwtException e) {
@@ -102,9 +192,18 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token)
                     .getPayload();
 
+            // type 클레임이 있으면 미팅 전용 토큰이므로 거부
+            String type = claims.get("type", String.class);
+            if (type != null) {
+                throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+            }
+
             Role role = Role.fromString(claims.get("role", String.class));
 
             return new AuthUser(claims.getSubject(), role);
+
+        } catch (SejongLifeException e) {
+            throw e;
 
         } catch (ExpiredJwtException e) {
             throw new SejongLifeException(ErrorCode.EXPIRED_TOKEN);

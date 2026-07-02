@@ -21,6 +21,9 @@ public class LoginResponse {
     @Schema(description = "신규 회원용 가입 토큰(임시)", example = "eyJhbGciOiJIUzI1NiJ9...")
     private final String signUpToken;
 
+    @Schema(description = "카카오 ID", example = "kakao_123456789")
+    private final String kakaoId;
+
     @Schema(description = "신규 회원 기본 정보")
     private final UserInfo userInfo;
 
@@ -52,6 +55,14 @@ public class LoginResponse {
                 .build();
     }
 
+    public static LoginResponse loginSuccess(String accessToken, String kakaoId) {
+        return LoginResponse.builder()
+                .isNewUser(false)
+                .accessToken(accessToken)
+                .kakaoId(kakaoId)
+                .build();
+    }
+
     /**
      * 신규 회원일 때 : 회원가입 필요, sign-up token 발급, 포털에서 가져온 기본 정보 제공
      */
@@ -60,6 +71,17 @@ public class LoginResponse {
                 .isNewUser(true)
                 .signUpToken(signUpToken)
                 .userInfo(UserInfo.from(portalInfo))
+                .build();
+    }
+
+    /**
+     * 미팅 신규 회원일 때 : 회원가입 필요, sign-up token 발급 (추가 정보 없음)
+     */
+    public static LoginResponse signUpRequired(String signUpToken, String kakaoId) {
+        return LoginResponse.builder()
+                .isNewUser(true)
+                .signUpToken(signUpToken)
+                .kakaoId(kakaoId)
                 .build();
     }
 }

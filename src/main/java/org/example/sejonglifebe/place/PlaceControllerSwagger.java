@@ -6,15 +6,24 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.common.dto.CommonResponse;
+import org.example.sejonglifebe.external.dto.MapLinksRequest;
+import org.example.sejonglifebe.external.dto.MapLinksResponse;
+import org.example.sejonglifebe.external.dto.PlaceSearchResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.dto.PlacePageResponse;
+import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,8 +31,9 @@ import org.springframework.web.multipart.MultipartFile;
 public interface PlaceControllerSwagger {
 
     @Operation(summary = "장소 목록 조회")
-    ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
-            @Valid @ModelAttribute PlaceSearchConditions conditions);
+    ResponseEntity<CommonResponse<PlacePageResponse>> getPlaces(
+            @Valid @ModelAttribute PlaceSearchConditions conditions,
+            Pageable pageable);
 
     @Operation(summary = "주간 핫플레이스 조회")
     ResponseEntity<CommonResponse<List<PlaceResponse>>> getHotPlaces();
@@ -41,11 +51,24 @@ public interface PlaceControllerSwagger {
             AuthUser authUser
     );
 
+    @Operation(summary = "장소 수정")
+    public ResponseEntity<CommonResponse<Void>> updatePlace(
+            @PathVariable("placeId") Long placeId,
+            @Valid @RequestBody PlaceUpdateRequest placeRequest,
+            AuthUser authUser
+    );
+
     @Operation(summary = "장소 삭제")
     ResponseEntity<CommonResponse<Void>> deletePlace(
             @PathVariable Long placeId,
             AuthUser authUser
     );
+
+    @Operation(summary = "추가할 장소 url 생성")
+    ResponseEntity<CommonResponse<MapLinksResponse>> buildUrl(@RequestBody MapLinksRequest request);
+
+    @Operation(summary = "추가할 장소명 검색")
+    ResponseEntity<CommonResponse<List<PlaceSearchResponse>>> search(@RequestParam("query") String query);
 
     @Operation(summary = "내 즐겨찾기 목록 조회")
     ResponseEntity<CommonResponse<List<PlaceResponse>>> getMyFavoritePlaces(

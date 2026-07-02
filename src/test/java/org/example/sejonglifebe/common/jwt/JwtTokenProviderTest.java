@@ -15,7 +15,11 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JwtTokenProviderTest {
 
@@ -148,6 +152,30 @@ class JwtTokenProviderTest {
             // then
             assertThat(authUser.studentId()).isEqualTo("21011111");
             assertThat(authUser.role()).isEqualTo(Role.USER);
+        }
+
+        @Test
+        @DisplayName("미팅 최종 토큰(type=meeting)으로 sejonglife 인증 시 INVALID_TOKEN 예외가 발생한다")
+        void validateAndGetAuthUser_withMeetingToken_throwsInvalidToken() {
+            // given
+            String meetingToken = jwtTokenProvider.createMeetingToken("kakao_123456789");
+
+            // when & then
+            assertThatThrownBy(() -> jwtTokenProvider.validateAndGetAuthUser(meetingToken))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.INVALID_TOKEN.getErrorMessage());
+        }
+
+        @Test
+        @DisplayName("미팅 회원가입 토큰(type=meeting_signup)으로 sejonglife 인증 시 INVALID_TOKEN 예외가 발생한다")
+        void validateAndGetAuthUser_withMeetingSignUpToken_throwsInvalidToken() {
+            // given
+            String meetingSignUpToken = jwtTokenProvider.createMeetingSignUpToken("kakao_123456789");
+
+            // when & then
+            assertThatThrownBy(() -> jwtTokenProvider.validateAndGetAuthUser(meetingSignUpToken))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.INVALID_TOKEN.getErrorMessage());
         }
     }
 }

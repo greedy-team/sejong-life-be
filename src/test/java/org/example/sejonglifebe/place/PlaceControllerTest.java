@@ -8,26 +8,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.time.LocalDateTime;
+import jakarta.persistence.EntityManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.sejonglifebe.auth.AuthUser;
-import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.entity.MapLinks;
-import org.example.sejonglifebe.place.view.PlaceViewLog;
-import org.example.sejonglifebe.place.view.PlaceViewLogRepository;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.user.UserRepository;
@@ -80,6 +77,9 @@ public class PlaceControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private EntityManager entityManager;
+
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
@@ -87,10 +87,11 @@ public class PlaceControllerTest {
     private S3Service s3Service;
 
     @Autowired
-    private PlaceViewLogRepository placeViewLogRepository;
+    StringRedisTemplate redisTemplate;
 
     private Place detailPlace;
     private Place place1, place2, place3, place4, place5, place6; // 테스트에서 사용하기 위해 필드로 선언
+    private Place partnerPlace1, partnerPlace2; // 제휴 장소
 
     @BeforeEach
     void setUp() {
@@ -98,7 +99,6 @@ public class PlaceControllerTest {
         placeRepository.deleteAll();
         tagRepository.deleteAll();
         categoryRepository.deleteAll();
-        placeViewLogRepository.deleteAll();
 
         Category category1 = new Category("식당");
         Category category2 = new Category("카페");
@@ -119,6 +119,7 @@ public class PlaceControllerTest {
         placeRepository.saveAll(List.of(place1, place2, place3, place4, place5, place6));
 
         detailPlace = place1;
+        redisTemplate.getConnectionFactory().getConnection().flushAll();
     }
 
     private record Img(String url, boolean main) {}
@@ -150,11 +151,12 @@ public class PlaceControllerTest {
     public void search_noCategory_noTags() throws Exception {
         mockMvc.perform(get("/api/places")
                         .param("category", "전체")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(6))
-                .andExpect(jsonPath("$.data[0].viewCount").value(0))
-                .andExpect(jsonPath("$.data[0].reviewCount").value(0))
+                .andExpect(jsonPath("$.data.places.length()").value(6))
+                .andExpect(jsonPath("$.data.places[0].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[0].reviewCount").value(0))
                 .andDo(print());
     }
 
@@ -165,15 +167,16 @@ public class PlaceControllerTest {
                         .param("category", "전체")
                         .param("tags", "맛집")
                         .param("tags", "가성비")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data.places.length()").value(1))
 
                 // 정렬 순서 검증
-                .andExpect(jsonPath("$.data[0].placeName").value("식당3")) // 두 번째 결과는 '식당1'
-                .andExpect(jsonPath("$.data[0].viewCount").value(0))
-                .andExpect(jsonPath("$.data[0].reviewCount").value(0));
+                .andExpect(jsonPath("$.data.places[0].placeName").value("식당3"))
+                .andExpect(jsonPath("$.data.places[0].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[0].reviewCount").value(0));
     }
 
     @Test
@@ -181,19 +184,20 @@ public class PlaceControllerTest {
     public void search_categoryRestaurant_noTags() throws Exception {
         mockMvc.perform(get("/api/places")
                         .param("category", "식당")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(3))
-                .andExpect(jsonPath("$.data[0].placeName").value("식당1"))
-                .andExpect(jsonPath("$.data[0].viewCount").value(0))
-                .andExpect(jsonPath("$.data[0].reviewCount").value(0))
-                .andExpect(jsonPath("$.data[1].placeName").value("식당2"))
-                .andExpect(jsonPath("$.data[1].viewCount").value(0))
-                .andExpect(jsonPath("$.data[1].reviewCount").value(0))
-                .andExpect(jsonPath("$.data[2].placeName").value("식당3"))
-                .andExpect(jsonPath("$.data[2].viewCount").value(0))
-                .andExpect(jsonPath("$.data[2].reviewCount").value(0));
+                .andExpect(jsonPath("$.data.places.length()").value(3))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("식당1"))
+                .andExpect(jsonPath("$.data.places[0].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[0].reviewCount").value(0))
+                .andExpect(jsonPath("$.data.places[1].placeName").value("식당2"))
+                .andExpect(jsonPath("$.data.places[1].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[1].reviewCount").value(0))
+                .andExpect(jsonPath("$.data.places[2].placeName").value("식당3"))
+                .andExpect(jsonPath("$.data.places[2].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[2].reviewCount").value(0));
     }
 
     @Test
@@ -202,16 +206,17 @@ public class PlaceControllerTest {
         mockMvc.perform(get("/api/places")
                         .param("category", "카페")
                         .param("tags", "분위기 좋은")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].placeName").value("카페1"))
-                .andExpect(jsonPath("$.data[0].viewCount").value(0))
-                .andExpect(jsonPath("$.data[0].reviewCount").value(0))
-                .andExpect(jsonPath("$.data[1].placeName").value("카페3"))
-                .andExpect(jsonPath("$.data[1].viewCount").value(0))
-                .andExpect(jsonPath("$.data[1].reviewCount").value(0));
+                .andExpect(jsonPath("$.data.places.length()").value(2))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("카페1"))
+                .andExpect(jsonPath("$.data.places[0].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[0].reviewCount").value(0))
+                .andExpect(jsonPath("$.data.places[1].placeName").value("카페3"))
+                .andExpect(jsonPath("$.data.places[1].viewCount").value(0))
+                .andExpect(jsonPath("$.data.places[1].reviewCount").value(0));
     }
 
     @Test
@@ -219,6 +224,7 @@ public class PlaceControllerTest {
     void search_wrongCategory_fail() throws Exception {
         mockMvc.perform(get("/api/places")
                         .param("category", "병원")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isNotFound())
@@ -233,6 +239,7 @@ public class PlaceControllerTest {
                         .param("category", "전체")
                         .param("tags", "맛집")
                         .param("tags", "진상부리기 좋은")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isNotFound())
@@ -246,13 +253,14 @@ public class PlaceControllerTest {
         mockMvc.perform(get("/api/places")
                         .param("category", "전체")
                         .param("keyword", "식당")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(3))
-                .andExpect(jsonPath("$.data[0].placeName").value("식당1"))
-                .andExpect(jsonPath("$.data[1].placeName").value("식당2"))
-                .andExpect(jsonPath("$.data[2].placeName").value("식당3"))
+                .andExpect(jsonPath("$.data.places.length()").value(3))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("식당1"))
+                .andExpect(jsonPath("$.data.places[1].placeName").value("식당2"))
+                .andExpect(jsonPath("$.data.places[2].placeName").value("식당3"))
                 .andDo(print());
     }
 
@@ -262,11 +270,12 @@ public class PlaceControllerTest {
         mockMvc.perform(get("/api/places")
                         .param("category", "카페")
                         .param("keyword", "카페1")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].placeName").value("카페1"))
+                .andExpect(jsonPath("$.data.places.length()").value(1))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("카페1"))
                 .andDo(print());
     }
 
@@ -277,11 +286,12 @@ public class PlaceControllerTest {
                         .param("category", "전체")
                         .param("tags", "맛집")
                         .param("keyword", "식당1")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].placeName").value("식당1"))
+                .andExpect(jsonPath("$.data.places.length()").value(1))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("식당1"))
                 .andDo(print());
     }
 
@@ -292,11 +302,12 @@ public class PlaceControllerTest {
                         .param("category", "카페")
                         .param("tags", "분위기 좋은")
                         .param("keyword", "카페3")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(1))
-                .andExpect(jsonPath("$.data[0].placeName").value("카페3"))
+                .andExpect(jsonPath("$.data.places.length()").value(1))
+                .andExpect(jsonPath("$.data.places[0].placeName").value("카페3"))
                 .andDo(print());
     }
 
@@ -306,10 +317,11 @@ public class PlaceControllerTest {
         mockMvc.perform(get("/api/places")
                         .param("category", "전체")
                         .param("keyword", "존재하지않는장소")
+                        .param("partnershipOnly", "false")
                         .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(0))
+                .andExpect(jsonPath("$.data.places.length()").value(0))
                 .andDo(print());
     }
 
@@ -358,6 +370,7 @@ public class PlaceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.viewCount").value(1));
 
+        entityManager.clear();
         Place updatedPlace = placeRepository.findById(placeId).get();
         assertThat(updatedPlace.getViewCount()).isEqualTo(1);
         assertThat(updatedPlace.getWeeklyViewCount()).isEqualTo(1);
@@ -368,43 +381,40 @@ public class PlaceControllerTest {
     void getPlaceDetail_withRecentViewLog_doesNotIncreaseViewCount() throws Exception {
         Long placeId = detailPlace.getId();
 
-        String viewerKey = ipUaHash(TEST_IP, TEST_UA);
-        placeViewLogRepository.save(new PlaceViewLog(
-                placeId, VIEWER_TYPE_IPUA, viewerKey, LocalDateTime.now()
-        ));
+        // given: Redis에 "최근 조회" 상태 심기
+        redisTemplate.opsForValue().set(redisPvKey(placeId), "1", java.time.Duration.ofHours(6));
 
+        // when & then
         mockMvc.perform(get("/api/places/" + placeId)
                         .header("X-Forwarded-For", TEST_IP)
                         .header(HttpHeaders.USER_AGENT, TEST_UA)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.viewCount").value(0))
-                .andExpect(cookie().doesNotExist("placeView"));
+                .andExpect(jsonPath("$.data.viewCount").value(0));
 
+        entityManager.clear();
         Place notUpdatedPlace = placeRepository.findById(placeId).get();
         assertThat(notUpdatedPlace.getViewCount()).isEqualTo(0);
         assertThat(notUpdatedPlace.getWeeklyViewCount()).isEqualTo(0);
     }
 
     @Test
-    @DisplayName("장소 상세 조회 시 동일 viewer가 '다른 장소'만 최근에 봤더라도 현재 장소는 조회수가 1 증가하고 view log를 저장한다")
+    @DisplayName("장소 상세 조회 시 동일 viewer가 '다른 장소'만 최근에 봤더라도 현재 장소는 조회수가 1 증가한다")
     void getPlaceDetail_withAnotherPlaceViewLog_increaseViewCount() throws Exception {
         Long placeId = detailPlace.getId();
         Long anotherPlaceId = 99L;
 
-        String viewerKey = ipUaHash(TEST_IP, TEST_UA);
-        placeViewLogRepository.save(new PlaceViewLog(
-                anotherPlaceId, VIEWER_TYPE_IPUA, viewerKey, LocalDateTime.now()
-        ));
+        String anotherKey = "pv:" + anotherPlaceId + ":" + VIEWER_TYPE_IPUA + ":" + ipUaHash(TEST_IP, TEST_UA);
+        redisTemplate.opsForValue().set(anotherKey, "1", java.time.Duration.ofHours(6));
 
         mockMvc.perform(get("/api/places/" + placeId)
                         .header("X-Forwarded-For", TEST_IP)
                         .header(HttpHeaders.USER_AGENT, TEST_UA)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.viewCount").value(1))
-                .andExpect(cookie().doesNotExist("placeView"));
+                .andExpect(jsonPath("$.data.viewCount").value(1));
 
+        entityManager.clear();
         Place updatedPlace = placeRepository.findById(placeId).get();
         assertThat(updatedPlace.getViewCount()).isEqualTo(1);
         assertThat(updatedPlace.getWeeklyViewCount()).isEqualTo(1);
@@ -413,14 +423,13 @@ public class PlaceControllerTest {
     @Test
     @DisplayName("주간 핫플레이스 조회 시 weeklyViewCount가 높은 순으로 정렬되어 반환된다")
     void getHotPlaces_success() throws Exception {
-        // given: 테스트를 위해 특정 장소들의 weeklyViewCount 값을 임의로 설정
-        detailPlace.setWeeklyViewCount(100L); // 식당1
-        place2.setWeeklyViewCount(50L);      // 식당2
-        place6.setWeeklyViewCount(200L);     // 카페3
+        detailPlace.setWeeklyViewCount(100L);
+        place2.setWeeklyViewCount(50L);
+        place6.setWeeklyViewCount(200L);
         placeRepository.saveAll(List.of(detailPlace, place2, place6));
 
         // when & then
-        mockMvc.perform(get("/api/places/hot") // 핫플레이스 조회 API 엔드포인트
+        mockMvc.perform(get("/api/places/hot")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("핫플레이스 조회 성공"))
@@ -447,6 +456,8 @@ public class PlaceControllerTest {
         PlaceRequest request = new PlaceRequest(
                 "새로운 장소",
                 "새로운 주소",
+                127.0,
+                70.0,
                 List.of(category.getId()), // CategoryInfo 리스트 괄호 닫기
                 List.of(tag1.getId(), tag2.getId()),
                 new MapLinks("https://naver.com/place", "", ""),
@@ -499,6 +510,8 @@ public class PlaceControllerTest {
         PlaceRequest request = new PlaceRequest(
                 "썸네일 장소",
                 "썸네일 주소",
+                127.0,
+                70.0,
                 List.of(category.getId()),
                 List.of(tag.getId()),
                 new MapLinks("", "https://kakao.com/place", ""),
@@ -559,11 +572,13 @@ public class PlaceControllerTest {
                 .orElseThrow(() -> new IllegalStateException("가성비 태그가 없습니다."));
 
         given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
-                .willReturn(new AuthUser("21011111", Role.USER)); // ✅ USER
+                .willReturn(new AuthUser("21011111", Role.USER));
 
         PlaceRequest request = new PlaceRequest(
                 "권한없는 장소",
                 "권한없는 주소",
+                127.0,
+                70.0,
                 List.of(category.getId()),
                 List.of(tag1.getId(), tag2.getId()),
                 new MapLinks("https://naver.com/place", "", ""),
@@ -633,15 +648,183 @@ public class PlaceControllerTest {
         assertThat(placeRepository.findById(placeId)).isPresent();
     }
 
-    private static String sha256Hex(String input) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(digest.length * 2);
-            for (byte b : digest) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    @Test
+    @DisplayName("partnershipOnly=true 이면 제휴 장소만 조회된다")
+    void search_partnershipOnly_true() throws Exception {
+        // given
+        Category category = categoryRepository.findByName("식당")
+                .orElseThrow(() -> new IllegalStateException("식당 카테고리가 없습니다."));
+        Tag tag = tagRepository.findByName("맛집")
+                .orElseThrow(() -> new IllegalStateException("맛집 태그가 없습니다."));
+
+        Place partnerPlace = Place.createPlace("제휴식당", "제휴주소", 127.0, 37.0, null, true, "10% 할인");
+        partnerPlace.addCategory(category);
+        partnerPlace.addTag(tag);
+        placeRepository.save(partnerPlace);
+
+        // when & then
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("partnershipOnly", "true")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.places.length()").value(1))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("partnershipOnly=false 이면 제휴 여부 관계없이 모든 장소가 조회된다")
+    void search_partnershipOnly_false_withPartnerPlace() throws Exception {
+        // given
+        Category category = categoryRepository.findByName("식당")
+                .orElseThrow(() -> new IllegalStateException("식당 카테고리가 없습니다."));
+        Tag tag = tagRepository.findByName("맛집")
+                .orElseThrow(() -> new IllegalStateException("맛집 태그가 없습니다."));
+
+        Place partnerPlace = Place.createPlace("제휴식당", "제휴주소", 127.0, 37.0, null, true, "10% 할인");
+        partnerPlace.addCategory(category);
+        partnerPlace.addTag(tag);
+        placeRepository.save(partnerPlace);
+
+        // when & then
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("partnershipOnly", "false")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.places.length()").value(7)) // 기존 6개 + 제휴 1개
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("장소 수정 성공 - JSON 요청으로 DTO 필드가 반영된다")
+    void updatePlace_success_json() throws Exception {
+        // given
+        Long placeId = detailPlace.getId();
+
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.ADMIN));
+
+        Category cafe = categoryRepository.findByName("카페")
+                .orElseThrow(() -> new IllegalStateException("카페 카테고리가 없습니다."));
+        Tag tag3 = tagRepository.findByName("분위기 좋은")
+                .orElseThrow(() -> new IllegalStateException("분위기 좋은 태그가 없습니다."));
+        Tag tag4 = tagRepository.findByName("콘센트 있는")
+                .orElseThrow(() -> new IllegalStateException("콘센트 있는 태그가 없습니다."));
+
+        PlaceUpdateRequest request = new PlaceUpdateRequest(
+                List.of(cafe.getId()),
+                List.of(tag3.getId(), tag4.getId()),
+                new MapLinks(
+                        "https://n-updated.com",
+                        "https://k-updated.com",
+                        "https://g-updated.com"
+                ),
+                true,
+                "재학생 10% 할인"
+        );
+
+        // when & then
+        mockMvc.perform(put("/api/places/{placeId}", placeId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer test-token")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("장소 수정 성공"));
+
+        // then: DB 반영 확인
+        Place updated = placeRepository.findById(placeId).orElseThrow();
+
+        assertThat(updated.getMapLinks().getNaverMap()).isEqualTo("https://n-updated.com");
+        assertThat(updated.getMapLinks().getKakaoMap()).isEqualTo("https://k-updated.com");
+        assertThat(updated.getMapLinks().getGoogleMap()).isEqualTo("https://g-updated.com");
+
+        assertThat(updated.isPartnership()).isTrue();
+        assertThat(updated.getPartnershipContent()).isEqualTo("재학생 10% 할인");
+
+        assertThat(updated.getPlaceCategories()).hasSize(1);
+        assertThat(updated.getPlaceCategories().get(0).getCategory().getName()).isEqualTo("카페");
+
+        assertThat(updated.getPlaceTags()).hasSize(2);
+        assertThat(updated.getPlaceTags())
+                .extracting(pt -> pt.getTag().getName())
+                .containsExactlyInAnyOrder("분위기 좋은", "콘센트 있는");
+    }
+
+    @Test
+    @DisplayName("장소 수정 권한 없음 - USER면 ACCESS_DENIED 반환")
+    void updatePlace_fail_accessDenied_whenUserRole() throws Exception {
+        // given
+        Long placeId = detailPlace.getId();
+
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.USER));
+
+        Category cafe = categoryRepository.findByName("카페")
+                .orElseThrow();
+        Tag tag3 = tagRepository.findByName("분위기 좋은")
+                .orElseThrow();
+
+        PlaceUpdateRequest request = new PlaceUpdateRequest(
+                List.of(cafe.getId()),
+                List.of(tag3.getId()),
+                new MapLinks(
+                        "https://naver.com/place",
+                        "https://kakao.com/place",
+                        "https://google.com/maps"
+                ),
+                false,
+                ""
+        );
+
+        // when & then
+        mockMvc.perform(put("/api/places/{placeId}", placeId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .header("Authorization", "Bearer test-token")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 장소 수정 실패 - PLACE_NOT_FOUND 반환")
+    void updatePlace_fail_placeNotFound() throws Exception {
+        // given
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.ADMIN));
+
+        Category cafe = categoryRepository.findByName("카페")
+                .orElseThrow();
+        Tag tag3 = tagRepository.findByName("분위기 좋은")
+                .orElseThrow();
+
+        PlaceUpdateRequest request = new PlaceUpdateRequest(
+                List.of(cafe.getId()),
+                List.of(tag3.getId()),
+                new MapLinks(
+                        "https://naver.com/place",
+                        "https://kakao.com/place",
+                        "https://google.com/maps"
+                ),
+                false,
+                ""
+        );
+
+        // when & then
+        mockMvc.perform(put("/api/places/{placeId}", NON_EXISTENT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .header("Authorization", "Bearer test-token")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"));
+    }
+
+    private String redisPvKey(Long placeId) {
+        String viewerKey = ipUaHash(TEST_IP, TEST_UA);
+        return "pv:" + placeId + ":" + VIEWER_TYPE_IPUA + ":" + viewerKey;
     }
 }

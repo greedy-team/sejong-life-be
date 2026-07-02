@@ -1,5 +1,6 @@
 #!/bin/bash
 
+JAVA_HOME="/opt/jdk/jdk-17.0.12+7"
 NGINX_CONFIG_PATH=$(readlink /etc/nginx/conf.d/service-env.conf)
 JAR_PATH="/home/ubuntu/sejong-life-prod/build/libs/server.jar"
 CONFIG_PATH="file:/home/ubuntu/sejong-life-prod/"
@@ -22,8 +23,10 @@ echo "> Next Profile: $PROFILE"
 echo ""
 
 echo "Starting new server..."
+echo "Using Java: ${JAVA_HOME}/bin/java"
+${JAVA_HOME}/bin/java -version
 
-nohup java -jar \
+nohup ${JAVA_HOME}/bin/java -jar \
   -Dspring.profiles.active=${PROFILE} \
   -Dspring.config.location=${CONFIG_PATH} \
   ${JAR_PATH} > /dev/null 2>&1 &

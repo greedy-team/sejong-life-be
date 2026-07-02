@@ -16,13 +16,13 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '17.0.12'
           distribution: 'temurin'
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Start MySQL container
+      - name: Start MySQL & Redis containers
         run: docker compose up -d --wait
         env:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -39,6 +39,9 @@ jobs:
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
+
           SPRING_JPA_HIBERNATE_DDL_AUTO: create
           SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
           SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
@@ -50,6 +53,11 @@ jobs:
 
           CLOUD_AWS_S3_BUCKET: sejong-life-bucket
           CLOUD_AWS_REGION_STATIC: ap-northeast-2
+
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
 
       - name: Stop MySQL container
         if: always()
@@ -70,5 +78,12 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script: sudo bash /home/ubuntu/sejong-life-prod/deploy.sh
-            
+          script: |
+            sudo env \
+              NAVER_CLIENT_ID='${{ secrets.NAVER_CLIENT_ID }}' \
+              NAVER_CLIENT_SECRET='${{ secrets.NAVER_CLIENT_SECRET }}' \
+              KAKAO_REST_API_KEY='${{ secrets.KAKAO_REST_API_KEY }}' \
+              GOOGLE_MAPS_API_KEY='${{ secrets.GOOGLE_MAPS_API_KEY }}' \
+              REDIS_HOST='${{ secrets.REDIS_HOST }}' \
+              REDIS_PORT='6379' \
+              bash /home/ubuntu/sejong-life-prod/deploy.sh

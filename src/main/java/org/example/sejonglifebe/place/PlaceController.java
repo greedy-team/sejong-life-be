@@ -6,16 +6,23 @@ import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.auth.LoginRequired;
 import org.example.sejonglifebe.common.dto.CommonResponse;
+import org.example.sejonglifebe.external.MapLinksService;
+import org.example.sejonglifebe.external.dto.MapLinksRequest;
+import org.example.sejonglifebe.external.dto.MapLinksResponse;
+import org.example.sejonglifebe.external.dto.PlaceSearchResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.place.favorite.FavoritePlaceService;
 import org.example.sejonglifebe.user.Role;
 import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
+import org.example.sejonglifebe.place.dto.PlacePageResponse;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,7 +30,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,11 +45,13 @@ public class PlaceController implements PlaceControllerSwagger {
 
     private final PlaceService placeService;
     private final FavoritePlaceService favoritePlaceService;
+    private final MapLinksService mapLinksService;
 
     @GetMapping
-    public ResponseEntity<CommonResponse<List<PlaceResponse>>> getPlaces(
-            @Valid @ModelAttribute PlaceSearchConditions conditions) {
-        List<PlaceResponse> response = placeService.getPlaceByConditions(conditions);
+    public ResponseEntity<CommonResponse<PlacePageResponse>> getPlaces(
+            @Valid @ModelAttribute PlaceSearchConditions conditions,
+            Pageable pageable) {
+        PlacePageResponse response = PlacePageResponse.of(placeService.getPlaceByConditions(conditions, pageable));
         return CommonResponse.of(HttpStatus.OK, "장소 목록 조회 성공", response);
     }
 
@@ -70,6 +82,34 @@ public class PlaceController implements PlaceControllerSwagger {
     }
 
     @LoginRequired(role = Role.ADMIN)
+    @PutMapping("/{placeId}")
+    public ResponseEntity<CommonResponse<Void>> updatePlace(
+            @PathVariable("placeId") Long placeId,
+            @Valid @RequestBody PlaceUpdateRequest placeRequest,
+            AuthUser authUser
+    ) {
+        placeService.updatePlace(placeId, placeRequest, authUser);
+        return CommonResponse.of(HttpStatus.OK, "장소 수정 성공", null);
+    }
+
+    /*
+    *
+    * @LoginRequired
+    @PutMapping("/{reviewId}")
+    public ResponseEntity<CommonResponse<Void>> updateReview(
+            @PathVariable Long placeId,
+            @PathVariable Long reviewId,
+            @Valid @RequestBody ReviewRequest reviewRequest,
+            AuthUser authUser) {
+
+        reviewService.updateReview(placeId, reviewId, reviewRequest, authUser);
+
+        return CommonResponse.of(HttpStatus.OK, "리뷰 수정 성공", null);
+    }
+    *
+    * */
+
+    @LoginRequired(role = Role.ADMIN)
     @DeleteMapping("/{placeId}")
     public ResponseEntity<CommonResponse<Void>> deletePlace(
             @PathVariable Long placeId,
@@ -77,6 +117,18 @@ public class PlaceController implements PlaceControllerSwagger {
     ) {
         placeService.deletePlace(placeId, authUser);
         return CommonResponse.of(HttpStatus.OK, "장소 삭제 성공", null);
+    }
+
+    @PostMapping("/urls")
+    public ResponseEntity<CommonResponse<MapLinksResponse>> buildUrl(@RequestBody MapLinksRequest request) {
+        MapLinksResponse response = mapLinksService.buildUrl(request);
+        return CommonResponse.of(HttpStatus.OK, "url 생성 성공", response);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<CommonResponse<List<PlaceSearchResponse>>> search(@RequestParam("query") String query) {
+        List<PlaceSearchResponse> response = mapLinksService.search(query);
+        return CommonResponse.of(HttpStatus.OK, "장소명 검색 성공", response);
     }
 
     @LoginRequired

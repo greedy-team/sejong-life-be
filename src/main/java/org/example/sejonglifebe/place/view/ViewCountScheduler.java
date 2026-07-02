@@ -1,4 +1,4 @@
-package org.example.sejonglifebe.place.util;
+package org.example.sejonglifebe.place.view;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

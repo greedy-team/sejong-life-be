@@ -45,3 +45,6 @@ out/
 
 # Log files
 /logs
+
+# Local notes
+notes.md

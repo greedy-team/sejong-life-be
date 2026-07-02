@@ -36,7 +36,17 @@ public enum ErrorCode {
     S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3 파일 삭제 중 오류가 발생했습니다."),
     PERMISSION_DENIED(HttpStatus.FORBIDDEN, "리뷰 수정, 삭제 권한이 없습니다"),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
-    ALREADY_FAVORITE_PLACE(HttpStatus.BAD_REQUEST, "이미 즐겨찾기로 등록된 장소입니다.");
+    ALREADY_FAVORITE_PLACE(HttpStatus.BAD_REQUEST, "이미 즐겨찾기로 등록된 장소입니다."),
+    KAKAO_TOKEN_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "카카오 토큰 발급에 실패했습니다."),
+    KAKAO_USER_INFO_REQUEST_FAILED(HttpStatus.BAD_GATEWAY, "카카오 사용자 정보 조회에 실패했습니다."),
+    ALREADY_EXIST_USER(HttpStatus.CONFLICT, "이미 가입된 사용자입니다."),
+    INVALID_GENDER(HttpStatus.BAD_REQUEST, "유효하지 않은 성별입니다."),
+    INVALID_FACE_TYPE(HttpStatus.BAD_REQUEST, "유효하지 않은 얼굴상입니다."),
+    INVALID_OAUTH_STATE(HttpStatus.BAD_REQUEST, "유효하지 않은 OAuth State입니다."),
+    MEETING_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 미팅 프로필입니다."),
+    INSUFFICIENT_OPEN_COUNT(HttpStatus.FORBIDDEN, "열람권이 부족합니다."),
+    SELF_PROFILE_OPEN_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "자신의 프로필은 열람할 수 없습니다.");
+
     private final HttpStatus httpStatus;
     private final String errorMessage;
 }

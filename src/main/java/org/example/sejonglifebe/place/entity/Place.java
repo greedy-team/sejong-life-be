@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +37,12 @@ public class Place {
 
     @Column(nullable = false)
     private String address;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
 
     @Convert(converter = MapLinkConverter.class)
     @Column(columnDefinition = "text")
@@ -84,6 +89,8 @@ public class Place {
     public static Place createPlace(
             String name,
             String address,
+            Double latitude,
+            Double longitude,
             MapLinks mapLinks,
             boolean isPartnership,
             String partnershipContent
@@ -95,6 +102,8 @@ public class Place {
                 .mainImageUrl(null)
                 .build();
 
+        place.latitude = latitude;
+        place.longitude = longitude;
         place.isPartnership = isPartnership;
         place.partnershipContent = partnershipContent;
         place.viewCount = 0L;
@@ -151,4 +160,34 @@ public class Place {
                 .orElse(placeImages.get(0).getUrl()); // 만약 대표 이미지가 없다면, 그냥 첫 번째 이미지 반환
     }
 
+    public void updateMapLinks(MapLinks mapLinks) {
+        this.mapLinks = mapLinks;
+    }
+
+    public void updatePartnership(boolean partnership, String content) {
+        this.isPartnership = partnership;
+        this.partnershipContent = partnership ? content : null;
+    }
+
+    public void replaceTags(List<Tag> tags) {
+        for (PlaceTag pt : new ArrayList<>(this.placeTags)) {
+            pt.getTag().getPlaceTags().remove(pt);
+        }
+        this.placeTags.clear();
+
+        for (Tag tag : tags) {
+            PlaceTag.createPlaceTag(this, tag);
+        }
+    }
+
+    public void replaceCategories(List<Category> categories) {
+        for (PlaceCategory pc : new ArrayList<>(this.placeCategories)) {
+            pc.getCategory().getPlaceCategories().remove(pc);
+        }
+        this.placeCategories.clear();
+
+        for (Category category : categories) {
+            PlaceCategory.createPlaceCategory(this, category);
+        }
+    }
 }
