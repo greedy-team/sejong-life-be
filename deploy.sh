@@ -1,9 +1,9 @@
 #!/bin/bash
 
 JAVA_HOME="/opt/jdk/jdk-17.0.12+7"
-NGINX_CONFIG_PATH=$(readlink /etc/nginx/conf.d/service-env.conf)
-JAR_PATH="/home/ubuntu/sejong-life-prod/build/libs/server.jar"
-CONFIG_PATH="file:/home/ubuntu/sejong-life-prod/"
+NGINX_CONFIG_PATH=$(readlink /etc/nginx/conf.d/service-env.inc)
+JAR_PATH="/home/ubuntu/sejong-life-dev/build/libs/server.jar"
+CONFIG_PATH="file:/home/ubuntu/sejong-life-dev/"
 
 if [[ -z "$NGINX_CONFIG_PATH" ]]; then
   echo "Nginx Config Not Found, Set Profile blue"
@@ -68,7 +68,7 @@ done
 echo ""
 
 echo "Nginx Traffic Change"
-sudo ln -sf /etc/nginx/conf.d/service-${PROFILE}.conf /etc/nginx/conf.d/service-env.conf
+sudo ln -sf /etc/nginx/conf.d/service-${PROFILE}.inc /etc/nginx/conf.d/service-env.inc
 sudo nginx -s reload
 echo "Traffic Change Complete"
 echo ""

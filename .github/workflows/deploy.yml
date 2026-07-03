@@ -70,7 +70,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           source: "build/libs/server.jar"
-          target: "~/sejong-life-prod"
+          target: "~/sejong-life-dev"
 
       - name: Execute Server
         uses: appleboy/ssh-action@master
@@ -86,4 +86,4 @@ jobs:
               GOOGLE_MAPS_API_KEY='${{ secrets.GOOGLE_MAPS_API_KEY }}' \
               REDIS_HOST='${{ secrets.REDIS_HOST }}' \
               REDIS_PORT='6379' \
-              bash /home/ubuntu/sejong-life-prod/deploy.sh
+              bash /home/ubuntu/sejong-life-dev/deploy.sh
