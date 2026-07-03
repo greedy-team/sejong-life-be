@@ -68,7 +68,7 @@ done
 echo ""
 
 echo "Nginx Traffic Change"
-sudo ln -sf /etc/nginx/conf.d/service-${PROFILE}.conf /etc/nginx/conf.d/service-env.conf
+sudo ln -sf /etc/nginx/conf.d/service-${PROFILE}.inc /etc/nginx/conf.d/service-env.inc
 sudo nginx -s reload
 echo "Traffic Change Complete"
 echo ""
