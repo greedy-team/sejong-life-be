@@ -1,7 +1,7 @@
 #!/bin/bash
 
 JAVA_HOME="/opt/jdk/jdk-17.0.12+7"
-NGINX_CONFIG_PATH=$(readlink /etc/nginx/conf.d/service-env.conf)
+NGINX_CONFIG_PATH=$(readlink /etc/nginx/conf.d/service-env.inc)
 JAR_PATH="/home/ubuntu/sejong-life-dev/build/libs/server.jar"
 CONFIG_PATH="file:/home/ubuntu/sejong-life-dev/"
 
