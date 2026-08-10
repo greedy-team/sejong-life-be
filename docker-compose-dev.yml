@@ -12,6 +12,7 @@ services:
     volumes:
       - ./application.yml:/app/config/application.yml
     environment:
+      - SPRING_PROFILES_ACTIVE=blue
       - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
       - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
       - KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
@@ -31,6 +32,7 @@ services:
     volumes:
       - ./application.yml:/app/config/application.yml
     environment:
+      - SPRING_PROFILES_ACTIVE=green
       - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
       - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
       - KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
