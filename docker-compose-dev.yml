@@ -1,0 +1,45 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: sejong-life-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+
+  blue:
+    container_name: blue
+    image: sejonglife/sejong-life:dev
+    volumes:
+      - ./application.yml:/app/config/application.yml
+    environment:
+      - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
+      - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
+      - KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+    expose:
+      - 8080
+      - 9091
+    ports:
+      - "8081:8080"
+      - "9091:9091"
+    depends_on:
+      - redis
+
+  green:
+    container_name: green
+    image: sejonglife/sejong-life:dev
+    volumes:
+      - ./application.yml:/app/config/application.yml
+    environment:
+      - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
+      - NAVER_CLIENT_SECRET=${NAVER_CLIENT_SECRET}
+      - KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+    expose:
+      - 8080
+      - 9091
+    ports:
+      - "8082:8080"
+      - "9092:9091"
+    depends_on:
+      - redis
