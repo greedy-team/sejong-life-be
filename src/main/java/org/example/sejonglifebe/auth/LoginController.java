@@ -7,9 +7,14 @@ import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.auth.dto.LoginRequest;
 import org.example.sejonglifebe.common.dto.CommonResponse;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.user.Role;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,20 +28,49 @@ import org.springframework.web.bind.annotation.RestController;
 public class LoginController {
 
     private final LoginService loginService;
+    private final RefreshTokenCookieUtil refreshTokenCookieUtil;
 
     @Operation(summary = "로그인")
     @PostMapping("/login")
     public ResponseEntity<CommonResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request) {
         LoginResponse response = loginService.login(request);
-        return CommonResponse.of(HttpStatus.OK, "로그인 성공", response);
+
+        ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.status(HttpStatus.OK);
+        if (response.getRefreshToken() != null) {
+            ResponseCookie refreshTokenCookie = refreshTokenCookieUtil.create(response.getRefreshToken());
+            responseBuilder.header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+        }
+
+        return responseBuilder.body(new CommonResponse<>("로그인 성공", response));
     }
 
-    @Operation(summary = "로그아웃", description = "클라이언트에서 저장된 토큰을 삭제해주세요.")
+    @Operation(summary = "액세스 토큰 재발급", description = "쿠키의 refresh token으로 access token을 재발급합니다.")
+    @PostMapping("/reissue")
+    public ResponseEntity<CommonResponse<LoginResponse>> reissue(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken) {
+        if (refreshToken == null) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+        }
+
+        LoginResponse response = loginService.reissue(refreshToken);
+        ResponseCookie refreshTokenCookie = refreshTokenCookieUtil.create(response.getRefreshToken());
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(new CommonResponse<>("토큰 재발급 성공", response));
+    }
+
+    @Operation(summary = "로그아웃")
+    @LoginRequired
     @PostMapping("/logout")
-    public ResponseEntity<CommonResponse<Void>> logout() {
-        // 클라이언트 기반 로그아웃 (토큰 삭제는 클라이언트가 처리)
-        return CommonResponse.of(HttpStatus.OK, "로그아웃 성공", null);
+    public ResponseEntity<CommonResponse<Void>> logout(AuthUser authUser) {
+        loginService.logout(authUser.studentId());
+        ResponseCookie expiredCookie = refreshTokenCookieUtil.expire();
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .header(HttpHeaders.SET_COOKIE, expiredCookie.toString())
+                .body(new CommonResponse<>("로그아웃 성공", null));
     }
 
     @Operation(summary = "관리자 권한 여부 확인", description = "관리자 권한 여부를 반환합니다")
