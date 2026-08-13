@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.auth.dto.LoginRequest;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.user.User;
 import org.example.sejonglifebe.user.UserService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -21,6 +23,8 @@ public class LoginService {
     private final PortalHtmlParser htmlParser;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
+    private final TokenIssuer tokenIssuer;
 
     public LoginResponse login(LoginRequest request) {
         String html = fetchPortal(request);
@@ -36,13 +40,31 @@ public class LoginService {
             userService.updateStudentProfileIfChanged(user.getId(),
                     studentInfo.getName(), studentInfo.getDepartment());
 
-            String accessToken = jwtTokenProvider.createToken(user);
-            return LoginResponse.loginSuccess(accessToken);
+            return tokenIssuer.issue(user);
         } else {
             // 신규 회원: 회원가입 토큰 발급 후 가입 필요 응답
             String signUpToken = jwtTokenProvider.createSignUpToken(studentInfo);
             return LoginResponse.signUpRequired(signUpToken, studentInfo);
         }
+    }
+
+    public LoginResponse reissue(String refreshToken) {
+        String studentId = jwtTokenProvider.validateRefreshToken(refreshToken);
+
+        if (!refreshTokenService.matches(studentId, refreshToken)) {
+            // 이미 회전되어 폐기된(재사용된) 토큰이거나 위조된 토큰 -> 해당 유저 세션 전체 무효화
+            refreshTokenService.delete(studentId);
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+        }
+
+        User user = userService.findUserByStudentId(studentId)
+                .orElseThrow(() -> new SejongLifeException(ErrorCode.USER_NOT_FOUND));
+
+        return tokenIssuer.issue(user);
+    }
+
+    public void logout(String studentId) {
+        refreshTokenService.delete(studentId);
     }
 
     // 인증 로직

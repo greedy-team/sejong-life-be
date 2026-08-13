@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.auth.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -24,6 +25,10 @@ public class LoginResponse {
     @Schema(description = "카카오 ID", example = "kakao_123456789")
     private final String kakaoId;
 
+    @Schema(hidden = true)
+    @JsonIgnore
+    private final String refreshToken;
+
     @Schema(description = "신규 회원 기본 정보")
     private final UserInfo userInfo;
 
@@ -46,12 +51,13 @@ public class LoginResponse {
     }
 
     /**
-     * 기존 회원일 때 : 로그인 성공, access token 발급
+     * 기존 회원일 때 : 로그인 성공, access/refresh token 발급 (포털 로그인 전용)
      */
-    public static LoginResponse loginSuccess(String accessToken) {
+    public static LoginResponse loginSuccessWithRefreshToken(String accessToken, String refreshToken) {
         return LoginResponse.builder()
                 .isNewUser(false)
                 .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 

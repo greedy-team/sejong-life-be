@@ -3,7 +3,8 @@ package org.example.sejonglifebe.user;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
-import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.auth.TokenIssuer;
+import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.favorite.FavoritePlaceRepository;
@@ -24,7 +25,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final TokenIssuer tokenIssuer;
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
     private final FavoritePlaceRepository favoritePlaceRepository;
@@ -36,7 +37,7 @@ public class UserService {
     }
 
     @Transactional
-    public String createUser(SignUpRequest requestDto, PortalStudentInfo portalStudentInfo) {
+    public LoginResponse createUser(SignUpRequest requestDto, PortalStudentInfo portalStudentInfo) {
         if (userRepository.existsByNickname(requestDto.getNickname())) {
             throw new SejongLifeException(ErrorCode.DUPLICATE_NICKNAME);
         }
@@ -50,7 +51,7 @@ public class UserService {
 
         User savedUser = userRepository.save(newUser);
 
-        return jwtTokenProvider.createToken(savedUser);
+        return tokenIssuer.issue(savedUser);
     }
 
     @Transactional

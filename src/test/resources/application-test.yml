@@ -18,6 +18,7 @@ jwt:
   secret: test-secret-key-for-testing-purpose-only-1234567890
   expiration: 3600000
   signup-expiration: 600000
+  refresh-expiration: 1209600000
 
 cookie:
   secure: false

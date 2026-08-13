@@ -2,7 +2,8 @@ package org.example.sejonglifebe.user;
 
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
-import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.auth.TokenIssuer;
+import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.entity.Place;
@@ -38,7 +39,7 @@ class UserServiceTest {
     UserRepository userRepository;
 
     @Mock
-    JwtTokenProvider jwtTokenProvider;
+    TokenIssuer tokenIssuer;
 
     @Mock
     ReviewRepository reviewRepository;
@@ -80,7 +81,7 @@ class UserServiceTest {
                     .hasMessage(ErrorCode.DUPLICATE_NICKNAME.getErrorMessage());
 
             verify(userRepository, never()).save(any());
-            verify(jwtTokenProvider, never()).createToken(any());
+            verify(tokenIssuer, never()).issue(any());
         }
 
         @Test
@@ -107,15 +108,17 @@ class UserServiceTest {
                     .nickname("새로 생성된 닉네임")
                     .build();
 
+            LoginResponse expectedResponse = LoginResponse.loginSuccessWithRefreshToken("jwt-token", "refresh-token");
+
             given(userRepository.existsByNickname("새로 생성된 닉네임")).willReturn(false);
             given(userRepository.save(any(User.class))).willReturn(savedUser);
-            given(jwtTokenProvider.createToken(savedUser)).willReturn("jwt-token");
+            given(tokenIssuer.issue(savedUser)).willReturn(expectedResponse);
 
             // when
-            String token = userService.createUser(request, portalInfo);
+            LoginResponse response = userService.createUser(request, portalInfo);
 
             // then
-            assertThat(token).isEqualTo("jwt-token");
+            assertThat(response.getAccessToken()).isEqualTo("jwt-token");
 
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
             verify(userRepository).save(userCaptor.capture());
@@ -127,7 +130,7 @@ class UserServiceTest {
             assertThat(toSave.getDepartment()).isEqualTo("컴퓨터공학과");
             assertThat(toSave.getNickname()).isEqualTo("새로 생성된 닉네임");
 
-            verify(jwtTokenProvider).createToken(savedUser);
+            verify(tokenIssuer).issue(savedUser);
         }
     }
 

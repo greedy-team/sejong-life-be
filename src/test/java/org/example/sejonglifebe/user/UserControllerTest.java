@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -71,6 +72,10 @@ class UserControllerTest {
     void setUp() {
         given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
                 .willReturn(new AuthUser("21011111", Role.USER));
+        given(jwtTokenProvider.createToken(any()))
+                .willReturn("access-token");
+        given(jwtTokenProvider.createRefreshToken(any()))
+                .willReturn("refresh-token");
     }
 
     @Test
