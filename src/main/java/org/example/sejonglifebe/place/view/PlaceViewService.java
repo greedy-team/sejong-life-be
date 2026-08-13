@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PlaceViewService {
     private final StringRedisTemplate redisTemplate;
-    private static final Duration VIEW_TIME_TO_LIVE = Duration.ofHours(6);
+    private static final Duration VIEW_TIME_TO_LIVE = Duration.ofSeconds(30);
 
     public boolean recordFirstView(Long placeId, Viewer viewer) {
         String key = buildKey(placeId, viewer);
