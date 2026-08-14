@@ -79,7 +79,7 @@ class PlaceServiceTest {
         @DisplayName("존재하지 않는 태그 이름이 포함되면 TAG_NOT_FOUND 예외를 던진다")
         void getPlaces_tagNotFound() {
             // given
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("존재X"), "전체", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("존재X"), "전체", null, false, null);
             Pageable pageable = PageRequest.of(0, 10);
 
             given(tagRepository.findByNameIn(anyList()))
@@ -97,7 +97,7 @@ class PlaceServiceTest {
         @DisplayName("카테고리 = 전체 && 태그 없음 → 모든 장소를 조회한다")
         void getPlaces_allCategory_noTags() {
             // given
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", null, false, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("장소1").build();
             Place place2 = Place.builder().name("장소2").build();
@@ -107,7 +107,7 @@ class PlaceServiceTest {
             ));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
-            given(placeRepository.getPlacesByConditions(null, List.of(), null, false, pageable))
+            given(placeRepository.getPlacesByConditions(null, List.of(), null, false, null, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -124,13 +124,13 @@ class PlaceServiceTest {
         void getPlaces_allCategory_withTags() {
             // given
             Tag tag = new Tag("가성비");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", null, false, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 장소").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
-            given(placeRepository.getPlacesByConditions(null, List.of(tag), null, false, pageable))
+            given(placeRepository.getPlacesByConditions(null, List.of(tag), null, false, null, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -145,7 +145,7 @@ class PlaceServiceTest {
         @DisplayName("카테고리 존재하지 않으면 CATEGORY_NOT_FOUND 예외를 던진다")
         void getPlaces_categoryNotFound() {
             // given
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null, false, null);
             Pageable pageable = PageRequest.of(0, 10);
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
@@ -162,7 +162,7 @@ class PlaceServiceTest {
         void getPlaces_selectedCategory_noTags() {
             // given
             Category category = new Category("맛집");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null, false, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("맛집1").build();
             Place place2 = Place.builder().name("맛집2").build();
@@ -173,7 +173,7 @@ class PlaceServiceTest {
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(), null, false, pageable))
+            given(placeRepository.getPlacesByConditions(category, List.of(), null, false, null, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -191,14 +191,14 @@ class PlaceServiceTest {
             // given
             Category category = new Category("맛집");
             Tag tag = new Tag("가성비");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", null, false, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 맛집").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(tag), null, false, pageable))
+            given(placeRepository.getPlacesByConditions(category, List.of(tag), null, false, null, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -213,7 +213,7 @@ class PlaceServiceTest {
         @DisplayName("키워드만 입력 → 장소명에 키워드가 포함된 장소를 조회한다")
         void getPlaces_withKeywordOnly() {
             // given
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", "카페", false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", "카페", false, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("스타벅스 카페").build();
             Place place2 = Place.builder().name("투썸 카페").build();
@@ -223,7 +223,7 @@ class PlaceServiceTest {
             ));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
-            given(placeRepository.getPlacesByConditions(null, List.of(), "카페", false, pageable))
+            given(placeRepository.getPlacesByConditions(null, List.of(), "카페", false, null, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -240,14 +240,14 @@ class PlaceServiceTest {
         void getPlaces_withCategoryAndKeyword() {
             // given
             Category category = new Category("맛집");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", "치킨", false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", "치킨", false, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("BHC 치킨").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(), "치킨", false, pageable))
+            given(placeRepository.getPlacesByConditions(category, List.of(), "치킨", false, null, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -263,13 +263,13 @@ class PlaceServiceTest {
         void getPlaces_withTagAndKeyword() {
             // given
             Tag tag = new Tag("가성비");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", "피자", false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", "피자", false, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 피자").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
-            given(placeRepository.getPlacesByConditions(null, List.of(tag), "피자", false, pageable))
+            given(placeRepository.getPlacesByConditions(null, List.of(tag), "피자", false, null, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -286,14 +286,14 @@ class PlaceServiceTest {
             // given
             Category category = new Category("맛집");
             Tag tag = new Tag("가성비");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", "치킨", false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", "치킨", false, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 치킨집").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(tag), "치킨", false, pageable))
+            given(placeRepository.getPlacesByConditions(category, List.of(tag), "치킨", false, null, pageable))
                     .willReturn(pageResult);
 
             // when
