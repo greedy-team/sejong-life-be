@@ -2,6 +2,7 @@ package org.example.sejonglifebe.place;
 
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.dto.PlaceQueryResult;
+import org.example.sejonglifebe.place.dto.PlaceSortType;
 import org.example.sejonglifebe.tag.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,7 @@ public interface PlaceRepositoryCustom {
             List<Tag> tags,
             String keyword,
             boolean partnershipOnly,
+            PlaceSortType sort,
             Pageable pageable
     );
 }
