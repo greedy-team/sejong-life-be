@@ -23,7 +23,7 @@ public record PlaceSearchConditions(
         boolean partnershipOnly,
 
         @Schema(description = "정렬 기준 (미지정 시 REVIEW_COUNT)", example = "REVIEW_COUNT")
-        PlaceSortType sort
+        PlaceSortType sortType
 ) {
     public PlaceSearchConditions {
         sortType = PlaceSortType.orDefault(sortType);
