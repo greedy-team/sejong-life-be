@@ -54,7 +54,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 )
                 .groupBy(place.id)
                 .having(placeTagCountEq(tags))
-                .orderBy(toOrderSpecifier(sort))
+                .orderBy(toOrderSpecifiers(sort))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -74,12 +74,13 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
         return new PageImpl<>(content, pageable, total == null ? 0L : total);
     }
 
-    private OrderSpecifier<?> toOrderSpecifier(PlaceSortType sort) {
-        return switch (PlaceSortType.orDefault(sort)) {
+    private OrderSpecifier<?>[] toOrderSpecifiers(PlaceSortType sort) {
+        OrderSpecifier<?> primary = switch (PlaceSortType.orDefault(sort)) {
             case REVIEW_COUNT -> review.countDistinct().desc();
             case RATING -> review.rating.avg().desc();
             case VIEW_COUNT -> place.viewCount.desc();
         };
+        return new OrderSpecifier<?>[]{primary, place.id.asc()};
     }
 
     private BooleanExpression likePlaceName(String keyword) {
