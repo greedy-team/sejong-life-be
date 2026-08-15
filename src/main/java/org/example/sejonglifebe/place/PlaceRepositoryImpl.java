@@ -77,7 +77,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
     private OrderSpecifier<?>[] toOrderSpecifiers(PlaceSortType sort) {
         OrderSpecifier<?> primary = switch (PlaceSortType.orDefault(sort)) {
             case REVIEW_COUNT -> review.countDistinct().desc();
-            case RATING -> review.rating.avg().desc();
+            case RATING -> review.rating.avg().desc().nullsLast();
             case VIEW_COUNT -> place.viewCount.desc();
         };
         return new OrderSpecifier<?>[]{primary, place.id.asc()};
