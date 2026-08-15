@@ -15,6 +15,7 @@ import org.example.sejonglifebe.place.dto.PlaceQueryResult;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.dto.PlaceSortType;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
@@ -107,7 +108,7 @@ class PlaceServiceTest {
             ));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
-            given(placeRepository.getPlacesByConditions(null, List.of(), null, false, null, pageable))
+            given(placeRepository.getPlacesByConditions(null, List.of(), null, false, PlaceSortType.REVIEW_COUNT, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -130,7 +131,7 @@ class PlaceServiceTest {
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
-            given(placeRepository.getPlacesByConditions(null, List.of(tag), null, false, null, pageable))
+            given(placeRepository.getPlacesByConditions(null, List.of(tag), null, false, PlaceSortType.REVIEW_COUNT, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -173,7 +174,7 @@ class PlaceServiceTest {
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(), null, false, null, pageable))
+            given(placeRepository.getPlacesByConditions(category, List.of(), null, false, PlaceSortType.REVIEW_COUNT, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -198,7 +199,7 @@ class PlaceServiceTest {
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(tag), null, false, null, pageable))
+            given(placeRepository.getPlacesByConditions(category, List.of(tag), null, false, PlaceSortType.REVIEW_COUNT, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -223,7 +224,7 @@ class PlaceServiceTest {
             ));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
-            given(placeRepository.getPlacesByConditions(null, List.of(), "카페", false, null, pageable))
+            given(placeRepository.getPlacesByConditions(null, List.of(), "카페", false, PlaceSortType.REVIEW_COUNT, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -247,7 +248,7 @@ class PlaceServiceTest {
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(), "치킨", false, null, pageable))
+            given(placeRepository.getPlacesByConditions(category, List.of(), "치킨", false, PlaceSortType.REVIEW_COUNT, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -269,7 +270,7 @@ class PlaceServiceTest {
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
-            given(placeRepository.getPlacesByConditions(null, List.of(tag), "피자", false, null, pageable))
+            given(placeRepository.getPlacesByConditions(null, List.of(tag), "피자", false, PlaceSortType.REVIEW_COUNT, pageable))
                     .willReturn(pageResult);
 
             // when
@@ -293,7 +294,7 @@ class PlaceServiceTest {
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(tag), "치킨", false, null, pageable))
+            given(placeRepository.getPlacesByConditions(category, List.of(tag), "치킨", false, PlaceSortType.REVIEW_COUNT, pageable))
                     .willReturn(pageResult);
 
             // when
