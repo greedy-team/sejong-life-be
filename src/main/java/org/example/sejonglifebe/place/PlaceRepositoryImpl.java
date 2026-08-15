@@ -59,8 +59,8 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = queryFactory
-                .select(place.id.countDistinct())
+        long total = queryFactory
+                .select(place.id)
                 .from(place)
                 .leftJoin(place.placeCategories, placeCategory)
                 .leftJoin(place.placeTags, placeTag)
@@ -69,9 +69,12 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                         placeTagIn(tags),
                         filterByPartnership(partnershipOnly)
                 )
-                .fetchOne();
+                .groupBy(place.id)
+                .having(placeTagCountEq(tags))
+                .fetch()
+                .size();
 
-        return new PageImpl<>(content, pageable, total == null ? 0L : total);
+        return new PageImpl<>(content, pageable, total);
     }
 
     private OrderSpecifier<?>[] toOrderSpecifiers(PlaceSortType sort) {
