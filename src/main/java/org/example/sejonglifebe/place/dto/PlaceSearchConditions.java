@@ -25,4 +25,7 @@ public record PlaceSearchConditions(
         @Schema(description = "정렬 기준 (미지정 시 REVIEW_COUNT)", example = "REVIEW_COUNT")
         PlaceSortType sort
 ) {
+    public PlaceSearchConditions {
+        sortType = PlaceSortType.orDefault(sortType);
+    }
 }
