@@ -2,6 +2,8 @@ package org.example.sejonglifebe.place.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import org.example.sejonglifebe.exception.ErrorCode;
+import org.example.sejonglifebe.exception.SejongLifeException;
 import org.springdoc.core.annotations.ParameterObject;
 
 import java.util.List;
@@ -23,9 +25,18 @@ public record PlaceSearchConditions(
         boolean partnershipOnly,
 
         @Schema(description = "정렬 기준 (미지정 시 REVIEW_COUNT)", example = "REVIEW_COUNT")
-        PlaceSortType sortType
+        PlaceSortType sortType,
+
+        @Schema(description = "사용자 위도 (거리순 정렬 시 필수)", example = "37.550838")
+        Double latitude,
+
+        @Schema(description = "사용자 경도 (거리순 정렬 시 필수)", example = "127.074430")
+        Double longitude
 ) {
     public PlaceSearchConditions {
         sortType = PlaceSortType.orDefault(sortType);
+        if (sortType == PlaceSortType.DISTANCE && (latitude == null || longitude == null)) {
+            throw new SejongLifeException(ErrorCode.DISTANCE_SORT_REQUIRES_LOCATION);
+        }
     }
 }

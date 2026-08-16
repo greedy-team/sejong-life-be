@@ -66,7 +66,7 @@ public class PlaceService {
                     .orElseThrow(() -> new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND));
         }
 
-        return placeRepository.getPlacesByConditions(category, tags, conditions.keyword(), PartnershipOnly, conditions.sortType(), pageable)
+        return placeRepository.getPlacesByConditions(category, tags, conditions.keyword(), PartnershipOnly, conditions.sortType(), conditions.latitude(), conditions.longitude(), pageable)
                 .map(PlaceResponse::from);
     }
 

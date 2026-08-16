@@ -17,6 +17,8 @@ public interface PlaceRepositoryCustom {
             String keyword,
             boolean partnershipOnly,
             PlaceSortType sort,
+            Double latitude,
+            Double longitude,
             Pageable pageable
     );
 }

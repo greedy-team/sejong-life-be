@@ -4,6 +4,8 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<PlaceQueryResult> getPlacesByConditions(Category category, List<Tag> tags, String keyword, boolean partnershipOnly, PlaceSortType sort, Pageable pageable) {
+    public Page<PlaceQueryResult> getPlacesByConditions(Category category, List<Tag> tags, String keyword, boolean partnershipOnly, PlaceSortType sort, Double latitude, Double longitude, Pageable pageable) {
         JPAQuery<PlaceQueryResult> query = queryFactory
                 .select(Projections.constructor(PlaceQueryResult.class,
                         place,
@@ -54,7 +56,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 )
                 .groupBy(place.id)
                 .having(placeTagCountEq(tags))
-                .orderBy(toOrderSpecifiers(sort))
+                .orderBy(toOrderSpecifiers(sort, latitude, longitude))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -77,13 +79,20 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
         return new PageImpl<>(content, pageable, total);
     }
 
-    private OrderSpecifier<?>[] toOrderSpecifiers(PlaceSortType sort) {
+    private OrderSpecifier<?>[] toOrderSpecifiers(PlaceSortType sort, Double latitude, Double longitude) {
         OrderSpecifier<?> primary = switch (PlaceSortType.orDefault(sort)) {
             case REVIEW_COUNT -> review.countDistinct().desc();
             case RATING -> review.rating.avg().desc().nullsLast();
             case VIEW_COUNT -> place.viewCount.desc();
+            case DISTANCE -> distance(latitude, longitude).asc();
         };
         return new OrderSpecifier<?>[]{primary, place.id.asc()};
+    }
+
+    private NumberExpression<Double> distance(Double latitude, Double longitude) {
+        return Expressions.numberTemplate(Double.class,
+                "ST_Distance_Sphere(POINT({0}, {1}), POINT({2}, {3}))",
+                longitude, latitude, place.longitude, place.latitude);
     }
 
     private BooleanExpression likePlaceName(String keyword) {

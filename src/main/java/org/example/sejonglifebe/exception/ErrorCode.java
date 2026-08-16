@@ -16,6 +16,7 @@ public enum ErrorCode {
     REVIEW_LIKE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 좋아요입니다."),
     TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "파라미터 형식이 올바르지 않습니다."),
     MISSING_REQUIRED_PARAMETER(HttpStatus.BAD_REQUEST, "필수 파라미터가 누락되었습니다."),
+    DISTANCE_SORT_REQUIRES_LOCATION(HttpStatus.BAD_REQUEST, "거리순 정렬은 사용자 위치가 필요합니다."),
     DUPLICATE_VALUE(HttpStatus.BAD_REQUEST, "중복된 값이 존재합니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
     DUPLICATE_LIKE(HttpStatus.CONFLICT, "중복된 좋아요 요청입니다."),
