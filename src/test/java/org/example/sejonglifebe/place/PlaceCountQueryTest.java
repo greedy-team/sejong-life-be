@@ -64,7 +64,7 @@ class PlaceCountQueryTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         Page<PlaceQueryResult> result = placeRepository.getPlacesByConditions(
-                null, List.of(tagA, tagB), null, false, PlaceSortType.REVIEW_COUNT, pageable);
+                null, List.of(tagA, tagB), null, false, PlaceSortType.REVIEW_COUNT, null, null, pageable);
 
         // A+B 둘 다 가진 장소는 2개뿐. A만 가진 3개는 제외돼야 함.
         assertThat(result.getContent()).hasSize(2);
