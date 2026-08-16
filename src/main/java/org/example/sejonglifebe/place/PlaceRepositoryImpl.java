@@ -1,5 +1,6 @@
 package org.example.sejonglifebe.place;
 
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -8,6 +9,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.dto.PlaceQueryResult;
+import org.example.sejonglifebe.place.dto.PlaceSortType;
 import org.example.sejonglifebe.tag.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,7 +29,7 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<PlaceQueryResult> getPlacesByConditions(Category category, List<Tag> tags, String keyword, boolean partnershipOnly, Pageable pageable) {
+    public Page<PlaceQueryResult> getPlacesByConditions(Category category, List<Tag> tags, String keyword, boolean partnershipOnly, PlaceSortType sort, Pageable pageable) {
         JPAQuery<PlaceQueryResult> query = queryFactory
                 .select(Projections.constructor(PlaceQueryResult.class,
                         place,
@@ -52,13 +54,13 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                 )
                 .groupBy(place.id)
                 .having(placeTagCountEq(tags))
-                .orderBy(review.countDistinct().desc())
+                .orderBy(toOrderSpecifiers(sort))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = queryFactory
-                .select(place.id.countDistinct())
+        long total = queryFactory
+                .select(place.id)
                 .from(place)
                 .leftJoin(place.placeCategories, placeCategory)
                 .leftJoin(place.placeTags, placeTag)
@@ -67,9 +69,21 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
                         placeTagIn(tags),
                         filterByPartnership(partnershipOnly)
                 )
-                .fetchOne();
+                .groupBy(place.id)
+                .having(placeTagCountEq(tags))
+                .fetch()
+                .size();
 
-        return new PageImpl<>(content, pageable, total == null ? 0L : total);
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    private OrderSpecifier<?>[] toOrderSpecifiers(PlaceSortType sort) {
+        OrderSpecifier<?> primary = switch (PlaceSortType.orDefault(sort)) {
+            case REVIEW_COUNT -> review.countDistinct().desc();
+            case RATING -> review.rating.avg().desc().nullsLast();
+            case VIEW_COUNT -> place.viewCount.desc();
+        };
+        return new OrderSpecifier<?>[]{primary, place.id.asc()};
     }
 
     private BooleanExpression likePlaceName(String keyword) {

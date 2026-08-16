@@ -20,6 +20,12 @@ public record PlaceSearchConditions(
         String keyword,
 
         @Schema(description = "제휴 장소 필터링 여부" , example = "false")
-        boolean partnershipOnly
+        boolean partnershipOnly,
+
+        @Schema(description = "정렬 기준 (미지정 시 REVIEW_COUNT)", example = "REVIEW_COUNT")
+        PlaceSortType sortType
 ) {
+    public PlaceSearchConditions {
+        sortType = PlaceSortType.orDefault(sortType);
+    }
 }
