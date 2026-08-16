@@ -28,7 +28,7 @@ jobs:
 
       - name: 빌드 및 테스트 실행
         run: |
-          ./gradlew build
+          ./gradlew build --stacktrace
         env:
           SPRING_APPLICATION_NAME: sejong-life-be
           SPRING_PROFILES_ACTIVE: default
