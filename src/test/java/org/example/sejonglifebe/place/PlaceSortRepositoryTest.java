@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.place;
 
 import org.example.sejonglifebe.place.dto.PlaceQueryResult;
+import org.example.sejonglifebe.place.dto.PlaceSearchQuery;
 import org.example.sejonglifebe.place.dto.PlaceSortType;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.Review;
@@ -97,7 +98,7 @@ class PlaceSortRepositoryTest {
         @DisplayName("REVIEW_COUNT: 리뷰 많은 순으로 정렬한다")
         void sortByReviewCount() {
             Page<PlaceQueryResult> result = placeRepository.getPlacesByConditions(
-                    null, List.of(), null, false, PlaceSortType.REVIEW_COUNT, null, null, pageable);
+                    PlaceSearchQuery.builder().tags(List.of()).sort(PlaceSortType.REVIEW_COUNT).build(), pageable);
 
             // A(3) > B(2) > C(0)
             assertThat(names(result)).containsExactly("장소A", "장소B", "장소C");
@@ -107,7 +108,7 @@ class PlaceSortRepositoryTest {
         @DisplayName("RATING: 평균 별점 높은 순으로 정렬하고, 리뷰 없는 장소는 맨 뒤로 보낸다")
         void sortByRating() {
             Page<PlaceQueryResult> result = placeRepository.getPlacesByConditions(
-                    null, List.of(), null, false, PlaceSortType.RATING, null, null, pageable);
+                    PlaceSearchQuery.builder().tags(List.of()).sort(PlaceSortType.RATING).build(), pageable);
 
             // A(5) > B(3) > C(리뷰 없음 → 맨 뒤)
             assertThat(names(result)).containsExactly("장소A", "장소B", "장소C");
@@ -117,7 +118,7 @@ class PlaceSortRepositoryTest {
         @DisplayName("VIEW_COUNT: 조회수 많은 순으로 정렬한다")
         void sortByViewCount() {
             Page<PlaceQueryResult> result = placeRepository.getPlacesByConditions(
-                    null, List.of(), null, false, PlaceSortType.VIEW_COUNT, null, null, pageable);
+                    PlaceSearchQuery.builder().tags(List.of()).sort(PlaceSortType.VIEW_COUNT).build(), pageable);
 
             // B(10) > C(5) > A(1)
             assertThat(names(result)).containsExactly("장소B", "장소C", "장소A");
@@ -127,7 +128,7 @@ class PlaceSortRepositoryTest {
         @DisplayName("sort가 null이면 기본값(REVIEW_COUNT)으로 정렬한다")
         void sortByNull_usesReviewCountDefault() {
             Page<PlaceQueryResult> result = placeRepository.getPlacesByConditions(
-                    null, List.of(), null, false, null, null, null, pageable);
+                    PlaceSearchQuery.builder().tags(List.of()).build(), pageable);
 
             // 기본값 = REVIEW_COUNT → A(3) > B(2) > C(0)
             assertThat(names(result)).containsExactly("장소A", "장소B", "장소C");

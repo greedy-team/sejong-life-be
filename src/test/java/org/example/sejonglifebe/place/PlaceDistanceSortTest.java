@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.place;
 
 import org.example.sejonglifebe.place.dto.PlaceQueryResult;
+import org.example.sejonglifebe.place.dto.PlaceSearchQuery;
 import org.example.sejonglifebe.place.dto.PlaceSortType;
 import org.example.sejonglifebe.place.entity.Place;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,17 +41,24 @@ class PlaceDistanceSortTest {
         Place near = savePlace("가까운곳", 37.550900, 127.074500);   // ~수십 m
         Place mid = savePlace("중간곳", 37.556000, 127.080000);      // ~수백 m
         Place far = savePlace("먼곳", 37.600000, 127.150000);        // ~수 km
+        savePlace("좌표없는곳", null, null);
 
         Pageable pageable = PageRequest.of(0, 10);
         Page<PlaceQueryResult> result = placeRepository.getPlacesByConditions(
-                null, List.of(), null, false, PlaceSortType.DISTANCE, USER_LATITUDE, USER_LONGITUDE, pageable);
+                PlaceSearchQuery.builder()
+                        .tags(List.of())
+                        .sort(PlaceSortType.DISTANCE)
+                        .latitude(USER_LATITUDE)
+                        .longitude(USER_LONGITUDE)
+                        .build(),
+                pageable);
 
         assertThat(result.getContent())
                 .extracting(r -> r.place().getName())
-                .containsExactly("가까운곳", "중간곳", "먼곳");
+                .containsExactly("가까운곳", "중간곳", "먼곳", "좌표없는곳");
     }
 
-    private Place savePlace(String name, double latitude, double longitude) {
+    private Place savePlace(String name, Double latitude, Double longitude) {
         Place place = Place.createPlace(name, "주소", latitude, longitude, null, false, "");
         return placeRepository.save(place);
     }
