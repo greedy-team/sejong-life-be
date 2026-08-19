@@ -161,6 +161,41 @@ public class PlaceControllerTest {
     }
 
     @Test
+    @DisplayName("DISTANCE 정렬인데 좌표 없이 요청하면 400을 반환한다")
+    void search_distanceSortWithoutCoordinates_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("partnershipOnly", "false")
+                        .param("sortType", "DISTANCE")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_INPUT_VALUE"));
+
+    }
+
+    @Test
+    @DisplayName("위도가 허용 범위를 벗어나면 400을 반환한다")
+    void search_invalidLatitude_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("latitude", "90.1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_INPUT_VALUE"));
+    }
+
+    @Test
+    @DisplayName("경도가 허용 범위를 벗어나면 400을 반환한다")
+    void search_invalidLongitude_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("longitude", "180.1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_INPUT_VALUE"));
+    }
+
+    @Test
     @DisplayName("카테고리 전체이고 선택된 태그가 맛집과 가성비이면 태그를 둘 다 가진 장소 1개가 조회된다.")
     public void search_noCategory_withTags() throws Exception {
         mockMvc.perform(get("/api/places")
