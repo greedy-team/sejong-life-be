@@ -16,6 +16,7 @@ import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.dto.PlaceSearchQuery;
 import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.entity.PlaceImage;
@@ -47,7 +48,6 @@ public class PlaceService {
     public Page<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions, Pageable pageable) {
         List<String> tagNames = conditions.tags();
         String categoryName = conditions.category();
-        boolean PartnershipOnly = conditions.partnershipOnly();
 
         Category category = null;
 
@@ -66,7 +66,17 @@ public class PlaceService {
                     .orElseThrow(() -> new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND));
         }
 
-        return placeRepository.getPlacesByConditions(category, tags, conditions.keyword(), PartnershipOnly, conditions.sortType(), pageable)
+        PlaceSearchQuery query = PlaceSearchQuery.builder()
+                .category(category)
+                .tags(tags)
+                .keyword(conditions.keyword())
+                .partnershipOnly(conditions.partnershipOnly())
+                .sort(conditions.sortType())
+                .latitude(conditions.latitude())
+                .longitude(conditions.longitude())
+                .build();
+
+        return placeRepository.getPlacesByConditions(query, pageable)
                 .map(PlaceResponse::from);
     }
 
