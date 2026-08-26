@@ -24,7 +24,7 @@ import org.example.sejonglifebe.place.view.PlaceViewService;
 import org.example.sejonglifebe.place.view.Viewer;
 import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.review.Review;
-import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.springframework.data.domain.Page;
@@ -41,7 +41,7 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
-    private final S3Service s3Service;
+    private final ImageStorage imageStorage;
     private final PlaceViewService placeViewService;
 
     @Transactional(readOnly = true)
@@ -96,7 +96,7 @@ public class PlaceService {
         placeRepository.save(place);
 
         if (thumbnail != null && !thumbnail.isEmpty()) {
-            String uploadedUrl = s3Service.uploadImage(place.getId(), thumbnail);
+            String uploadedUrl = imageStorage.uploadImage(place.getId(), thumbnail);
             place.addImage(uploadedUrl, true);
         }
 
@@ -125,7 +125,7 @@ public class PlaceService {
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
         List<PlaceImage> images = new ArrayList<>(place.getPlaceImages());
-        s3Service.deleteImages(images);
+        imageStorage.deleteImages(images.stream().map(PlaceImage::getUrl).toList());
 
         place.getPlaceImages().clear();
 
