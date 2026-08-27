@@ -17,7 +17,7 @@ import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
 import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.entity.Place;
-import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.user.User;
 import org.example.sejonglifebe.user.UserRepository;
@@ -57,7 +57,7 @@ class FavoritePlaceControllerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private S3Service s3Service;
+    private ImageStorage imageStorage;
 
     private Place place1;
     private Place place2;
