@@ -26,7 +26,7 @@ import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
-import org.example.sejonglifebe.common.storage.ImageStorage;
+import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.user.UserRepository;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -84,7 +84,7 @@ public class PlaceControllerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private ImageStorage imageStorage;
+    private S3Service s3Service;
 
     @Autowired
     StringRedisTemplate redisTemplate;
@@ -568,7 +568,7 @@ public class PlaceControllerTest {
                 "fake-image".getBytes()
         );
 
-        given(imageStorage.uploadImage(anyLong(), any(MultipartFile.class)))
+        given(s3Service.uploadImage(anyLong(), any(MultipartFile.class)))
                 .willReturn("https://mock-s3/thumb.webp");
 
         long beforeCount = placeRepository.count();

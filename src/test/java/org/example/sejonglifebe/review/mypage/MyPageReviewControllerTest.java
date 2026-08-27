@@ -10,7 +10,7 @@ import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.review.ReviewRepository;
-import org.example.sejonglifebe.common.storage.ImageStorage;
+import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.Role;
@@ -68,7 +68,7 @@ class MyPageReviewControllerTest {
     private ReviewRepository reviewRepository;
 
     @MockitoBean
-    private ImageStorage imageStorage;
+    private S3Service s3Service;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;

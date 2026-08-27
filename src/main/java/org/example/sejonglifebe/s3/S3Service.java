@@ -4,9 +4,9 @@ package org.example.sejonglifebe.s3;
 import java.util.List;
 import org.example.sejonglifebe.common.image.ConvertedImage;
 import org.example.sejonglifebe.common.image.ImageConverter;
-import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
+import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.util.UUID;
 
 @Service
-public class S3Service implements ImageStorage {
+public class S3Service {
 
     private final static int MAX_SIZE = 30 * 1024 * 1024;
     private final static String KEY_DELIMITER = "-";
@@ -43,7 +43,6 @@ public class S3Service implements ImageStorage {
         this.imageConverter = imageConverter;
     }
 
-    @Override
     public String uploadImage(Long placeId, MultipartFile image) {
         validate(image);
 
@@ -83,13 +82,12 @@ public class S3Service implements ImageStorage {
         }
     }
 
-    @Override
-    public void deleteImages(List<String> imageUrls) {
-        if (imageUrls == null || imageUrls.isEmpty()) {
+    public void deleteImages(List<PlaceImage> images) {
+        if (images == null || images.isEmpty()) {
             return;
         }
-        List<ObjectIdentifier> identifiers = imageUrls.stream()
-                .map(url -> ObjectIdentifier.builder().key(url).build())
+        List<ObjectIdentifier> identifiers = images.stream()
+                .map(image -> ObjectIdentifier.builder().key(image.getUrl()).build())
                 .toList();
         Delete deleteRequest = Delete.builder()
                 .objects(identifiers)

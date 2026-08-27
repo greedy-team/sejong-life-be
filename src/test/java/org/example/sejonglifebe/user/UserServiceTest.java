@@ -10,7 +10,7 @@ import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.review.ReviewLikeRepository;
 import org.example.sejonglifebe.review.ReviewRepository;
-import org.example.sejonglifebe.common.storage.ImageStorage;
+import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +48,7 @@ class UserServiceTest {
     ReviewLikeRepository reviewLikeRepository;
 
     @Mock
-    ImageStorage imageStorage;
+    S3Service s3Service;
 
     @InjectMocks
     UserService userService;
@@ -174,7 +174,7 @@ class UserServiceTest {
             userService.deleteUser(authUser);
 
             // then
-            verify(imageStorage, times(1)).deleteImages(anyList());
+            verify(s3Service, times(1)).deleteImages(anyList());
             verify(reviewRepository, times(1)).delete(review);
             verify(reviewLikeRepository, times(1)).deleteAllByUser(user);
             verify(userRepository, times(1)).delete(user);
@@ -207,7 +207,7 @@ class UserServiceTest {
             userService.deleteUser(authUser);
 
             // then
-            verify(imageStorage, never()).deleteImages(anyList());
+            verify(s3Service, never()).deleteImages(anyList());
             verify(reviewRepository, never()).delete(any());
             verify(reviewLikeRepository, times(1)).deleteAllByUser(user);
             verify(userRepository, times(1)).delete(user);

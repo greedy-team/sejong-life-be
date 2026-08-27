@@ -17,7 +17,7 @@ import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.dto.PlaceSearchQuery;
 import org.example.sejonglifebe.place.entity.Place;
-import org.example.sejonglifebe.common.storage.ImageStorage;
+import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.Role;
@@ -67,7 +67,7 @@ class PlaceServiceTest {
     private PlaceViewService placeViewService;
 
     @Mock
-    private ImageStorage imageStorage;
+    private S3Service s3Service;
 
     @InjectMocks
     private PlaceService placeService;

@@ -10,7 +10,7 @@ import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.dto.RatingCount;
 import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.example.sejonglifebe.review.dto.ReviewSummaryResponse;
-import org.example.sejonglifebe.common.storage.ImageStorage;
+import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.User;
@@ -58,7 +58,7 @@ class ReviewServiceTest {
     private ReviewLikeRepository reviewLikeRepository;
 
     @Mock
-    private ImageStorage imageStorage;
+    private S3Service s3Service;
 
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
@@ -391,7 +391,7 @@ class ReviewServiceTest {
 
             reviewService.deleteReview(reviewId, placeId, authUser);
 
-            verify(imageStorage, times(1)).deleteImages(anyList());
+            verify(s3Service, times(1)).deleteImages(anyList());
             verify(reviewRepository, times(1)).delete(review);
         }
 
@@ -410,7 +410,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.REVIEW_NOT_FOUND.getErrorMessage());
 
-            verify(imageStorage, never()).deleteImages(any());
+            verify(s3Service, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
 
@@ -429,7 +429,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.REVIEW_NOT_FOUND.getErrorMessage());
 
-            verify(imageStorage, never()).deleteImages(any());
+            verify(s3Service, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
 
@@ -449,7 +449,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.PERMISSION_DENIED.getErrorMessage());
 
-            verify(imageStorage, never()).deleteImages(any());
+            verify(s3Service, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
     }
@@ -733,7 +733,7 @@ class ReviewServiceTest {
             reviewService.deleteMyPageReview(reviewId, authUser);
 
             // then
-            verify(imageStorage, times(1)).deleteImages(anyList());
+            verify(s3Service, times(1)).deleteImages(anyList());
             verify(reviewRepository, times(1)).delete(review);
         }
 
@@ -750,7 +750,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.REVIEW_NOT_FOUND.getErrorMessage());
 
-            verify(imageStorage, never()).deleteImages(any());
+            verify(s3Service, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
 
@@ -769,7 +769,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.USER_NOT_FOUND.getErrorMessage());
 
-            verify(imageStorage, never()).deleteImages(any());
+            verify(s3Service, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
 
@@ -793,7 +793,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.PERMISSION_DENIED.getErrorMessage());
 
-            verify(imageStorage, never()).deleteImages(any());
+            verify(s3Service, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
     }
