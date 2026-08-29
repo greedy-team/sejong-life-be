@@ -4,9 +4,9 @@ package org.example.sejonglifebe.s3;
 import java.util.List;
 import org.example.sejonglifebe.common.image.ConvertedImage;
 import org.example.sejonglifebe.common.image.ImageConverter;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
-import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.util.UUID;
 
 @Service
-public class S3Service {
+public class S3Service implements ImageStorage {
 
     private final static int MAX_SIZE = 30 * 1024 * 1024;
     private final static String KEY_DELIMITER = "-";
@@ -43,13 +43,14 @@ public class S3Service {
         this.imageConverter = imageConverter;
     }
 
-    public String uploadImage(Long placeId, MultipartFile image) {
+    @Override
+    public String uploadImage(String keyPrefix, MultipartFile image) {
         validate(image);
 
         String ext = StringUtils.getFilenameExtension(image.getOriginalFilename());
         ConvertedImage converted = imageConverter.convert(image, ext);
 
-        String key = generateKey(placeId, converted.extension());
+        String key = generateKey(keyPrefix, converted.extension());
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
@@ -82,12 +83,13 @@ public class S3Service {
         }
     }
 
-    public void deleteImages(List<PlaceImage> images) {
-        if (images == null || images.isEmpty()) {
+    @Override
+    public void deleteImages(List<String> imageUrls) {
+        if (imageUrls.isEmpty()) {
             return;
         }
-        List<ObjectIdentifier> identifiers = images.stream()
-                .map(image -> ObjectIdentifier.builder().key(image.getUrl()).build())
+        List<ObjectIdentifier> identifiers = imageUrls.stream()
+                .map(url -> ObjectIdentifier.builder().key(url).build())
                 .toList();
         Delete deleteRequest = Delete.builder()
                 .objects(identifiers)
@@ -104,8 +106,8 @@ public class S3Service {
         }
     }
 
-    private String generateKey(Long placeId, String ext) {
-        return placeId + KEY_DELIMITER + UUID.randomUUID() + (ext != null ? "." + ext : "");
+    private String generateKey(String keyPrefix, String ext) {
+        return keyPrefix + KEY_DELIMITER + UUID.randomUUID() + (ext != null ? "." + ext : "");
     }
 
     private void validate(MultipartFile image) {

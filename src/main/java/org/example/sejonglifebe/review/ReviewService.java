@@ -13,7 +13,7 @@ import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.example.sejonglifebe.review.dto.ReviewResponse;
 import org.example.sejonglifebe.review.dto.ReviewSummaryResponse;
 import org.example.sejonglifebe.review.mypage.dto.MyPageReviewResponse;
-import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.User;
@@ -47,7 +47,7 @@ public class ReviewService {
     private final TagRepository tagRepository;
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
-    private final S3Service s3Service;
+    private final ImageStorage imageStorage;
     private final ApplicationEventPublisher eventPublisher;
 
     public List<ReviewResponse> getReviewsByPlaceId(Long placeId, AuthUser authUser) {
@@ -118,8 +118,8 @@ public class ReviewService {
 
         if (images != null && !images.isEmpty()) {
             for (MultipartFile image : images) {
-                String key = s3Service.uploadImage(placeId, image);
-                review.addImage(key);
+                String uploadedUrl = imageStorage.uploadImage(String.valueOf(placeId), image);
+                review.addImage(uploadedUrl);
             }
         }
 
@@ -147,7 +147,7 @@ public class ReviewService {
         List<PlaceImage> images = place.getPlaceImages().stream()
                 .filter(image -> image.getReview() != null && image.getReview().getId().equals(reviewId))
                 .toList();
-        s3Service.deleteImages(images);
+        imageStorage.deleteImages(PlaceImage.toUrls(images));
         for (PlaceImage image : images) {
             place.removeImage(image);
         }
@@ -225,7 +225,7 @@ public class ReviewService {
             throw new SejongLifeException(ErrorCode.PERMISSION_DENIED);
         }
 
-        s3Service.deleteImages(review.getPlaceImages());
+        imageStorage.deleteImages(PlaceImage.toUrls(review.getPlaceImages()));
         review.getUser().removeReview(review);
         review.getPlace().removeReview(review);
         reviewRepository.delete(review);

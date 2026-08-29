@@ -11,7 +11,8 @@ import org.example.sejonglifebe.place.favorite.FavoritePlaceRepository;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.review.ReviewLikeRepository;
 import org.example.sejonglifebe.review.ReviewRepository;
-import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.common.storage.ImageStorage;
+import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.example.sejonglifebe.user.dto.MyPageResponse;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,7 @@ public class UserService {
     private final ReviewRepository reviewRepository;
     private final ReviewLikeRepository reviewLikeRepository;
     private final FavoritePlaceRepository favoritePlaceRepository;
-    private final S3Service s3Service;
+    private final ImageStorage imageStorage;
 
     @Transactional(readOnly = true)
     public Optional<User> findUserByStudentId(String studentId) {
@@ -62,7 +63,7 @@ public class UserService {
         List<Review> reviews = reviewRepository.findAllByUserOrderByCreatedAtDesc(user);
 
         for (Review review : reviews) {
-            s3Service.deleteImages(review.getPlaceImages());
+            imageStorage.deleteImages(PlaceImage.toUrls(review.getPlaceImages()));
             review.getPlace().removeReview(review);
             reviewRepository.delete(review);
         }

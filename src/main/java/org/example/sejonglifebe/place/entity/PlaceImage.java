@@ -1,6 +1,7 @@
 package org.example.sejonglifebe.place.entity;
 
 import jakarta.persistence.Column;
+import java.util.List;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -50,5 +51,9 @@ public class PlaceImage {
         this.review = review;
         this.url = imageUrl;
         this.isThumbnail = isThumbnail;
+    }
+
+    public static List<String> toUrls(List<PlaceImage> images) {
+        return images.stream().map(PlaceImage::getUrl).toList();
     }
 }
