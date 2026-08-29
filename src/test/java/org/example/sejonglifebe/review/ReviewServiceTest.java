@@ -735,7 +735,7 @@ class ReviewServiceTest {
             reviewService.deleteMyPageReview(reviewId, authUser);
 
             // then
-            verify(imageStorage, times(1)).deleteImages(anyList());
+            verify(imageStorage, times(1)).deleteImages(List.of("s3_image_url_1"));
             verify(reviewRepository, times(1)).delete(review);
         }
 
