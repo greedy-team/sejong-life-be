@@ -63,7 +63,7 @@ public class UserService {
         List<Review> reviews = reviewRepository.findAllByUserOrderByCreatedAtDesc(user);
 
         for (Review review : reviews) {
-            imageStorage.deleteImages(review.getPlaceImages().stream().map(PlaceImage::getUrl).toList());
+            imageStorage.deleteImages(PlaceImage.toUrls(review.getPlaceImages()));
             review.getPlace().removeReview(review);
             reviewRepository.delete(review);
         }

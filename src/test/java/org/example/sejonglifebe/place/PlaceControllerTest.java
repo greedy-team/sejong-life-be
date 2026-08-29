@@ -568,7 +568,7 @@ public class PlaceControllerTest {
                 "fake-image".getBytes()
         );
 
-        given(imageStorage.uploadImage(anyLong(), any(MultipartFile.class)))
+        given(imageStorage.uploadImage(anyString(), any(MultipartFile.class)))
                 .willReturn("https://mock-s3/thumb.webp");
 
         long beforeCount = placeRepository.count();

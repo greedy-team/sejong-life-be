@@ -118,8 +118,8 @@ public class ReviewService {
 
         if (images != null && !images.isEmpty()) {
             for (MultipartFile image : images) {
-                String key = imageStorage.uploadImage(placeId, image);
-                review.addImage(key);
+                String uploadedUrl = imageStorage.uploadImage(String.valueOf(placeId), image);
+                review.addImage(uploadedUrl);
             }
         }
 
@@ -147,7 +147,7 @@ public class ReviewService {
         List<PlaceImage> images = place.getPlaceImages().stream()
                 .filter(image -> image.getReview() != null && image.getReview().getId().equals(reviewId))
                 .toList();
-        imageStorage.deleteImages(images.stream().map(PlaceImage::getUrl).toList());
+        imageStorage.deleteImages(PlaceImage.toUrls(images));
         for (PlaceImage image : images) {
             place.removeImage(image);
         }
@@ -225,7 +225,7 @@ public class ReviewService {
             throw new SejongLifeException(ErrorCode.PERMISSION_DENIED);
         }
 
-        imageStorage.deleteImages(review.getPlaceImages().stream().map(PlaceImage::getUrl).toList());
+        imageStorage.deleteImages(PlaceImage.toUrls(review.getPlaceImages()));
         review.getUser().removeReview(review);
         review.getPlace().removeReview(review);
         reviewRepository.delete(review);

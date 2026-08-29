@@ -44,13 +44,13 @@ public class S3Service implements ImageStorage {
     }
 
     @Override
-    public String uploadImage(Long placeId, MultipartFile image) {
+    public String uploadImage(String keyPrefix, MultipartFile image) {
         validate(image);
 
         String ext = StringUtils.getFilenameExtension(image.getOriginalFilename());
         ConvertedImage converted = imageConverter.convert(image, ext);
 
-        String key = generateKey(placeId, converted.extension());
+        String key = generateKey(keyPrefix, converted.extension());
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
@@ -85,7 +85,7 @@ public class S3Service implements ImageStorage {
 
     @Override
     public void deleteImages(List<String> imageUrls) {
-        if (imageUrls == null || imageUrls.isEmpty()) {
+        if (imageUrls.isEmpty()) {
             return;
         }
         List<ObjectIdentifier> identifiers = imageUrls.stream()
@@ -106,8 +106,8 @@ public class S3Service implements ImageStorage {
         }
     }
 
-    private String generateKey(Long placeId, String ext) {
-        return placeId + KEY_DELIMITER + UUID.randomUUID() + (ext != null ? "." + ext : "");
+    private String generateKey(String keyPrefix, String ext) {
+        return keyPrefix + KEY_DELIMITER + UUID.randomUUID() + (ext != null ? "." + ext : "");
     }
 
     private void validate(MultipartFile image) {

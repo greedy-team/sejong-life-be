@@ -378,6 +378,8 @@ class ReviewServiceTest {
             ReflectionTestUtils.setField(review, "id", 101L); // reviewId = 101L
 
             review.addImage("s3_image_url_1");
+            // DB에서 로드된 상태처럼 place 쪽 컬렉션에도 반영 (deleteReview는 place 컬렉션에서 이미지를 찾음)
+            place.getPlaceImages().addAll(review.getPlaceImages());
         }
 
         @Test
@@ -391,7 +393,7 @@ class ReviewServiceTest {
 
             reviewService.deleteReview(reviewId, placeId, authUser);
 
-            verify(imageStorage, times(1)).deleteImages(anyList());
+            verify(imageStorage, times(1)).deleteImages(List.of("s3_image_url_1"));
             verify(reviewRepository, times(1)).delete(review);
         }
 

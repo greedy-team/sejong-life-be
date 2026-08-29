@@ -174,7 +174,7 @@ class UserServiceTest {
             userService.deleteUser(authUser);
 
             // then
-            verify(imageStorage, times(1)).deleteImages(anyList());
+            verify(imageStorage, times(1)).deleteImages(List.of("s3_image_url_1"));
             verify(reviewRepository, times(1)).delete(review);
             verify(reviewLikeRepository, times(1)).deleteAllByUser(user);
             verify(userRepository, times(1)).delete(user);

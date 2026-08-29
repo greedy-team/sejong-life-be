@@ -96,7 +96,7 @@ public class PlaceService {
         placeRepository.save(place);
 
         if (thumbnail != null && !thumbnail.isEmpty()) {
-            String uploadedUrl = imageStorage.uploadImage(place.getId(), thumbnail);
+            String uploadedUrl = imageStorage.uploadImage(String.valueOf(place.getId()), thumbnail);
             place.addImage(uploadedUrl, true);
         }
 
@@ -124,8 +124,7 @@ public class PlaceService {
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
-        List<PlaceImage> images = new ArrayList<>(place.getPlaceImages());
-        imageStorage.deleteImages(images.stream().map(PlaceImage::getUrl).toList());
+        imageStorage.deleteImages(PlaceImage.toUrls(place.getPlaceImages()));
 
         place.getPlaceImages().clear();
 
