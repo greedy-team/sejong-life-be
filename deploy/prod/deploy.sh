@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COMPOSE_FILE="$HOME/docker-compose-dev.yml"
+COMPOSE_FILE="$HOME/docker-compose-prod.yml"
 
 IS_BLUE_EXIST=$(docker ps | grep blue)
 IS_REDIS_EXIST=$(docker ps | grep redis)
@@ -45,7 +45,8 @@ while [ $RETRY_COUNT -le $MAX_RETRY_COUNT ]
 do
     echo "> 헬스체크 진행중 ($RETRY_COUNT / $MAX_RETRY_COUNT)"
 
-    if curl -s http://127.0.0.1:${HEALTH_CHECK_PORT}/actuator/health | grep -q "UP"; then
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${HEALTH_CHECK_PORT}/actuator/health)
+    if [ "$STATUS" = "200" ]; then
         echo "> 헬스체크 성공"
         break
     fi

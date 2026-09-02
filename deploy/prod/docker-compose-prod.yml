@@ -8,7 +8,7 @@ services:
 
   blue:
     container_name: blue
-    image: sejonglife/sejong-life:dev
+    image: sejonglife/sejong-life:prod
     volumes:
       - ./application.yml:/app/config/application.yml
     environment:
@@ -28,7 +28,7 @@ services:
 
   green:
     container_name: green
-    image: sejonglife/sejong-life:dev
+    image: sejonglife/sejong-life:prod
     volumes:
       - ./application.yml:/app/config/application.yml
     environment:
