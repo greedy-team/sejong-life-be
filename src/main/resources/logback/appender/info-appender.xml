@@ -5,10 +5,10 @@
             <fileNamePattern>./logs/info-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>7</maxHistory> </rollingPolicy>
 
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <!-- root가 이미 INFO 이상만 넘겨주므로, 여기서는 INFO 이상(INFO/WARN/ERROR)을 전부 받음.
+             LevelFilter(정확히 일치)로 두면 WARN이 info/error 어디에도 안 남는 버그 발생. -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
         </filter>
 
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
@@ -20,10 +20,10 @@
                 </timestamp>
                 <level/>
                 <mdc>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
                     <includeMdcKeyName>userId</includeMdcKeyName>
                     <includeMdcKeyName>requestUrl</includeMdcKeyName>
                     <includeMdcKeyName>responseCode</includeMdcKeyName>
-                    <includeMdcKeyName>responseBody</includeMdcKeyName>
                     <includeMdcKeyName>errorCode</includeMdcKeyName>
                 </mdc>
                 <message/>

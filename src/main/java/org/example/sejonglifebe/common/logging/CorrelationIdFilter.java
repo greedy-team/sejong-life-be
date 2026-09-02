@@ -24,7 +24,6 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
                 .orElse(UUID.randomUUID().toString());
         try {
             MDC.put("requestId", requestId);
-            MDC.put("uri", request.getRequestURI());
             chain.doFilter(request, response);
         } finally {
             MDC.clear();

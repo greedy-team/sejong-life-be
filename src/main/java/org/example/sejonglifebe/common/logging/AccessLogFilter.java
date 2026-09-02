@@ -27,9 +27,8 @@ public class AccessLogFilter extends OncePerRequestFilter {
         finally {
             int status = response.getStatus();
             String msg = HttpStatus.resolve(status) != null ? HttpStatus.resolve(status).getReasonPhrase() : "Processed";
-            MDC.put("statuscode", String.valueOf(status));
+            MDC.put("responseCode", String.valueOf(status));
             log.info(msg);
-            MDC.remove("statuscode");
         }
     }
 }

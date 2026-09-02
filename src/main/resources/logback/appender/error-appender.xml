@@ -21,6 +21,7 @@
                 </timestamp>
                 <level/>
                 <mdc>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
                     <includeMdcKeyName>userId</includeMdcKeyName>
                     <includeMdcKeyName>requestUrl</includeMdcKeyName>
                     <includeMdcKeyName>errorCode</includeMdcKeyName>

@@ -3,6 +3,7 @@ package org.example.sejonglifebe.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.example.sejonglifebe.common.dto.ErrorResponse;
+import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -21,6 +22,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SejongLifeException.class)
     public ResponseEntity<ErrorResponse<Void>> handleSejongLifeException(SejongLifeException exception, HttpServletRequest request) {
 
+        MDC.put("errorCode", exception.getErrorCode().name());
         log.warn("예외 발생: {}, method: {}, url: {}",
                 exception.getMessage(),
                 request.getMethod(),
@@ -35,6 +37,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
 
+        MDC.put("errorCode", TYPE_MISMATCH.name());
         log.warn("예외 발생: {}, method: {}, url: {}",
                 exception.getMessage(),
                 request.getMethod(),
@@ -49,6 +52,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse<Void>> handleMissingParam(MissingServletRequestParameterException exception, HttpServletRequest request) {
+        MDC.put("errorCode", MISSING_REQUIRED_PARAMETER.name());
         log.warn("예외 발생: {}, method: {}, url: {}",
                 exception.getMessage(),
                 request.getMethod(),
@@ -62,6 +66,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException exception, HttpServletRequest request) {
+        MDC.put("errorCode", DUPLICATE_VALUE.name());
         log.warn("예외 발생: {},method:{}, url: {}",
                 exception.getMessage(),
                 request.getMethod(),
@@ -75,6 +80,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse<Void>> handleException(Exception exception, HttpServletRequest request) {
+        MDC.put("errorCode", INTERNAL_SERVER_ERROR.name());
         log.error("예외 발생: {},method: {}, url: {}",
                 exception.getMessage(),
                 request.getMethod(),
@@ -90,6 +96,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse<Void>> handleValidation(MethodArgumentNotValidException exception, HttpServletRequest request) {
         String errorMessage = exception.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        MDC.put("errorCode", ErrorCode.INVALID_INPUT_VALUE.name());
         log.warn("예외 발생: {},method: {}, url: {}",
                 errorMessage,
                 request.getMethod(),
@@ -104,6 +111,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MissingRequestHeaderException.class)
     public ResponseEntity<ErrorResponse<Void>> handleMissingHeader(MissingRequestHeaderException ex, HttpServletRequest request) {
+        MDC.put("errorCode", INVALID_AUTH_HEADER.name());
         return ErrorResponse.of(
                 INVALID_AUTH_HEADER.getHttpStatus(),
                 INVALID_AUTH_HEADER.name(),
