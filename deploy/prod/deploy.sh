@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COMPOSE_FILE="$HOME/docker-compose-dev.yml"
+COMPOSE_FILE="$HOME/docker-compose-prod.yml"
 
 IS_BLUE_EXIST=$(docker ps | grep blue)
 IS_REDIS_EXIST=$(docker ps | grep redis)
