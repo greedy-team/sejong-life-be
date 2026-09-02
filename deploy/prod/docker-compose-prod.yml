@@ -11,6 +11,7 @@ services:
     image: sejonglife/sejong-life:prod
     volumes:
       - ./application.yml:/app/config/application.yml
+      - log-data-blue:/app/logs
     environment:
       - SPRING_PROFILES_ACTIVE=blue
       - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
@@ -31,6 +32,7 @@ services:
     image: sejonglife/sejong-life:prod
     volumes:
       - ./application.yml:/app/config/application.yml
+      - log-data-green:/app/logs
     environment:
       - SPRING_PROFILES_ACTIVE=green
       - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
@@ -45,3 +47,7 @@ services:
       - "9092:9091"
     depends_on:
       - redis
+
+volumes:
+  log-data-blue:
+  log-data-green:
