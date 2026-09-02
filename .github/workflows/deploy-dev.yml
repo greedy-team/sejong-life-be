@@ -85,7 +85,7 @@ jobs:
           host: ${{ secrets.GCP_DEV_HOST }}
           username: ${{ secrets.GCP_DEV_USERNAME }}
           key: ${{ secrets.GCP_DEV_SSH_KEY }}
-          source: "deploy/dev/docker-compose-prod.yml,deploy/dev/deploy.sh"
+          source: "deploy/dev/docker-compose-dev.yml,deploy/dev/deploy.sh"
           strip_components: 2
           target: "~"
 
