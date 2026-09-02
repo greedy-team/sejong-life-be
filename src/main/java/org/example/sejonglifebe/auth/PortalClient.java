@@ -78,8 +78,8 @@ public class PortalClient {
 
         try (Response response = client.newCall(request).execute()) {
             if (response.body() == null || response.code() != 200) { //고전독서 인증현황 페이지 조회 실패
-                log.error("고전독서 페이지 조회 실패 - code: {}, message: {}, body: {}",
-                        response.code(), response.message(), response.body());
+                log.error("고전독서 페이지 조회 실패 - code: {}, message: {}",
+                        response.code(), response.message());
                 throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
             }
             return response.body().string();
