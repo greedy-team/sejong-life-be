@@ -17,7 +17,6 @@ public class LogInterceptor implements HandlerInterceptor {
         }
 
         MDC.put("userId", userId);
-        MDC.put("requestUrl", request.getRequestURI());
         MDC.put("httpMethod", request.getMethod());
         MDC.put("clientIp", request.getRemoteAddr());
         MDC.put("userAgent", request.getHeader("User-Agent"));
@@ -25,12 +24,7 @@ public class LogInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
-        MDC.remove("userId");
-        MDC.remove("requestUrl");
-        MDC.remove("httpMethod");
-        MDC.remove("clientIp");
-        MDC.remove("userAgent");
-    }
+    // MDC 정리는 CorrelationIdFilter의 최종 MDC.clear()가 담당.
+    // 여기서 먼저 지우면 AccessLogFilter가 access log를 남기는 시점엔
+    // 이미 userId 등이 비어있는 상태가 되어버림.
 }

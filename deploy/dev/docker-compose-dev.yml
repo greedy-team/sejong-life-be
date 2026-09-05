@@ -31,6 +31,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./application.yml:/app/config/application.yml
+      - log-data:/app/logs
     environment:
       - SPRING_PROFILES_ACTIVE=dev
       - NAVER_CLIENT_ID=${NAVER_CLIENT_ID}
@@ -49,3 +50,4 @@ services:
 
 volumes:
   mysql-data:
+  log-data:

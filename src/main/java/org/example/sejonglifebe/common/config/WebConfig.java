@@ -31,6 +31,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // CorrelationIdFilter/AccessLogFilter는 actuator, swagger 등 모든 요청에 걸리지만,
+        // LogInterceptor(userId/httpMethod/clientIp/userAgent)는 의도적으로 /api/** 비즈니스 요청에만 걸리도록 함.
+        // actuator 헬스체크 등은 특정 사용자 컨텍스트가 없어 이 필드들이 의미가 없음.
         registry.addInterceptor(logInterceptor)
                 .order(1)
                 .addPathPatterns("/api/**");
