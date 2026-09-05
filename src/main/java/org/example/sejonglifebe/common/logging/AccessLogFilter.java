@@ -21,10 +21,12 @@ public class AccessLogFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(AccessLogFilter.class);
 
-    @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        try { chain.doFilter(request, response); }
-        finally {
+        try {
+            chain.doFilter(request, response);
+        } finally {
             int status = response.getStatus();
             String msg = HttpStatus.resolve(status) != null ? HttpStatus.resolve(status).getReasonPhrase() : "Processed";
             MDC.put("responseCode", String.valueOf(status));
