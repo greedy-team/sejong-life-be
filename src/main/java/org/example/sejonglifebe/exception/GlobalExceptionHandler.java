@@ -9,9 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static org.example.sejonglifebe.exception.ErrorCode.*;
 
@@ -107,6 +109,34 @@ public class GlobalExceptionHandler {
                 ErrorCode.INVALID_INPUT_VALUE.getHttpStatus(),
                 ErrorCode.INVALID_INPUT_VALUE.name(),
                 errorMessage);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleNoResourceFound(NoResourceFoundException exception, HttpServletRequest request) {
+        MDC.put("errorCode", RESOURCE_NOT_FOUND.name());
+        log.warn("예외 발생: {}, method: {}, url: {}",
+                exception.getMessage(),
+                request.getMethod(),
+                request.getRequestURL());
+
+        return ErrorResponse.of(
+                RESOURCE_NOT_FOUND.getHttpStatus(),
+                RESOURCE_NOT_FOUND.name(),
+                RESOURCE_NOT_FOUND.getErrorMessage());
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleMethodNotSupported(HttpRequestMethodNotSupportedException exception, HttpServletRequest request) {
+        MDC.put("errorCode", METHOD_NOT_ALLOWED.name());
+        log.warn("예외 발생: {}, method: {}, url: {}",
+                exception.getMessage(),
+                request.getMethod(),
+                request.getRequestURL());
+
+        return ErrorResponse.of(
+                METHOD_NOT_ALLOWED.getHttpStatus(),
+                METHOD_NOT_ALLOWED.name(),
+                METHOD_NOT_ALLOWED.getErrorMessage());
     }
 
     @ExceptionHandler(MissingRequestHeaderException.class)
