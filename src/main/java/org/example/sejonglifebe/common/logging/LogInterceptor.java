@@ -17,7 +17,6 @@ public class LogInterceptor implements HandlerInterceptor {
         }
 
         MDC.put("userId", userId);
-        MDC.put("requestUrl", request.getRequestURI());
         MDC.put("httpMethod", request.getMethod());
         MDC.put("clientIp", request.getRemoteAddr());
         MDC.put("userAgent", request.getHeader("User-Agent"));
