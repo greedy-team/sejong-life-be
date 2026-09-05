@@ -3,7 +3,10 @@
         <file>./logs/info.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>./logs/info-%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>7</maxHistory> </rollingPolicy>
+            <maxHistory>7</maxHistory>
+            <!-- dev 서버가 DB와 디스크를 같이 쓰는 소형 인스턴스임, 보관 일수와 별개로 총 용량 상한 제한 -->
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
 
         <!-- root가 이미 INFO 이상만 넘겨주므로, 여기서는 INFO 이상(INFO/WARN/ERROR)을 전부 받음.
              LevelFilter(정확히 일치)로 두면 WARN이 info/error 어디에도 안 남는 버그 발생. -->
