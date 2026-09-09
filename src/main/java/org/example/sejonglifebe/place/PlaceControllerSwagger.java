@@ -10,22 +10,21 @@ import org.example.sejonglifebe.external.dto.MapLinksRequest;
 import org.example.sejonglifebe.external.dto.MapLinksResponse;
 import org.example.sejonglifebe.external.dto.PlaceSearchResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
+import org.example.sejonglifebe.place.dto.PlacePageResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
-import org.example.sejonglifebe.place.dto.PlacePageResponse;
 import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-
-import java.util.List;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Tag(name = "Place", description = "장소")
 public interface PlaceControllerSwagger {
@@ -51,11 +50,16 @@ public interface PlaceControllerSwagger {
             AuthUser authUser
     );
 
-    @Operation(summary = "장소 수정")
-    public ResponseEntity<CommonResponse<Void>> updatePlace(
+    @Operation(summary = "장소 수정", description = "관리자 전용. multipart/form-data의 필수 place 파트에 장소 정보 전체를 application/json으로 전달합니다. "
+            + "위도·경도는 함께 전달하거나 둘 다 null로 전달합니다. "
+            + "thumbnail 파일을 보내면 WebP로 변환해 추가 또는 교체하며 생략하면 기존 썸네일을 유지합니다. "
+            + "deleteThumbnail=true이면 관리자 썸네일만 삭제합니다. 파일과 삭제 요청은 동시에 보낼 수 없습니다. "
+            + "리뷰 사진은 유지되며 관리자 썸네일이 없으면 기존 첫 사진을 대표 이미지로 사용합니다.")
+    ResponseEntity<CommonResponse<Void>> updatePlace(
             @PathVariable("placeId") Long placeId,
-            @Valid @RequestBody PlaceUpdateRequest placeRequest,
-            AuthUser authUser
+            @Valid @RequestPart("place") PlaceUpdateRequest placeRequest,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+            @RequestParam(value = "deleteThumbnail", defaultValue = "false") boolean deleteThumbnail
     );
 
     @Operation(summary = "장소 삭제")
