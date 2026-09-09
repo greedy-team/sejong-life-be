@@ -47,7 +47,8 @@ public enum ErrorCode {
     INSUFFICIENT_OPEN_COUNT(HttpStatus.FORBIDDEN, "열람권이 부족합니다."),
     SELF_PROFILE_OPEN_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "자신의 프로필은 열람할 수 없습니다."),
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 API 경로입니다."),
-    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 HTTP 메서드입니다.");
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 HTTP 메서드입니다."),
+    UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "지원하지 않는 요청 형식입니다.");
 
     private final HttpStatus httpStatus;
     private final String errorMessage;
