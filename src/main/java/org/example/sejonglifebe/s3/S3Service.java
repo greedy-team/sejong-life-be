@@ -1,7 +1,6 @@
 package org.example.sejonglifebe.s3;
 
-
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.example.sejonglifebe.common.image.ConvertedImage;
 import org.example.sejonglifebe.common.image.ImageConverter;
 import org.example.sejonglifebe.common.storage.ImageStorage;
@@ -23,9 +22,12 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class S3Service implements ImageStorage {
 
     private final static int MAX_SIZE = 30 * 1024 * 1024;
@@ -77,9 +79,22 @@ public class S3Service implements ImageStorage {
                     .toExternalForm();
 
         } catch (IOException e) {
+            cleanupFailedUpload(key);
             throw new SejongLifeException(ErrorCode.FILE_UPLOAD_FAILED);
-        } catch (S3Exception e) {
-            throw new SejongLifeException(ErrorCode.S3_UPLOAD_FAILED, e);
+        } catch (RuntimeException e) {
+            cleanupFailedUpload(key);
+            if (e instanceof S3Exception) {
+                throw new SejongLifeException(ErrorCode.S3_UPLOAD_FAILED, e);
+            }
+            throw e;
+        }
+    }
+
+    private void cleanupFailedUpload(String key) {
+        try {
+            deleteImages(List.of(key));
+        } catch (RuntimeException exception) {
+            log.error("업로드 실패 파일 정리 실패: key={}", key, exception);
         }
     }
 
@@ -89,7 +104,8 @@ public class S3Service implements ImageStorage {
             return;
         }
         List<ObjectIdentifier> identifiers = imageUrls.stream()
-                .map(url -> ObjectIdentifier.builder().key(url).build())
+                .map(this::extractKey)
+                .map(key -> ObjectIdentifier.builder().key(key).build())
                 .toList();
         Delete deleteRequest = Delete.builder()
                 .objects(identifiers)
@@ -100,7 +116,9 @@ public class S3Service implements ImageStorage {
                 .delete(deleteRequest)
                 .build();
         try {
-            s3Client.deleteObjects(bulkDeleteRequest);
+            if (s3Client.deleteObjects(bulkDeleteRequest).hasErrors()) {
+                throw new SejongLifeException(ErrorCode.S3_DELETE_FAILED);
+            }
         } catch (S3Exception e) {
             throw new SejongLifeException(ErrorCode.S3_DELETE_FAILED);
         }
@@ -108,6 +126,18 @@ public class S3Service implements ImageStorage {
 
     private String generateKey(String keyPrefix, String ext) {
         return keyPrefix + KEY_DELIMITER + UUID.randomUUID() + (ext != null ? "." + ext : "");
+    }
+
+    private String extractKey(String imageUrl) {
+        URI imageUri = URI.create(imageUrl);
+        String key = imageUri.getPath();
+        if (key == null || key.isBlank()) {
+            return imageUrl;
+        }
+
+        key = key.startsWith("/") ? key.substring(1) : key;
+        String bucketPrefix = bucket + "/";
+        return key.startsWith(bucketPrefix) ? key.substring(bucketPrefix.length()) : key;
     }
 
     private void validate(MultipartFile image) {
