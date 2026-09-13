@@ -129,7 +129,13 @@ public class S3Service implements ImageStorage {
     }
 
     private String extractKey(String imageUrl) {
-        URI imageUri = URI.create(imageUrl);
+        URI imageUri;
+        try {
+            imageUri = URI.create(imageUrl);
+        } catch (IllegalArgumentException e) {
+            log.warn("S3 key 추출 실패, 원본 URL로 폴백: {}", imageUrl, e);
+            return imageUrl;
+        }
         String key = imageUri.getPath();
         if (key == null || key.isBlank()) {
             return imageUrl;

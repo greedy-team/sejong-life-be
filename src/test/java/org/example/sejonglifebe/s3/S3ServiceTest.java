@@ -67,6 +67,29 @@ class S3ServiceTest {
     }
 
     @Test
+    @DisplayName("깨진 URL은 원본으로 전달하고 정상 URL의 삭제 요청도 계속 처리한다")
+    void deleteImages_invalidUrlDoesNotBlockOtherImages() {
+        // given
+        S3Service service = new S3Service(s3Client, "sejong-life", imageConverter);
+        given(s3Client.deleteObjects(any(DeleteObjectsRequest.class)))
+                .willReturn(DeleteObjectsResponse.builder().build());
+
+        // when
+        service.deleteImages(List.of(
+                "https://sejong-life.s3.amazonaws.com/first.webp",
+                "https://sejong-life.s3.amazonaws.com/broken image.webp",
+                "https://sejong-life.s3.amazonaws.com/last.webp"));
+
+        // then
+        ArgumentCaptor<DeleteObjectsRequest> captor = ArgumentCaptor.forClass(DeleteObjectsRequest.class);
+        verify(s3Client).deleteObjects(captor.capture());
+        assertThat(captor.getValue().delete().objects())
+                .extracting(identifier -> identifier.key())
+                .containsExactly("first.webp",
+                        "https://sejong-life.s3.amazonaws.com/broken image.webp", "last.webp");
+    }
+
+    @Test
     @DisplayName("객체별 삭제 실패가 있으면 예외를 던진다")
     void deleteImages_detectsPerObjectFailureEvenWhenHttpRequestSucceeds() {
         // given
