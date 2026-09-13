@@ -25,7 +25,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -41,14 +40,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-// 임베디드 H2와 모킹된 이미지 저장소만 사용한다.
-@DataJpaTest(properties = {
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.jpa.properties.hibernate.session_factory.statement_inspector="
-                + "org.example.sejonglifebe.place.PlaceThumbnailPersistenceTest$ImageQueryInspector"
-})
-@ActiveProfiles("test")
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
+@DataJpaTest(properties = "spring.jpa.properties.hibernate.session_factory.statement_inspector="
+        + "org.example.sejonglifebe.place.PlaceThumbnailPersistenceTest$ImageQueryInspector")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import({PlaceService.class, QueryDslConfig.class, TransactionalImageStorage.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class PlaceThumbnailPersistenceTest {
