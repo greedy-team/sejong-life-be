@@ -6,13 +6,16 @@ import org.example.sejonglifebe.common.dto.ErrorResponse;
 import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import static org.example.sejonglifebe.exception.ErrorCode.*;
@@ -78,6 +81,39 @@ public class GlobalExceptionHandler {
                 DUPLICATE_VALUE.getHttpStatus(),
                 DUPLICATE_VALUE.name(),
                 DUPLICATE_VALUE.getErrorMessage());
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleMissingPart(MissingServletRequestPartException exception, HttpServletRequest request) {
+        MDC.put("errorCode", MISSING_REQUIRED_PARAMETER.name());
+        log.warn("예외 발생: {}, method: {}, url: {}",
+                exception.getMessage(), request.getMethod(), request.getRequestURL());
+        return ErrorResponse.of(
+                MISSING_REQUIRED_PARAMETER.getHttpStatus(),
+                MISSING_REQUIRED_PARAMETER.name(),
+                exception.getRequestPartName() + " : " + MISSING_REQUIRED_PARAMETER.getErrorMessage());
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException exception, HttpServletRequest request) {
+        MDC.put("errorCode", UNSUPPORTED_MEDIA_TYPE.name());
+        log.warn("예외 발생: {}, method: {}, url: {}",
+                exception.getMessage(), request.getMethod(), request.getRequestURL());
+        return ErrorResponse.of(
+                UNSUPPORTED_MEDIA_TYPE.getHttpStatus(),
+                UNSUPPORTED_MEDIA_TYPE.name(),
+                UNSUPPORTED_MEDIA_TYPE.getErrorMessage());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse<Void>> handleUnreadableMessage(HttpMessageNotReadableException exception, HttpServletRequest request) {
+        MDC.put("errorCode", INVALID_INPUT_VALUE.name());
+        log.warn("예외 발생: {}, method: {}, url: {}",
+                exception.getMessage(), request.getMethod(), request.getRequestURL());
+        return ErrorResponse.of(
+                INVALID_INPUT_VALUE.getHttpStatus(),
+                INVALID_INPUT_VALUE.name(),
+                INVALID_INPUT_VALUE.getErrorMessage());
     }
 
     @ExceptionHandler(Exception.class)
