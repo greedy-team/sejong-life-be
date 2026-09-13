@@ -15,6 +15,7 @@ import org.example.sejonglifebe.place.view.PlaceViewService;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
+import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 // 임베디드 H2와 모킹된 이미지 저장소만 사용한다.
-@DataJpaTest(properties = "spring.jpa.hibernate.ddl-auto=create-drop")
+@DataJpaTest(properties = {
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.properties.hibernate.session_factory.statement_inspector="
+                + "org.example.sejonglifebe.place.PlaceThumbnailPersistenceTest$ImageQueryInspector"
+})
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
 @Import({PlaceService.class, QueryDslConfig.class, TransactionalImageStorage.class})
@@ -127,6 +132,12 @@ class PlaceThumbnailPersistenceTest {
     @Test
     @DisplayName("관리자 썸네일만 삭제하고 리뷰 사진을 대표 이미지로 사용한다")
     void delete_removesOnlyAdminThumbnailAndFallsBackToReviewImage() {
+        // given
+        Review review = entityManager.find(Review.class, reviewId);
+        review.addImage("second-review.webp");
+        entityManager.flush();
+        entityManager.clear();
+
         // when
         placeService.updatePlace(placeId, request, null, true);
         entityManager.flush();
@@ -135,8 +146,11 @@ class PlaceThumbnailPersistenceTest {
 
         // then
         assertThat(saved.getThumbnailImage()).isEqualTo("review.webp");
+        assertThat(ImageQueryInspector.lastImageQuery).containsPattern("order by \\w+\\.image_id(?: asc)?$");
         assertThat(PlaceDetailResponse.from(saved).thumbnail()).isNull();
-        assertThat(entityManager.find(Review.class, reviewId).getPlaceImages()).hasSize(1);
+        assertThat(saved.getPlaceImages()).extracting(PlaceImage::getUrl)
+                .containsExactly("review.webp", "second-review.webp");
+        assertThat(entityManager.find(Review.class, reviewId).getPlaceImages()).hasSize(2);
         TestTransaction.flagForCommit();
         TestTransaction.end();
         verify(imageStorage).deleteImages(List.of("admin.webp"));
@@ -226,5 +240,17 @@ class PlaceThumbnailPersistenceTest {
                 .extracting(pc -> pc.getPlace().getId()).containsExactly(placeId);
         assertThat(entityManager.find(Tag.class, addedTag.getId()).getPlaceTags())
                 .extracting(pt -> pt.getPlace().getId()).containsExactly(placeId);
+    }
+    public static class ImageQueryInspector implements StatementInspector {
+        private static String lastImageQuery;
+
+        @Override
+        public String inspect(String sql) {
+            String normalized = sql.replaceAll("\\s+", " ").trim();
+            if (normalized.startsWith("select ") && normalized.contains(" from place_image ")) {
+                lastImageQuery = normalized;
+            }
+            return sql;
+        }
     }
 }
