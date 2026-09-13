@@ -101,13 +101,15 @@ class PlaceUpdateApiTest {
     }
 
     @Test
-    @DisplayName("삭제를 요청하면 관리자 썸네일을 삭제한다")
+    @DisplayName("빈 파일과 삭제 요청을 보내면 관리자 썸네일을 삭제한다")
     void multipartPut_deletesThumbnail() throws Exception {
         // given
         place.addImage("old.webp", true);
 
         // when & then
-        mockMvc.perform(request(PLACE_JSON).param("deleteThumbnail", "true")
+        mockMvc.perform(request(PLACE_JSON)
+                        .file(new MockMultipartFile("thumbnail", new byte[0]))
+                        .param("deleteThumbnail", "true")
                         .header("Authorization", "Bearer test-token"))
                 .andExpect(status().isOk());
         assertThat(place.getThumbnailImage()).isNull();

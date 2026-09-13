@@ -205,11 +205,8 @@ public class PlaceService {
     }
 
     private void validateThumbnailUpdate(MultipartFile thumbnail, boolean deleteThumbnail) {
-        if (thumbnail == null) {
+        if (thumbnail == null || thumbnail.isEmpty()) {
             return;
-        }
-        if (thumbnail.isEmpty()) {
-            throw new SejongLifeException(ErrorCode.INVALID_INPUT_VALUE);
         }
         if (deleteThumbnail) {
             throw new SejongLifeException(ErrorCode.INVALID_INPUT_VALUE);
@@ -229,7 +226,7 @@ public class PlaceService {
             imageStorage.deleteImages(place.removeThumbnail());
             return;
         }
-        if (thumbnail != null) {
+        if (thumbnail != null && !thumbnail.isEmpty()) {
             String uploadedUrl = imageStorage.uploadImage(String.valueOf(place.getId()), thumbnail);
             imageStorage.deleteImages(place.replaceThumbnail(uploadedUrl));
         }

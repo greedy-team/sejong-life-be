@@ -535,12 +535,33 @@ class PlaceServiceTest {
         }
 
         @Test
-        @DisplayName("빈 썸네일 파일은 변경 요청으로 처리하지 않고 거절한다")
-        void updatePlace_rejectsEmptyThumbnail() {
-            // when & then
-            assertThatThrownBy(() -> placeService.updatePlace(1L, updateRequest(), new MockMultipartFile("thumbnail", new byte[0]), false))
-                    .isInstanceOf(SejongLifeException.class);
-            verifyNoInteractions(imageStorage, placeRepository);
+        @DisplayName("빈 썸네일 파일만 보내면 기존 썸네일을 유지한다")
+        void updatePlace_emptyThumbnailKeepsExistingImage() {
+            // given
+            Place place = placeWithThumbnail("old.webp");
+            givenPlaceForUpdate(place);
+
+            // when
+            placeService.updatePlace(1L, updateRequest(), new MockMultipartFile("thumbnail", new byte[0]), false);
+
+            // then
+            assertThat(place.getThumbnailImage()).isEqualTo("old.webp");
+            verifyNoInteractions(imageStorage);
+        }
+
+        @Test
+        @DisplayName("빈 파일과 삭제 요청을 보내면 기존 썸네일을 삭제한다")
+        void updatePlace_emptyThumbnailAllowsDeletion() {
+            // given
+            Place place = placeWithThumbnail("old.webp");
+            givenPlaceForUpdate(place);
+
+            // when
+            placeService.updatePlace(1L, updateRequest(), new MockMultipartFile("thumbnail", new byte[0]), true);
+
+            // then
+            assertThat(place.getThumbnailImage()).isNull();
+            verify(imageStorage).deleteImages(List.of("old.webp"));
         }
 
         @Test

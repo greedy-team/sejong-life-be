@@ -52,8 +52,9 @@ public interface PlaceControllerSwagger {
 
     @Operation(summary = "장소 수정", description = "관리자 전용. multipart/form-data의 필수 place 파트에 장소 정보 전체를 application/json으로 전달합니다. "
             + "위도·경도는 함께 전달하거나 둘 다 null로 전달합니다. "
-            + "thumbnail 파일을 보내면 WebP로 변환해 추가 또는 교체하며 생략하면 기존 썸네일을 유지합니다. "
-            + "deleteThumbnail=true이면 관리자 썸네일만 삭제합니다. 파일과 삭제 요청은 동시에 보낼 수 없습니다. "
+            + "내용이 있는 thumbnail 파일을 보내면 WebP로 변환해 추가 또는 교체합니다. "
+            + "생략하거나 빈 파일을 보내면 파일 없음으로 처리하며 삭제 요청이 없으면 기존 썸네일을 유지합니다. "
+            + "deleteThumbnail=true이면 관리자 썸네일만 삭제합니다. 내용이 있는 파일과 삭제 요청은 동시에 보낼 수 없습니다. "
             + "리뷰 사진은 유지되며 관리자 썸네일이 없으면 기존 첫 사진을 대표 이미지로 사용합니다.")
     ResponseEntity<CommonResponse<Void>> updatePlace(
             @PathVariable("placeId") Long placeId,
