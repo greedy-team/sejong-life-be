@@ -8,9 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import java.util.ArrayList;
-import java.util.List;
-
+import jakarta.persistence.OrderBy;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,6 +19,9 @@ import org.example.sejonglifebe.place.util.MapLinkConverter;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.tag.Tag;
 import org.hibernate.annotations.BatchSize;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -63,6 +64,7 @@ public class Place {
 
     private String partnershipContent;
 
+    @OrderBy("id ASC")
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceImage> placeImages = new ArrayList<>();
 
@@ -114,10 +116,25 @@ public class Place {
 
     public void addImage(String imageUrl, Boolean isThumbnail) {
         if (isThumbnail) {
-            this.placeImages.removeIf(PlaceImage::getIsThumbnail);
+            this.placeImages.removeIf(image -> Boolean.TRUE.equals(image.getIsThumbnail()));
         }
         PlaceImage placeImage = new PlaceImage(this, imageUrl, isThumbnail);
         this.placeImages.add(placeImage);
+    }
+
+    public List<String> replaceThumbnail(String imageUrl) {
+        List<String> previousThumbnailUrls = removeThumbnail();
+        placeImages.add(new PlaceImage(this, imageUrl, true));
+        return previousThumbnailUrls;
+    }
+
+    public List<String> removeThumbnail() {
+        List<String> thumbnailUrls = placeImages.stream()
+                .filter(image -> image.getReview() == null && Boolean.TRUE.equals(image.getIsThumbnail()))
+                .map(PlaceImage::getUrl)
+                .toList();
+        placeImages.removeIf(image -> image.getReview() == null && Boolean.TRUE.equals(image.getIsThumbnail()));
+        return thumbnailUrls;
     }
 
     public void removeImage(PlaceImage image) {
@@ -160,8 +177,33 @@ public class Place {
                 .orElse(placeImages.get(0).getUrl()); // 만약 대표 이미지가 없다면, 그냥 첫 번째 이미지 반환
     }
 
+    public void update(
+            String name,
+            String address,
+            Double latitude,
+            Double longitude,
+            MapLinks mapLinks,
+            boolean partnership,
+            String partnershipContent,
+            List<Category> categories,
+            List<Tag> tags
+    ) {
+        updateDetails(name, address, latitude, longitude);
+        updateMapLinks(mapLinks);
+        updatePartnership(partnership, partnershipContent);
+        replaceCategories(categories);
+        replaceTags(tags);
+    }
+
     public void updateMapLinks(MapLinks mapLinks) {
         this.mapLinks = mapLinks;
+    }
+
+    public void updateDetails(String name, String address, Double latitude, Double longitude) {
+        this.name = name;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public void updatePartnership(boolean partnership, String content) {
@@ -171,23 +213,21 @@ public class Place {
 
     public void replaceTags(List<Tag> tags) {
         for (PlaceTag pt : new ArrayList<>(this.placeTags)) {
-            pt.getTag().getPlaceTags().remove(pt);
+            if (!tags.contains(pt.getTag())) {
+                pt.getTag().getPlaceTags().remove(pt);
+                this.placeTags.remove(pt);
+            }
         }
-        this.placeTags.clear();
-
-        for (Tag tag : tags) {
-            PlaceTag.createPlaceTag(this, tag);
-        }
+        tags.forEach(this::addTag);
     }
 
     public void replaceCategories(List<Category> categories) {
         for (PlaceCategory pc : new ArrayList<>(this.placeCategories)) {
-            pc.getCategory().getPlaceCategories().remove(pc);
+            if (!categories.contains(pc.getCategory())) {
+                pc.getCategory().getPlaceCategories().remove(pc);
+                this.placeCategories.remove(pc);
+            }
         }
-        this.placeCategories.clear();
-
-        for (Category category : categories) {
-            PlaceCategory.createPlaceCategory(this, category);
-        }
+        categories.forEach(this::addCategory);
     }
 }

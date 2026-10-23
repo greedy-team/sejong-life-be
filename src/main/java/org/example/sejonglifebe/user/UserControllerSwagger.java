@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.example.sejonglifebe.auth.AuthUser;
+import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.user.dto.MyPageResponse;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 public interface UserControllerSwagger {
 
     @Operation(summary = "회원가입")
-    ResponseEntity<CommonResponse<String>> signup(
+    ResponseEntity<CommonResponse<LoginResponse>> signup(
             @RequestHeader("Authorization") String signUpToken,
             @Valid @RequestBody SignUpRequest request);
 

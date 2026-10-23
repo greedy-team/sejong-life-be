@@ -1,21 +1,18 @@
 package org.example.sejonglifebe.place;
 
 import jakarta.servlet.http.HttpServletRequest;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.dto.PlaceSearchQuery;
 import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.place.entity.PlaceImage;
@@ -23,7 +20,6 @@ import org.example.sejonglifebe.place.view.PlaceViewService;
 import org.example.sejonglifebe.place.view.Viewer;
 import org.example.sejonglifebe.place.view.ViewerKeyGenerator;
 import org.example.sejonglifebe.review.Review;
-import org.example.sejonglifebe.s3.S3Service;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.springframework.data.domain.Page;
@@ -33,6 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class PlaceService {
@@ -40,14 +40,13 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final TagRepository tagRepository;
     private final CategoryRepository categoryRepository;
-    private final S3Service s3Service;
+    private final ImageStorage imageStorage;
     private final PlaceViewService placeViewService;
 
     @Transactional(readOnly = true)
     public Page<PlaceResponse> getPlaceByConditions(PlaceSearchConditions conditions, Pageable pageable) {
         List<String> tagNames = conditions.tags();
         String categoryName = conditions.category();
-        boolean PartnershipOnly = conditions.partnershipOnly();
 
         Category category = null;
 
@@ -66,7 +65,17 @@ public class PlaceService {
                     .orElseThrow(() -> new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND));
         }
 
-        return placeRepository.getPlacesByConditions(category, tags, conditions.keyword(), PartnershipOnly, pageable)
+        PlaceSearchQuery query = PlaceSearchQuery.builder()
+                .category(category)
+                .tags(tags)
+                .keyword(conditions.keyword())
+                .partnershipOnly(conditions.partnershipOnly())
+                .sort(conditions.sortType())
+                .latitude(conditions.latitude())
+                .longitude(conditions.longitude())
+                .build();
+
+        return placeRepository.getPlacesByConditions(query, pageable)
                 .map(PlaceResponse::from);
     }
 
@@ -86,7 +95,7 @@ public class PlaceService {
         placeRepository.save(place);
 
         if (thumbnail != null && !thumbnail.isEmpty()) {
-            String uploadedUrl = s3Service.uploadImage(place.getId(), thumbnail);
+            String uploadedUrl = imageStorage.uploadImage(String.valueOf(place.getId()), thumbnail);
             place.addImage(uploadedUrl, true);
         }
 
@@ -95,27 +104,40 @@ public class PlaceService {
     }
 
     @Transactional
-    public void updatePlace(Long placeId, PlaceUpdateRequest request, AuthUser authUser) {
-        Place place = placeRepository.findById(placeId)
+    public void updatePlace(
+            Long placeId,
+            PlaceUpdateRequest request,
+            MultipartFile thumbnail,
+            boolean deleteThumbnail
+    ) {
+        validateThumbnailUpdate(thumbnail, deleteThumbnail);
+        validateCoordinates(request.latitude(), request.longitude());
+        Place place = placeRepository.findByIdForUpdate(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
-        place.updateMapLinks(request.mapLinks());
-        place.updatePartnership(request.isPartnership(), request.partnershipContent());
+        List<Category> categories = findCategoriesOrThrow(request.categoryIds());
+        List<Tag> tags = findTagsOrThrow(request.tagIds());
 
-        List<Category> categories = categoryRepository.findAllById(request.categoryIds());
-        List<Tag> tags = tagRepository.findAllById(request.tagIds());
-
-        place.replaceCategories(categories);
-        place.replaceTags(tags);
+        place.update(
+                request.placeName(),
+                request.address(),
+                request.latitude(),
+                request.longitude(),
+                request.mapLinks(),
+                request.isPartnership(),
+                request.partnershipContent(),
+                categories,
+                tags
+        );
+        updateThumbnail(place, thumbnail, deleteThumbnail);
     }
 
     @Transactional
     public void deletePlace(Long placeId, AuthUser authUser) {
-        Place place = placeRepository.findById(placeId)
+        Place place = placeRepository.findByIdForUpdate(placeId)
                 .orElseThrow(() -> new SejongLifeException(ErrorCode.PLACE_NOT_FOUND));
 
-        List<PlaceImage> images = new ArrayList<>(place.getPlaceImages());
-        s3Service.deleteImages(images);
+        imageStorage.deleteImages(PlaceImage.toUrls(place.getPlaceImages()));
 
         place.getPlaceImages().clear();
 
@@ -159,23 +181,55 @@ public class PlaceService {
     }
 
     private void attachCategoriesToPlace(Place place, PlaceRequest request) {
-
-        List<Category> categories = categoryRepository.findAllById(request.categoryIds());
-        if (categories.size() != request.categoryIds().size()) {
-            throw new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND);
-        }
-
-        categories.forEach(place::addCategory);
+        findCategoriesOrThrow(request.categoryIds()).forEach(place::addCategory);
     }
 
     private void attachTagsToPlace(Place place, PlaceRequest request) {
+        findTagsOrThrow(request.tagIds()).forEach(place::addTag);
+    }
 
-        List<Tag> tags = tagRepository.findAllById(request.tagIds());
-        if (tags.size() != request.tagIds().size()) {
+    private List<Category> findCategoriesOrThrow(List<Long> categoryIds) {
+        List<Category> categories = categoryRepository.findAllById(categoryIds);
+        if (categories.size() != categoryIds.size()) {
+            throw new SejongLifeException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+        return categories;
+    }
+
+    private List<Tag> findTagsOrThrow(List<Long> tagIds) {
+        List<Tag> tags = tagRepository.findAllById(tagIds);
+        if (tags.size() != tagIds.size()) {
             throw new SejongLifeException(ErrorCode.TAG_NOT_FOUND);
         }
+        return tags;
+    }
 
-        tags.forEach(place::addTag);
+    private void validateThumbnailUpdate(MultipartFile thumbnail, boolean deleteThumbnail) {
+        if (thumbnail == null || thumbnail.isEmpty()) {
+            return;
+        }
+        if (deleteThumbnail) {
+            throw new SejongLifeException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+    private void validateCoordinates(Double latitude, Double longitude) {
+        boolean hasLatitude = latitude != null;
+        boolean hasLongitude = longitude != null;
+        if (hasLatitude != hasLongitude) {
+            throw new SejongLifeException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+    private void updateThumbnail(Place place, MultipartFile thumbnail, boolean deleteThumbnail) {
+        if (deleteThumbnail) {
+            imageStorage.deleteImages(place.removeThumbnail());
+            return;
+        }
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            String uploadedUrl = imageStorage.uploadImage(String.valueOf(place.getId()), thumbnail);
+            imageStorage.deleteImages(place.replaceThumbnail(uploadedUrl));
+        }
     }
 
     private Viewer identifyViewer(AuthUser authUser, HttpServletRequest request) {
@@ -184,6 +238,5 @@ public class PlaceService {
         }
         return Viewer.ipua(ViewerKeyGenerator.ipUaHash(request));
     }
-
 
 }

@@ -18,13 +18,15 @@ import java.util.UUID;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CorrelationIdFilter extends OncePerRequestFilter {
 
-    @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String requestId = Optional.ofNullable(request.getHeader("X-Request-Id")).filter(s->!s.isBlank())
+        String requestId = Optional.ofNullable(request.getHeader("X-Request-Id"))
+                .filter(s -> !s.isBlank())
                 .orElse(UUID.randomUUID().toString());
         try {
             MDC.put("requestId", requestId);
-            MDC.put("uri", request.getRequestURI());
+            MDC.put("requestUrl", request.getRequestURI());
             chain.doFilter(request, response);
         } finally {
             MDC.clear();

@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.auth.LoginRequired;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
+import org.example.sejonglifebe.auth.RefreshTokenCookieUtil;
+import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.common.dto.CommonResponse;
 import org.example.sejonglifebe.common.jwt.JwtTokenExtractor;
 import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
@@ -12,7 +14,9 @@ import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.user.dto.MyPageResponse;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,9 +34,10 @@ public class UserController implements UserControllerSwagger{
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtTokenExtractor jwtTokenExtractor;
+    private final RefreshTokenCookieUtil refreshTokenCookieUtil;
 
     @PostMapping("/signup")
-    public ResponseEntity<CommonResponse<String>> signup(
+    public ResponseEntity<CommonResponse<LoginResponse>> signup(
             @RequestHeader("Authorization") String signUpToken,
             @Valid @RequestBody SignUpRequest request) {
 
@@ -44,8 +49,12 @@ public class UserController implements UserControllerSwagger{
             throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
         }
 
-        String accessToken = userService.createUser(request, portalInfoFromToken);
-        return CommonResponse.of(HttpStatus.CREATED, "회원가입 및 로그인 성공", accessToken);
+        LoginResponse response = userService.createUser(request, portalInfoFromToken);
+        ResponseCookie refreshTokenCookie = refreshTokenCookieUtil.create(response.getRefreshToken());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+                .body(new CommonResponse<>("회원가입 및 로그인 성공", response));
     }
 
     @LoginRequired

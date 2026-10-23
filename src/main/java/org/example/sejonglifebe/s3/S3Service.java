@@ -1,12 +1,11 @@
 package org.example.sejonglifebe.s3;
 
-
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.example.sejonglifebe.common.image.ConvertedImage;
 import org.example.sejonglifebe.common.image.ImageConverter;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
-import org.example.sejonglifebe.place.entity.PlaceImage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -23,10 +22,13 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @Service
-public class S3Service {
+@Slf4j
+public class S3Service implements ImageStorage {
 
     private final static int MAX_SIZE = 30 * 1024 * 1024;
     private final static String KEY_DELIMITER = "-";
@@ -43,13 +45,14 @@ public class S3Service {
         this.imageConverter = imageConverter;
     }
 
-    public String uploadImage(Long placeId, MultipartFile image) {
+    @Override
+    public String uploadImage(String keyPrefix, MultipartFile image) {
         validate(image);
 
         String ext = StringUtils.getFilenameExtension(image.getOriginalFilename());
         ConvertedImage converted = imageConverter.convert(image, ext);
 
-        String key = generateKey(placeId, converted.extension());
+        String key = generateKey(keyPrefix, converted.extension());
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
@@ -76,18 +79,33 @@ public class S3Service {
                     .toExternalForm();
 
         } catch (IOException e) {
+            cleanupFailedUpload(key);
             throw new SejongLifeException(ErrorCode.FILE_UPLOAD_FAILED);
-        } catch (S3Exception e) {
-            throw new SejongLifeException(ErrorCode.S3_UPLOAD_FAILED, e);
+        } catch (RuntimeException e) {
+            cleanupFailedUpload(key);
+            if (e instanceof S3Exception) {
+                throw new SejongLifeException(ErrorCode.S3_UPLOAD_FAILED, e);
+            }
+            throw e;
         }
     }
 
-    public void deleteImages(List<PlaceImage> images) {
-        if (images == null || images.isEmpty()) {
+    private void cleanupFailedUpload(String key) {
+        try {
+            deleteImages(List.of(key));
+        } catch (RuntimeException exception) {
+            log.error("업로드 실패 파일 정리 실패: key={}", key, exception);
+        }
+    }
+
+    @Override
+    public void deleteImages(List<String> imageUrls) {
+        if (imageUrls.isEmpty()) {
             return;
         }
-        List<ObjectIdentifier> identifiers = images.stream()
-                .map(image -> ObjectIdentifier.builder().key(image.getUrl()).build())
+        List<ObjectIdentifier> identifiers = imageUrls.stream()
+                .map(this::extractKey)
+                .map(key -> ObjectIdentifier.builder().key(key).build())
                 .toList();
         Delete deleteRequest = Delete.builder()
                 .objects(identifiers)
@@ -98,14 +116,34 @@ public class S3Service {
                 .delete(deleteRequest)
                 .build();
         try {
-            s3Client.deleteObjects(bulkDeleteRequest);
+            if (s3Client.deleteObjects(bulkDeleteRequest).hasErrors()) {
+                throw new SejongLifeException(ErrorCode.S3_DELETE_FAILED);
+            }
         } catch (S3Exception e) {
             throw new SejongLifeException(ErrorCode.S3_DELETE_FAILED);
         }
     }
 
-    private String generateKey(Long placeId, String ext) {
-        return placeId + KEY_DELIMITER + UUID.randomUUID() + (ext != null ? "." + ext : "");
+    private String generateKey(String keyPrefix, String ext) {
+        return keyPrefix + KEY_DELIMITER + UUID.randomUUID() + (ext != null ? "." + ext : "");
+    }
+
+    private String extractKey(String imageUrl) {
+        URI imageUri;
+        try {
+            imageUri = URI.create(imageUrl);
+        } catch (IllegalArgumentException e) {
+            log.warn("S3 key 추출 실패, 원본 URL로 폴백: {}", imageUrl, e);
+            return imageUrl;
+        }
+        String key = imageUri.getPath();
+        if (key == null || key.isBlank()) {
+            return imageUrl;
+        }
+
+        key = key.startsWith("/") ? key.substring(1) : key;
+        String bucketPrefix = bucket + "/";
+        return key.startsWith(bucketPrefix) ? key.substring(bucketPrefix.length()) : key;
     }
 
     private void validate(MultipartFile image) {

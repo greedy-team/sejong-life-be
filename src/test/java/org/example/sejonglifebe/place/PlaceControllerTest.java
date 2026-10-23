@@ -1,53 +1,51 @@
 package org.example.sejonglifebe.place;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.example.sejonglifebe.place.view.ViewerKeyGenerator.ipUaHash;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import jakarta.persistence.EntityManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import org.example.sejonglifebe.auth.AuthUser;
-import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
-import org.example.sejonglifebe.user.Role;
-import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
-import org.example.sejonglifebe.place.dto.PlaceRequest;
-import org.example.sejonglifebe.place.entity.MapLinks;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.HttpHeaders;
-import org.example.sejonglifebe.s3.S3Service;
-import org.example.sejonglifebe.user.UserRepository;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
+import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.common.storage.ImageStorage;
+import org.example.sejonglifebe.place.dto.PlaceRequest;
+import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
+import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
+import org.example.sejonglifebe.user.Role;
+import org.example.sejonglifebe.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.example.sejonglifebe.place.view.ViewerKeyGenerator.ipUaHash;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Transactional
 @SpringBootTest
@@ -84,7 +82,7 @@ public class PlaceControllerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private S3Service s3Service;
+    private ImageStorage imageStorage;
 
     @Autowired
     StringRedisTemplate redisTemplate;
@@ -158,6 +156,41 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.data.places[0].viewCount").value(0))
                 .andExpect(jsonPath("$.data.places[0].reviewCount").value(0))
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("DISTANCE 정렬인데 좌표 없이 요청하면 400을 반환한다")
+    void search_distanceSortWithoutCoordinates_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("partnershipOnly", "false")
+                        .param("sortType", "DISTANCE")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_INPUT_VALUE"));
+
+    }
+
+    @Test
+    @DisplayName("위도가 허용 범위를 벗어나면 400을 반환한다")
+    void search_invalidLatitude_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("latitude", "90.1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_INPUT_VALUE"));
+    }
+
+    @Test
+    @DisplayName("경도가 허용 범위를 벗어나면 400을 반환한다")
+    void search_invalidLongitude_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/places")
+                        .param("category", "전체")
+                        .param("longitude", "180.1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("INVALID_INPUT_VALUE"));
     }
 
     @Test
@@ -344,7 +377,6 @@ public class PlaceControllerTest {
                 .andExpect(jsonPath("$.data.images[1].url").value("image2.jpg"))
                 .andDo(print());
     }
-
 
     @Test
     @DisplayName("존재하지 않는 장소 ID 조회 실패 테스트")
@@ -533,7 +565,7 @@ public class PlaceControllerTest {
                 "fake-image".getBytes()
         );
 
-        given(s3Service.uploadImage(anyLong(), any(MultipartFile.class)))
+        given(imageStorage.uploadImage(anyString(), any(MultipartFile.class)))
                 .willReturn("https://mock-s3/thumb.webp");
 
         long beforeCount = placeRepository.count();
@@ -698,7 +730,7 @@ public class PlaceControllerTest {
 
     @Test
     @DisplayName("장소 수정 성공 - JSON 요청으로 DTO 필드가 반영된다")
-    void updatePlace_success_json() throws Exception {
+    void updatePlace_success_multipart() throws Exception {
         // given
         Long placeId = detailPlace.getId();
 
@@ -713,6 +745,7 @@ public class PlaceControllerTest {
                 .orElseThrow(() -> new IllegalStateException("콘센트 있는 태그가 없습니다."));
 
         PlaceUpdateRequest request = new PlaceUpdateRequest(
+                    "수정된 장소", "수정된 주소", 37.55, 127.07,
                 List.of(cafe.getId()),
                 List.of(tag3.getId(), tag4.getId()),
                 new MapLinks(
@@ -725,10 +758,9 @@ public class PlaceControllerTest {
         );
 
         // when & then
-        mockMvc.perform(put("/api/places/{placeId}", placeId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer test-token")
-                        .content(objectMapper.writeValueAsString(request)))
+        mockMvc.perform(multipart(org.springframework.http.HttpMethod.PUT, "/api/places/{placeId}", placeId)
+                        .file(new MockMultipartFile("place", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request)))
+                        .header("Authorization", "Bearer test-token"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("장소 수정 성공"));
@@ -753,6 +785,43 @@ public class PlaceControllerTest {
     }
 
     @Test
+    @DisplayName("관리자는 사진이 없는 장소에 WebP 저장 경로를 통해 대표 썸네일을 추가할 수 있다")
+    void updatePlace_addsThumbnail() throws Exception {
+        Long placeId = place2.getId();
+        given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
+                .willReturn(new AuthUser("21011111", Role.ADMIN));
+        given(imageStorage.uploadImage(anyString(), any(MultipartFile.class)))
+                .willReturn("https://s3.example.com/places/2-thumbnail.webp");
+
+        PlaceUpdateRequest request = new PlaceUpdateRequest(
+                    "수정된 장소", "수정된 주소", 37.55, 127.07,
+                List.of(place2.getPlaceCategories().get(0).getCategory().getId()),
+                List.of(place2.getPlaceTags().get(0).getTag().getId()),
+                new MapLinks("https://n-updated.com", "https://k-updated.com", "https://g-updated.com"),
+                false,
+                ""
+        );
+        MockMultipartFile placePart = new MockMultipartFile(
+                "place", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request));
+        MockMultipartFile thumbnailPart = new MockMultipartFile(
+                "thumbnail", "thumbnail.png", MediaType.IMAGE_PNG_VALUE, new byte[]{1, 2, 3});
+        MockMultipartHttpServletRequestBuilder multipartRequest = multipart("/api/places/{placeId}", placeId)
+                .file(placePart)
+                .file(thumbnailPart);
+        multipartRequest.with(httpRequest -> {
+            httpRequest.setMethod("PUT");
+            return httpRequest;
+        });
+
+        mockMvc.perform(multipartRequest.header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("장소 수정 성공"));
+
+        Place updated = placeRepository.findById(placeId).orElseThrow();
+        assertThat(updated.getThumbnailImage()).isEqualTo("https://s3.example.com/places/2-thumbnail.webp");
+    }
+
+    @Test
     @DisplayName("장소 수정 권한 없음 - USER면 ACCESS_DENIED 반환")
     void updatePlace_fail_accessDenied_whenUserRole() throws Exception {
         // given
@@ -767,6 +836,7 @@ public class PlaceControllerTest {
                 .orElseThrow();
 
         PlaceUpdateRequest request = new PlaceUpdateRequest(
+                    "수정된 장소", "수정된 주소", 37.55, 127.07,
                 List.of(cafe.getId()),
                 List.of(tag3.getId()),
                 new MapLinks(
@@ -779,11 +849,10 @@ public class PlaceControllerTest {
         );
 
         // when & then
-        mockMvc.perform(put("/api/places/{placeId}", placeId)
-                        .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(multipart(org.springframework.http.HttpMethod.PUT, "/api/places/{placeId}", placeId)
+                        .file(new MockMultipartFile("place", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request)))
                         .characterEncoding("UTF-8")
-                        .header("Authorization", "Bearer test-token")
-                        .content(objectMapper.writeValueAsString(request)))
+                        .header("Authorization", "Bearer test-token"))
                 .andDo(print())
                 .andExpect(status().isForbidden());
     }
@@ -801,6 +870,7 @@ public class PlaceControllerTest {
                 .orElseThrow();
 
         PlaceUpdateRequest request = new PlaceUpdateRequest(
+                    "수정된 장소", "수정된 주소", 37.55, 127.07,
                 List.of(cafe.getId()),
                 List.of(tag3.getId()),
                 new MapLinks(
@@ -813,11 +883,10 @@ public class PlaceControllerTest {
         );
 
         // when & then
-        mockMvc.perform(put("/api/places/{placeId}", NON_EXISTENT_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(multipart(org.springframework.http.HttpMethod.PUT, "/api/places/{placeId}", NON_EXISTENT_ID)
+                        .file(new MockMultipartFile("place", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request)))
                         .characterEncoding("UTF-8")
-                        .header("Authorization", "Bearer test-token")
-                        .content(objectMapper.writeValueAsString(request)))
+                        .header("Authorization", "Bearer test-token"))
                 .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("PLACE_NOT_FOUND"));

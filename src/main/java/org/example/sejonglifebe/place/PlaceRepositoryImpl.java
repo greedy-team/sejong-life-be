@@ -1,13 +1,18 @@
 package org.example.sejonglifebe.place;
 
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.place.dto.PlaceQueryResult;
+import org.example.sejonglifebe.place.dto.PlaceSearchQuery;
+import org.example.sejonglifebe.place.dto.PlaceSortType;
 import org.example.sejonglifebe.tag.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,7 +32,10 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<PlaceQueryResult> getPlacesByConditions(Category category, List<Tag> tags, String keyword, boolean partnershipOnly, Pageable pageable) {
+    public Page<PlaceQueryResult> getPlacesByConditions(PlaceSearchQuery searchQuery, Pageable pageable) {
+        Category category = searchQuery.category();
+        List<Tag> tags = searchQuery.tags();
+
         JPAQuery<PlaceQueryResult> query = queryFactory
                 .select(Projections.constructor(PlaceQueryResult.class,
                         place,
@@ -45,31 +53,50 @@ public class PlaceRepositoryImpl implements PlaceRepositoryCustom {
 
         List<PlaceQueryResult> content = query
                 .leftJoin(place.reviews, review)
-                .where(likePlaceName(keyword),
+                .where(likePlaceName(searchQuery.keyword()),
                         placeCategoryEq(category),
                         placeTagIn(tags),
-                        filterByPartnership(partnershipOnly)
+                        filterByPartnership(searchQuery.partnershipOnly())
                 )
                 .groupBy(place.id)
                 .having(placeTagCountEq(tags))
-                .orderBy(review.countDistinct().desc())
+                .orderBy(toOrderSpecifiers(searchQuery.sort(), searchQuery.latitude(), searchQuery.longitude()))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        Long total = queryFactory
-                .select(place.id.countDistinct())
+        long total = queryFactory
+                .select(place.id)
                 .from(place)
                 .leftJoin(place.placeCategories, placeCategory)
                 .leftJoin(place.placeTags, placeTag)
-                .where(likePlaceName(keyword),
+                .where(likePlaceName(searchQuery.keyword()),
                         placeCategoryEq(category),
                         placeTagIn(tags),
-                        filterByPartnership(partnershipOnly)
+                        filterByPartnership(searchQuery.partnershipOnly())
                 )
-                .fetchOne();
+                .groupBy(place.id)
+                .having(placeTagCountEq(tags))
+                .fetch()
+                .size();
 
-        return new PageImpl<>(content, pageable, total == null ? 0L : total);
+        return new PageImpl<>(content, pageable, total);
+    }
+
+    private OrderSpecifier<?>[] toOrderSpecifiers(PlaceSortType sort, Double latitude, Double longitude) {
+        OrderSpecifier<?> primary = switch (PlaceSortType.orDefault(sort)) {
+            case REVIEW_COUNT -> review.countDistinct().desc();
+            case RATING -> review.rating.avg().desc().nullsLast();
+            case VIEW_COUNT -> place.viewCount.desc();
+            case DISTANCE -> distance(latitude, longitude).asc().nullsLast();
+        };
+        return new OrderSpecifier<?>[]{primary, place.id.asc()};
+    }
+
+    private NumberExpression<Double> distance(Double latitude, Double longitude) {
+        return Expressions.numberTemplate(Double.class,
+                "ST_Distance_Sphere(POINT({0}, {1}), POINT({2}, {3}))",
+                longitude, latitude, place.longitude, place.latitude);
     }
 
     private BooleanExpression likePlaceName(String keyword) {

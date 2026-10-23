@@ -12,7 +12,7 @@ import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.review.ReviewRepository;
-import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -65,12 +66,16 @@ class UserControllerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @MockitoBean
-    private S3Service s3Service;
+    private ImageStorage imageStorage;
 
     @BeforeEach
     void setUp() {
         given(jwtTokenProvider.validateAndGetAuthUser(anyString()))
                 .willReturn(new AuthUser("21011111", Role.USER));
+        given(jwtTokenProvider.createToken(any()))
+                .willReturn("access-token");
+        given(jwtTokenProvider.createRefreshToken(any()))
+                .willReturn("refresh-token");
     }
 
     @Test

@@ -10,7 +10,7 @@ import org.example.sejonglifebe.place.PlaceRepository;
 import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.dto.ReviewRequest;
-import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.Role;
@@ -72,7 +72,7 @@ class ReviewControllerTest {
     private EntityManager em; // (Service 테스트에서 썼던 것과 동일하게)
 
     @MockitoBean
-    private S3Service s3Service; // [추가] S3Service Mocking
+    private ImageStorage imageStorage; // [추가] ImageStorage Mocking
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;

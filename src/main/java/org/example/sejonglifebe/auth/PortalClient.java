@@ -22,11 +22,11 @@ import java.util.List;
 public class PortalClient {
 
     private static final String LOGIN_URL = "https://portal.sejong.ac.kr/jsp/login/login_action.jsp";
-    private static final String RETURN_URL = "http://classic.sejong.ac.kr/_custom/sejong/sso/sso-return.jsp?returnUrl=https%3A%2F%2Fclassic.sejong.ac.kr%2Fclassic%2Findex.do";
+    private static final String RETURN_URL = "https://classic.sejong.ac.kr/_custom/sejong/sso/sso-return.jsp?returnUrl=https%3A%2F%2Fclassic.sejong.ac.kr%2Fclassic%2Findex.do";
     private static final String HOST = "portal.sejong.ac.kr";
     private static final String REFERER = "https://portal.sejong.ac.kr";
     private static final String COOKIE = "chknos=false";
-    private static final String SSO_URL = "http://classic.sejong.ac.kr/_custom/sejong/sso/sso-return.jsp?returnUrl=https://classic.sejong.ac.kr/classic/index.do";
+    private static final String SSO_URL = "https://classic.sejong.ac.kr/_custom/sejong/sso/sso-return.jsp?returnUrl=https://classic.sejong.ac.kr/classic/index.do";
     private static final String HTML_URL = "https://classic.sejong.ac.kr/classic/reading/status.do";
 
     private static final int RETRY_COUNT = 3;
@@ -78,8 +78,8 @@ public class PortalClient {
 
         try (Response response = client.newCall(request).execute()) {
             if (response.body() == null || response.code() != 200) { //고전독서 인증현황 페이지 조회 실패
-                log.error("고전독서 페이지 조회 실패 - code: {}, message: {}, body: {}",
-                        response.code(), response.message(), response.body());
+                log.error("고전독서 페이지 조회 실패 - code: {}, message: {}",
+                        response.code(), response.message());
                 throw new SejongLifeException(ErrorCode.PORTAL_CONNECTION_ERROR);
             }
             return response.body().string();

@@ -32,6 +32,9 @@ public class JwtTokenProvider {
     @Value("${jwt.signup-expiration}")
     private long signUpTokenExpirationTime;
 
+    @Value("${jwt.refresh-expiration:1209600000}")
+    private long refreshExpirationTime;
+
     private SecretKey key;
 
     @PostConstruct
@@ -51,6 +54,52 @@ public class JwtTokenProvider {
                 .expiration(expiryDate)
                 .signWith(key)
                 .compact();
+    }
+
+    public String createRefreshToken(User user) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + refreshExpirationTime);
+
+        return Jwts.builder()
+                .subject(user.getStudentId())
+                .claim("type", "refresh")
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(key)
+                .compact();
+    }
+
+    // refresh token 검증 및 studentId(subject) 추출
+    public String validateRefreshToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            String type = claims.get("type", String.class);
+            if (!"refresh".equals(type)) {
+                throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+            }
+
+            return claims.getSubject();
+
+        } catch (SejongLifeException e) {
+            throw e;
+
+        } catch (ExpiredJwtException e) {
+            throw new SejongLifeException(ErrorCode.EXPIRED_TOKEN);
+
+        } catch (MalformedJwtException e) {
+            throw new SejongLifeException(ErrorCode.MALFORMED_TOKEN);
+
+        } catch (SignatureException e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+
+        } catch (Exception e) {
+            throw new SejongLifeException(ErrorCode.INVALID_TOKEN);
+        }
     }
 
     // 회원가입용 임시 토큰

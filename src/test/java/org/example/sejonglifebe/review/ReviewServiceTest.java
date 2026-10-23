@@ -10,7 +10,7 @@ import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.dto.RatingCount;
 import org.example.sejonglifebe.review.dto.ReviewRequest;
 import org.example.sejonglifebe.review.dto.ReviewSummaryResponse;
-import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.User;
@@ -58,7 +58,7 @@ class ReviewServiceTest {
     private ReviewLikeRepository reviewLikeRepository;
 
     @Mock
-    private S3Service s3Service;
+    private ImageStorage imageStorage;
 
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
@@ -378,6 +378,8 @@ class ReviewServiceTest {
             ReflectionTestUtils.setField(review, "id", 101L); // reviewId = 101L
 
             review.addImage("s3_image_url_1");
+            // DB에서 로드된 상태처럼 place 쪽 컬렉션에도 반영 (deleteReview는 place 컬렉션에서 이미지를 찾음)
+            place.getPlaceImages().addAll(review.getPlaceImages());
         }
 
         @Test
@@ -391,7 +393,7 @@ class ReviewServiceTest {
 
             reviewService.deleteReview(reviewId, placeId, authUser);
 
-            verify(s3Service, times(1)).deleteImages(anyList());
+            verify(imageStorage, times(1)).deleteImages(List.of("s3_image_url_1"));
             verify(reviewRepository, times(1)).delete(review);
         }
 
@@ -410,7 +412,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.REVIEW_NOT_FOUND.getErrorMessage());
 
-            verify(s3Service, never()).deleteImages(any());
+            verify(imageStorage, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
 
@@ -429,7 +431,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.REVIEW_NOT_FOUND.getErrorMessage());
 
-            verify(s3Service, never()).deleteImages(any());
+            verify(imageStorage, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
 
@@ -449,7 +451,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.PERMISSION_DENIED.getErrorMessage());
 
-            verify(s3Service, never()).deleteImages(any());
+            verify(imageStorage, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
     }
@@ -733,7 +735,7 @@ class ReviewServiceTest {
             reviewService.deleteMyPageReview(reviewId, authUser);
 
             // then
-            verify(s3Service, times(1)).deleteImages(anyList());
+            verify(imageStorage, times(1)).deleteImages(List.of("s3_image_url_1"));
             verify(reviewRepository, times(1)).delete(review);
         }
 
@@ -750,7 +752,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.REVIEW_NOT_FOUND.getErrorMessage());
 
-            verify(s3Service, never()).deleteImages(any());
+            verify(imageStorage, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
 
@@ -769,7 +771,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.USER_NOT_FOUND.getErrorMessage());
 
-            verify(s3Service, never()).deleteImages(any());
+            verify(imageStorage, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
 
@@ -793,7 +795,7 @@ class ReviewServiceTest {
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.PERMISSION_DENIED.getErrorMessage());
 
-            verify(s3Service, never()).deleteImages(any());
+            verify(imageStorage, never()).deleteImages(any());
             verify(reviewRepository, never()).delete(any());
         }
     }

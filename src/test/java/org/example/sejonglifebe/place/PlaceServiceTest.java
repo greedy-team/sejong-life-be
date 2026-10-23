@@ -1,22 +1,22 @@
 package org.example.sejonglifebe.place;
 
 import org.example.sejonglifebe.auth.AuthUser;
-import org.example.sejonglifebe.place.view.PlaceViewService;
-import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
-import org.example.sejonglifebe.place.entity.MapLinks;
-import org.example.sejonglifebe.place.entity.PlaceCategory;
-import org.example.sejonglifebe.place.entity.PlaceTag;
-import org.example.sejonglifebe.user.Role;
 import org.example.sejonglifebe.category.Category;
 import org.example.sejonglifebe.category.CategoryRepository;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.dto.PlaceQueryResult;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
 import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
+import org.example.sejonglifebe.place.dto.PlaceSearchQuery;
+import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
+import org.example.sejonglifebe.place.entity.MapLinks;
 import org.example.sejonglifebe.place.entity.Place;
-import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.place.entity.PlaceCategory;
+import org.example.sejonglifebe.place.entity.PlaceTag;
+import org.example.sejonglifebe.place.view.PlaceViewService;
 import org.example.sejonglifebe.tag.Tag;
 import org.example.sejonglifebe.tag.TagRepository;
 import org.example.sejonglifebe.user.Role;
@@ -33,7 +33,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -47,8 +47,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class PlaceServiceTest {
@@ -66,7 +66,7 @@ class PlaceServiceTest {
     private PlaceViewService placeViewService;
 
     @Mock
-    private S3Service s3Service;
+    private ImageStorage imageStorage;
 
     @InjectMocks
     private PlaceService placeService;
@@ -79,7 +79,7 @@ class PlaceServiceTest {
         @DisplayName("존재하지 않는 태그 이름이 포함되면 TAG_NOT_FOUND 예외를 던진다")
         void getPlaces_tagNotFound() {
             // given
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("존재X"), "전체", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("존재X"), "전체", null, false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
 
             given(tagRepository.findByNameIn(anyList()))
@@ -97,7 +97,7 @@ class PlaceServiceTest {
         @DisplayName("카테고리 = 전체 && 태그 없음 → 모든 장소를 조회한다")
         void getPlaces_allCategory_noTags() {
             // given
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", null, false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("장소1").build();
             Place place2 = Place.builder().name("장소2").build();
@@ -107,7 +107,7 @@ class PlaceServiceTest {
             ));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
-            given(placeRepository.getPlacesByConditions(null, List.of(), null, false, pageable))
+            given(placeRepository.getPlacesByConditions(PlaceSearchQuery.builder().tags(List.of()).build(), pageable))
                     .willReturn(pageResult);
 
             // when
@@ -124,13 +124,13 @@ class PlaceServiceTest {
         void getPlaces_allCategory_withTags() {
             // given
             Tag tag = new Tag("가성비");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", null, false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 장소").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
-            given(placeRepository.getPlacesByConditions(null, List.of(tag), null, false, pageable))
+            given(placeRepository.getPlacesByConditions(PlaceSearchQuery.builder().tags(List.of(tag)).build(), pageable))
                     .willReturn(pageResult);
 
             // when
@@ -145,7 +145,7 @@ class PlaceServiceTest {
         @DisplayName("카테고리 존재하지 않으면 CATEGORY_NOT_FOUND 예외를 던진다")
         void getPlaces_categoryNotFound() {
             // given
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null, false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
@@ -162,7 +162,7 @@ class PlaceServiceTest {
         void getPlaces_selectedCategory_noTags() {
             // given
             Category category = new Category("맛집");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", null, false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("맛집1").build();
             Place place2 = Place.builder().name("맛집2").build();
@@ -173,7 +173,7 @@ class PlaceServiceTest {
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(), null, false, pageable))
+            given(placeRepository.getPlacesByConditions(PlaceSearchQuery.builder().category(category).tags(List.of()).build(), pageable))
                     .willReturn(pageResult);
 
             // when
@@ -191,14 +191,14 @@ class PlaceServiceTest {
             // given
             Category category = new Category("맛집");
             Tag tag = new Tag("가성비");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", null, false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", null, false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 맛집").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(tag), null, false, pageable))
+            given(placeRepository.getPlacesByConditions(PlaceSearchQuery.builder().category(category).tags(List.of(tag)).build(), pageable))
                     .willReturn(pageResult);
 
             // when
@@ -213,7 +213,7 @@ class PlaceServiceTest {
         @DisplayName("키워드만 입력 → 장소명에 키워드가 포함된 장소를 조회한다")
         void getPlaces_withKeywordOnly() {
             // given
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", "카페", false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "전체", "카페", false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("스타벅스 카페").build();
             Place place2 = Place.builder().name("투썸 카페").build();
@@ -223,7 +223,7 @@ class PlaceServiceTest {
             ));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
-            given(placeRepository.getPlacesByConditions(null, List.of(), "카페", false, pageable))
+            given(placeRepository.getPlacesByConditions(PlaceSearchQuery.builder().tags(List.of()).keyword("카페").build(), pageable))
                     .willReturn(pageResult);
 
             // when
@@ -240,14 +240,14 @@ class PlaceServiceTest {
         void getPlaces_withCategoryAndKeyword() {
             // given
             Category category = new Category("맛집");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", "치킨", false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of(), "맛집", "치킨", false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("BHC 치킨").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(List.of())).willReturn(List.of());
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(), "치킨", false, pageable))
+            given(placeRepository.getPlacesByConditions(PlaceSearchQuery.builder().category(category).tags(List.of()).keyword("치킨").build(), pageable))
                     .willReturn(pageResult);
 
             // when
@@ -263,13 +263,13 @@ class PlaceServiceTest {
         void getPlaces_withTagAndKeyword() {
             // given
             Tag tag = new Tag("가성비");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", "피자", false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "전체", "피자", false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 피자").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
-            given(placeRepository.getPlacesByConditions(null, List.of(tag), "피자", false, pageable))
+            given(placeRepository.getPlacesByConditions(PlaceSearchQuery.builder().tags(List.of(tag)).keyword("피자").build(), pageable))
                     .willReturn(pageResult);
 
             // when
@@ -286,14 +286,14 @@ class PlaceServiceTest {
             // given
             Category category = new Category("맛집");
             Tag tag = new Tag("가성비");
-            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", "치킨", false);
+            PlaceSearchConditions conditions = new PlaceSearchConditions(List.of("가성비"), "맛집", "치킨", false, null, null, null);
             Pageable pageable = PageRequest.of(0, 10);
             Place place1 = Place.builder().name("가성비 치킨집").build();
             Page<PlaceQueryResult> pageResult = new PageImpl<>(List.of(new PlaceQueryResult(place1, 0L)));
 
             given(tagRepository.findByNameIn(conditions.tags())).willReturn(List.of(tag));
             given(categoryRepository.findByName("맛집")).willReturn(Optional.of(category));
-            given(placeRepository.getPlacesByConditions(category, List.of(tag), "치킨", false, pageable))
+            given(placeRepository.getPlacesByConditions(PlaceSearchQuery.builder().category(category).tags(List.of(tag)).keyword("치킨").build(), pageable))
                     .willReturn(pageResult);
 
             // when
@@ -397,8 +397,6 @@ class PlaceServiceTest {
         @DisplayName("성공: ADMIN이 장소의 mapLinks/partnership/categoryIds/tagIds를 수정한다")
         void updatePlace_success() {
             // given
-            AuthUser admin = new AuthUser("21011111", Role.ADMIN);
-
             Place place = Place.builder()
                     .name("원래이름")
                     .address("원래주소")
@@ -422,6 +420,7 @@ class PlaceServiceTest {
             ReflectionTestUtils.setField(newTag2, "id", 12L);
 
             PlaceUpdateRequest request = new PlaceUpdateRequest(
+                    "수정된 장소", "수정된 주소", 37.55, 127.07,
                     List.of(2L),
                     List.of(11L, 12L),
                     new MapLinks("https://n-updated.com", "https://k-updated.com", "https://g-updated.com"),
@@ -429,15 +428,19 @@ class PlaceServiceTest {
                     "재학생 10% 할인"
             );
 
-            given(placeRepository.findById(1L)).willReturn(Optional.of(place));
+            given(placeRepository.findByIdForUpdate(1L)).willReturn(Optional.of(place));
             given(categoryRepository.findAllById(List.of(2L))).willReturn(List.of(newCategory));
             given(tagRepository.findAllById(List.of(11L, 12L))).willReturn(List.of(newTag1, newTag2));
 
             // when
-            placeService.updatePlace(1L, request, admin);
+            placeService.updatePlace(1L, request, null, false);
 
             // then
             assertThat(place.getMapLinks().getNaverMap()).isEqualTo("https://n-updated.com");
+            assertThat(place.getName()).isEqualTo("수정된 장소");
+            assertThat(place.getAddress()).isEqualTo("수정된 주소");
+            assertThat(place.getLatitude()).isEqualTo(37.55);
+            assertThat(place.getLongitude()).isEqualTo(127.07);
             assertThat(place.getMapLinks().getKakaoMap()).isEqualTo("https://k-updated.com");
             assertThat(place.getMapLinks().getGoogleMap()).isEqualTo("https://g-updated.com");
 
@@ -452,7 +455,7 @@ class PlaceServiceTest {
                     .extracting(pt -> pt.getTag().getName())
                     .containsExactlyInAnyOrder("분위기 좋은", "콘센트 있는");
 
-            verify(placeRepository).findById(1L);
+            verify(placeRepository).findByIdForUpdate(1L);
             verify(categoryRepository).findAllById(List.of(2L));
             verify(tagRepository).findAllById(List.of(11L, 12L));
         }
@@ -461,9 +464,8 @@ class PlaceServiceTest {
         @DisplayName("실패: 존재하지 않는 placeId면 PLACE_NOT_FOUND 예외를 던진다")
         void updatePlace_fail_placeNotFound() {
             // given
-            AuthUser admin = new AuthUser("21011111", Role.ADMIN);
-
             PlaceUpdateRequest request = new PlaceUpdateRequest(
+                    "수정된 장소", "수정된 주소", 37.55, 127.07,
                     List.of(1L),
                     List.of(10L),
                     new MapLinks("https://naver.com/place", "https://kakao.com/place", "https://google.com/maps"),
@@ -471,16 +473,166 @@ class PlaceServiceTest {
                     ""
             );
 
-            given(placeRepository.findById(999L)).willReturn(Optional.empty());
+            given(placeRepository.findByIdForUpdate(999L)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> placeService.updatePlace(999L, request, admin))
+            assertThatThrownBy(() -> placeService.updatePlace(999L, request, null, false))
                     .isInstanceOf(SejongLifeException.class)
                     .hasMessage(ErrorCode.PLACE_NOT_FOUND.getErrorMessage());
 
-            verify(placeRepository).findById(999L);
+            verify(placeRepository).findByIdForUpdate(999L);
             verify(categoryRepository, org.mockito.Mockito.never()).findAllById(org.mockito.ArgumentMatchers.anyList());
             verify(tagRepository, org.mockito.Mockito.never()).findAllById(org.mockito.ArgumentMatchers.anyList());
+        }
+
+        @Test
+        @DisplayName("사진이 없는 장소에도 새 썸네일을 등록할 수 있다")
+        void updatePlace_addsThumbnailWhenPlaceHasNoImages() {
+            // given
+            Place place = Place.builder().name("장소").address("주소").build();
+            ReflectionTestUtils.setField(place, "id", 1L);
+            PlaceUpdateRequest request = updateRequest();
+            MockMultipartFile thumbnail = new MockMultipartFile(
+                    "thumbnail", "thumbnail.png", "image/png", new byte[]{1, 2, 3});
+
+            givenPlaceForUpdate(place);
+            given(imageStorage.uploadImage("1", thumbnail))
+                    .willReturn("https://s3.example.com/thumbnail.webp");
+
+            // when
+            placeService.updatePlace(1L, request, thumbnail, false);
+
+            // then
+            assertThat(place.getThumbnailImage()).isEqualTo("https://s3.example.com/thumbnail.webp");
+        }
+
+        @Test
+        @DisplayName("썸네일 변경 요청이 없으면 기존 썸네일을 유지한다")
+        void updatePlace_keepsThumbnail() {
+            // given
+            Place place = placeWithThumbnail("old.webp");
+            givenPlaceForUpdate(place);
+
+            // when
+            placeService.updatePlace(1L, updateRequest(), null, false);
+
+            // then
+            assertThat(place.getThumbnailImage()).isEqualTo("old.webp");
+            verifyNoInteractions(imageStorage);
+        }
+
+        @Test
+        @DisplayName("썸네일 업로드와 삭제를 함께 요청하면 변경 전에 거절한다")
+        void updatePlace_rejectsConflictingThumbnailRequest() {
+            // given
+            MockMultipartFile thumbnail = new MockMultipartFile("thumbnail", new byte[]{1});
+
+            // when & then
+            assertThatThrownBy(() -> placeService.updatePlace(1L, updateRequest(), thumbnail, true))
+                    .isInstanceOf(SejongLifeException.class)
+                    .hasMessage(ErrorCode.INVALID_INPUT_VALUE.getErrorMessage());
+            verifyNoInteractions(imageStorage, placeRepository);
+        }
+
+        @Test
+        @DisplayName("빈 썸네일 파일만 보내면 기존 썸네일을 유지한다")
+        void updatePlace_emptyThumbnailKeepsExistingImage() {
+            // given
+            Place place = placeWithThumbnail("old.webp");
+            givenPlaceForUpdate(place);
+
+            // when
+            placeService.updatePlace(1L, updateRequest(), new MockMultipartFile("thumbnail", new byte[0]), false);
+
+            // then
+            assertThat(place.getThumbnailImage()).isEqualTo("old.webp");
+            verifyNoInteractions(imageStorage);
+        }
+
+        @Test
+        @DisplayName("빈 파일과 삭제 요청을 보내면 기존 썸네일을 삭제한다")
+        void updatePlace_emptyThumbnailAllowsDeletion() {
+            // given
+            Place place = placeWithThumbnail("old.webp");
+            givenPlaceForUpdate(place);
+
+            // when
+            placeService.updatePlace(1L, updateRequest(), new MockMultipartFile("thumbnail", new byte[0]), true);
+
+            // then
+            assertThat(place.getThumbnailImage()).isNull();
+            verify(imageStorage).deleteImages(List.of("old.webp"));
+        }
+
+        @Test
+        @DisplayName("이미지 업로드 실패 시 이전 썸네일을 보존한다")
+        void updatePlace_uploadFailureKeepsThumbnail() {
+            // given
+            Place place = placeWithThumbnail("old.webp");
+            MockMultipartFile thumbnail = new MockMultipartFile("thumbnail", new byte[]{1});
+            givenPlaceForUpdate(place);
+            given(imageStorage.uploadImage("1", thumbnail)).willThrow(new SejongLifeException(ErrorCode.S3_UPLOAD_FAILED));
+
+            // when & then
+            assertThatThrownBy(() -> placeService.updatePlace(1L, updateRequest(), thumbnail, false)).isInstanceOf(SejongLifeException.class);
+            assertThat(place.getThumbnailImage()).isEqualTo("old.webp");
+            verify(imageStorage, never()).deleteImages(anyList());
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 카테고리는 이미지 업로드 전에 거절한다")
+        void updatePlace_rejectsUnknownCategoryBeforeUploading() {
+            // given
+            Place place = placeWithThumbnail("old.webp");
+            given(placeRepository.findByIdForUpdate(1L)).willReturn(Optional.of(place));
+            given(categoryRepository.findAllById(List.of(1L))).willReturn(List.of());
+
+            // when & then
+            assertThatThrownBy(() -> placeService.updatePlace(1L, updateRequest(),
+                    new MockMultipartFile("thumbnail", new byte[]{1}), false))
+                    .isInstanceOf(SejongLifeException.class).hasMessage(ErrorCode.CATEGORY_NOT_FOUND.getErrorMessage());
+            assertThat(place.getName()).isEqualTo("장소");
+            verifyNoInteractions(imageStorage);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 태그는 이미지 업로드 전에 거절한다")
+        void updatePlace_rejectsUnknownTagBeforeUploading() {
+            // given
+            Place place = placeWithThumbnail("old.webp");
+            given(placeRepository.findByIdForUpdate(1L)).willReturn(Optional.of(place));
+            given(categoryRepository.findAllById(List.of(1L))).willReturn(List.of(new Category("식당")));
+
+            // when & then
+            assertThatThrownBy(() -> placeService.updatePlace(1L, updateRequest(),
+                    new MockMultipartFile("thumbnail", new byte[]{1}), false))
+                    .isInstanceOf(SejongLifeException.class).hasMessage(ErrorCode.TAG_NOT_FOUND.getErrorMessage());
+            assertThat(place.getName()).isEqualTo("장소");
+            verifyNoInteractions(imageStorage);
+        }
+
+        private void givenPlaceForUpdate(Place place) {
+            given(placeRepository.findByIdForUpdate(1L)).willReturn(Optional.of(place));
+            given(categoryRepository.findAllById(List.of(1L))).willReturn(List.of(new Category("식당")));
+            given(tagRepository.findAllById(List.of(10L))).willReturn(List.of(new Tag("맛집")));
+        }
+
+        private Place placeWithThumbnail(String thumbnailUrl) {
+            Place place = Place.builder().name("장소").address("주소").build();
+            ReflectionTestUtils.setField(place, "id", 1L);
+            place.addImage(thumbnailUrl, true);
+            return place;
+        }
+
+        private PlaceUpdateRequest updateRequest() {
+            return new PlaceUpdateRequest(
+                    "수정된 장소", "수정된 주소", 37.55, 127.07,
+                    List.of(1L),
+                    List.of(10L),
+                    new MapLinks("https://naver.com", "https://kakao.com", "https://google.com"),
+                    false,
+                    ""
+            );
         }
     }
 
@@ -499,7 +651,7 @@ class PlaceServiceTest {
                     .build();
             ReflectionTestUtils.setField(place, "id", 1L);
 
-            given(placeRepository.findById(1L))
+            given(placeRepository.findByIdForUpdate(1L))
                     .willReturn(Optional.of(place));
 
             // when

@@ -11,18 +11,15 @@ import org.example.sejonglifebe.external.dto.MapLinksRequest;
 import org.example.sejonglifebe.external.dto.MapLinksResponse;
 import org.example.sejonglifebe.external.dto.PlaceSearchResponse;
 import org.example.sejonglifebe.place.dto.PlaceDetailResponse;
+import org.example.sejonglifebe.place.dto.PlacePageResponse;
 import org.example.sejonglifebe.place.dto.PlaceRequest;
+import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.example.sejonglifebe.place.dto.PlaceSearchConditions;
 import org.example.sejonglifebe.place.dto.PlaceUpdateRequest;
 import org.example.sejonglifebe.place.favorite.FavoritePlaceService;
 import org.example.sejonglifebe.user.Role;
-import org.springframework.http.HttpStatus;
-
-import java.util.List;
-
-import org.example.sejonglifebe.place.dto.PlacePageResponse;
-import org.example.sejonglifebe.place.dto.PlaceResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,6 +34,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -82,13 +81,14 @@ public class PlaceController implements PlaceControllerSwagger {
     }
 
     @LoginRequired(role = Role.ADMIN)
-    @PutMapping("/{placeId}")
+    @PutMapping(value = "/{placeId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<Void>> updatePlace(
             @PathVariable("placeId") Long placeId,
-            @Valid @RequestBody PlaceUpdateRequest placeRequest,
-            AuthUser authUser
+            @Valid @RequestPart("place") PlaceUpdateRequest placeRequest,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+            @RequestParam(value = "deleteThumbnail", defaultValue = "false") boolean deleteThumbnail
     ) {
-        placeService.updatePlace(placeId, placeRequest, authUser);
+        placeService.updatePlace(placeId, placeRequest, thumbnail, deleteThumbnail);
         return CommonResponse.of(HttpStatus.OK, "장소 수정 성공", null);
     }
 

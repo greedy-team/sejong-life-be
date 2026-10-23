@@ -4,6 +4,7 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>./logs/error-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>7</maxHistory>
+            <totalSizeCap>200MB</totalSizeCap>
         </rollingPolicy>
 
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
@@ -21,6 +22,7 @@
                 </timestamp>
                 <level/>
                 <mdc>
+                    <includeMdcKeyName>requestId</includeMdcKeyName>
                     <includeMdcKeyName>userId</includeMdcKeyName>
                     <includeMdcKeyName>requestUrl</includeMdcKeyName>
                     <includeMdcKeyName>errorCode</includeMdcKeyName>

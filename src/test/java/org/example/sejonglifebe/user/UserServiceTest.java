@@ -2,14 +2,15 @@ package org.example.sejonglifebe.user;
 
 import org.example.sejonglifebe.auth.AuthUser;
 import org.example.sejonglifebe.auth.PortalStudentInfo;
-import org.example.sejonglifebe.common.jwt.JwtTokenProvider;
+import org.example.sejonglifebe.auth.TokenIssuer;
+import org.example.sejonglifebe.auth.dto.LoginResponse;
 import org.example.sejonglifebe.exception.ErrorCode;
 import org.example.sejonglifebe.exception.SejongLifeException;
 import org.example.sejonglifebe.place.entity.Place;
 import org.example.sejonglifebe.review.Review;
 import org.example.sejonglifebe.review.ReviewLikeRepository;
 import org.example.sejonglifebe.review.ReviewRepository;
-import org.example.sejonglifebe.s3.S3Service;
+import org.example.sejonglifebe.common.storage.ImageStorage;
 import org.example.sejonglifebe.user.dto.SignUpRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +39,7 @@ class UserServiceTest {
     UserRepository userRepository;
 
     @Mock
-    JwtTokenProvider jwtTokenProvider;
+    TokenIssuer tokenIssuer;
 
     @Mock
     ReviewRepository reviewRepository;
@@ -47,7 +48,7 @@ class UserServiceTest {
     ReviewLikeRepository reviewLikeRepository;
 
     @Mock
-    S3Service s3Service;
+    ImageStorage imageStorage;
 
     @InjectMocks
     UserService userService;
@@ -80,7 +81,7 @@ class UserServiceTest {
                     .hasMessage(ErrorCode.DUPLICATE_NICKNAME.getErrorMessage());
 
             verify(userRepository, never()).save(any());
-            verify(jwtTokenProvider, never()).createToken(any());
+            verify(tokenIssuer, never()).issue(any());
         }
 
         @Test
@@ -107,15 +108,17 @@ class UserServiceTest {
                     .nickname("새로 생성된 닉네임")
                     .build();
 
+            LoginResponse expectedResponse = LoginResponse.loginSuccessWithRefreshToken("jwt-token", "refresh-token");
+
             given(userRepository.existsByNickname("새로 생성된 닉네임")).willReturn(false);
             given(userRepository.save(any(User.class))).willReturn(savedUser);
-            given(jwtTokenProvider.createToken(savedUser)).willReturn("jwt-token");
+            given(tokenIssuer.issue(savedUser)).willReturn(expectedResponse);
 
             // when
-            String token = userService.createUser(request, portalInfo);
+            LoginResponse response = userService.createUser(request, portalInfo);
 
             // then
-            assertThat(token).isEqualTo("jwt-token");
+            assertThat(response.getAccessToken()).isEqualTo("jwt-token");
 
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
             verify(userRepository).save(userCaptor.capture());
@@ -127,7 +130,7 @@ class UserServiceTest {
             assertThat(toSave.getDepartment()).isEqualTo("컴퓨터공학과");
             assertThat(toSave.getNickname()).isEqualTo("새로 생성된 닉네임");
 
-            verify(jwtTokenProvider).createToken(savedUser);
+            verify(tokenIssuer).issue(savedUser);
         }
     }
 
@@ -171,7 +174,7 @@ class UserServiceTest {
             userService.deleteUser(authUser);
 
             // then
-            verify(s3Service, times(1)).deleteImages(anyList());
+            verify(imageStorage, times(1)).deleteImages(List.of("s3_image_url_1"));
             verify(reviewRepository, times(1)).delete(review);
             verify(reviewLikeRepository, times(1)).deleteAllByUser(user);
             verify(userRepository, times(1)).delete(user);
@@ -204,7 +207,7 @@ class UserServiceTest {
             userService.deleteUser(authUser);
 
             // then
-            verify(s3Service, never()).deleteImages(anyList());
+            verify(imageStorage, never()).deleteImages(anyList());
             verify(reviewRepository, never()).delete(any());
             verify(reviewLikeRepository, times(1)).deleteAllByUser(user);
             verify(userRepository, times(1)).delete(user);
